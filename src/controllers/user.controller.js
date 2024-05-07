@@ -44,7 +44,9 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
     const avatarLocalPath = req.file?.path;
-   
+    // if (!avatarLocalPath) {
+    //     throw new ApiError(400, "Avatar is required");
+    //   }
    
     const user = await User.create({
         fullName,
@@ -55,7 +57,7 @@ const registerUser = asyncHandler( async (req, res) => {
     })
 
     const createdUser = await User.findById(user._id).select(
-        "-password -refreshToken"
+        "-password -refreshToken -resettoken "
     )
 
     if (!createdUser) {
@@ -226,100 +228,66 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
     )
 })
 
-const forgetpassword = asyncHandler(async (req, res) => {
+const forgetPassword = asyncHandler(async (req, res) => {
     const { email } = req.body;
     try {
-      const user = await User.findOne({ email });
-      if (!user) {
-        throw new ApiError(404, "User not found");
-      }
-    const {accessToken,refreshToken}=  await generateAccessAndRefereshTokens(user._id)
-      user.refreshToken = refreshToken;
-      const resetToken=accessToken
-      await user.save();
-      await sendPasswordResetEmail(user.email, resetToken);
-      res.status(200).json(new ApiResponse(200,user.email,"Password reset email sent successfully"));
+        const user = await User.findOne({ email });
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+        const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+        user.refreshToken = refreshToken;
+        const resetToken = accessToken;
+        user.resetToken = resetToken;
+        user.resetTokenExpiry = Date.now() + (2 * 60 * 60 * 1000);
+        await user.save();
+        await sendPasswordResetEmail(user.email, resetToken);
+        res.status(200).json(new ApiResponse(200, user.email, "Password reset email sent successfully"));
     } catch (error) {
-      console.error("Error requesting password reset:", error);
-      res.status(error.statusCode || 500).json(new ApiResponse(error.statusCode || 500, error.message));
+        console.error("Error requesting password reset:", error);
+        res.status(error.statusCode || 500).json(new ApiResponse(error.statusCode || 500, error.message));
     }
-  });
-  
-const forgetpassworktoken = asyncHandler(async (req, res) => {
+});
+
+const forgetPasswordToken = asyncHandler(async (req, res) => {
     const { token } = req.params;
-    // console.log(token);
     try {
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-      console.log(decoded);
-      const user = await User.findOne({ _id: decoded._id });
-      console.log(user);
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message: "User not found with provided email",
-          });
-      }
-  
-      if (user.forgetEmailVerified) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Email already verified change passwork within 15 mint" });
-      }
-       user.forgetEmailVerified = true;
-      
-      await user.save();
-      return res
-      .status(200) 
-       .json(new ApiResponse(200, "Email Token Verfiy successfully"))
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const user = await User.findById(decoded._id);
+        if (!user || Date.now() > user.resetTokenExpiry) {
+            throw new ApiError(404, "Invalid or expired token");
+        }
+        res.status(200).json(new ApiResponse(200, "Email Token Verified successfully"));
     } catch (error) {
-      console.log("Error verifying email: ", error);
-      res.status(500).json({ success: false, message: "Failed to verify email" });
+        console.error("Error verifying email token:", error);
+        res.status(400).json(new ApiResponse(400, error.message));
     }
-  });
-  
-const resetPasswordforforget = asyncHandler(async (req, res) => {
+});
 
-    const {password, confirmPassword } = req.body;
-     const { token }= req.params;
-    if (
-        [password,confirmPassword].some((field) => field?.trim() === "")
-    ) {
-        throw new ApiError(400, "All fields are required")
+const resetPasswordForForget = asyncHandler(async (req, res) => {
+    const { password, confirmPassword } = req.body;
+    const { token } = req.params;
+    if ([password, confirmPassword].some((field) => !field || field.trim() === "")) {
+        throw new ApiError(400, "All fields are required");
     }
 
-   
-    console.log(token);
     try {
-      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-      console.log(decoded);
-      console.log("qwer");
-      const user = await User.findById(decoded?._id);
-      if (!user) {
-        throw new ApiError(404, "User not found");
-      }
-  
-    //   if (Date.now() > user.resetTokenExpiry) {
-    //     throw new ApiError(400, "Reset token has expired");
-    //   }
-      if(user.emailVerified){
-        throw new ApiError(400, "Please Verfiy Email Token");
-      }
-      
-      user.password = password
-      user.refreshToken=null
-      user.forgetEmailVerified=false;
-      await user.save({validateBeforeSave: false})
-  
-      return res
-      .status(200)
-      .json(new ApiResponse(200, {}, "Password forget successfully"))
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const user = await User.findById(decoded._id);
+        if (!user || Date.now() > user.resetTokenExpiry) {
+            throw new ApiError(404, "Invalid or expired token");
+        }
+        user.password = password;
+        user.refreshToken = null;
+        user.resetToken = null;
+        user.resetTokenExpiry = null;
+        await user.save();
+        res.status(200).json(new ApiResponse(200, {}, "Password reset successfully"));
     } catch (error) {
-      console.error("Error resetting password:", error);
-      res.status(error.statusCode || 401).json(new ApiResponse(error.statusCode || 401, error.message));
+        console.error("Error resetting password:", error);
+        res.status(error.statusCode || 401).json(new ApiResponse(error.statusCode || 401, error.message));
     }
-  });
+});
 
 
 export {
@@ -330,7 +298,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-   forgetpassword,
-   forgetpassworktoken,
-   resetPasswordforforget
+   forgetPassword,
+   forgetPasswordToken,
+   resetPasswordForForget
 }

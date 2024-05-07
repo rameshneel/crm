@@ -53,7 +53,7 @@ export const addLead = asyncHandler(async (req, res) => {
 export const getAllLeads = asyncHandler(async (req, res) => {
   try {
     const user_id = req.user?._id;
-    const { customer_id} = req.params;
+    const {customer_id} = req.params;
     const user = await User.findById(user_id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });

@@ -17,7 +17,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
       from: "rkmahto151@gmail.com",
       to: email,
       subject: "Password Reset",
-      html: `<p>Please click the following link to reset your password:</p><p><a href="http://localhost:8000/api/reset-password-token/${resetToken}">Reset Password</a></p>`,
+      html: `<p>Please click the following link to reset your password:</p><p><a href="http://localhost:8000/api/users/reset-password-token/${resetToken}">Reset Password</a></p>`,
     };
 
     // Send email

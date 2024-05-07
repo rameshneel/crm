@@ -56,16 +56,22 @@ const customerList = asyncHandler(async (req, res) => {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
 
+    let page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit) || 10;
+    let skip = (page - 1) * limit;
+
+    let customers;
+    let totalCount;
+    
     if (user.role === "admin") {
-      const customers = await Customer.find();
-      return res.json(new ApiResponse(200, { customers }, "Customers fetched successfully"));
+      customers = await Customer.find().skip(skip).limit(limit);
+      totalCount = await Customer.countDocuments();
+    } else if (user.role === "salesman") {
+      customers = await Customer.find({ createdBy: activeUser }).skip(skip).limit(limit);
+      totalCount = await Customer.countDocuments({ createdBy: activeUser });
     }
 
-    if (user.role === "salesman") {
-      const customers = await Customer.find({ createdBy: activeUser });
-      return res.json(new ApiResponse(200, { customers }, "Customers fetched successfully"));
-    }
-
+    return res.json(new ApiResponse(200, { customers, totalCount }, "Customers fetched successfully"));
   } catch (error) {
     throw new ApiError(400, "Customer List Error");
   }
@@ -94,5 +100,66 @@ const deleteCustomer = asyncHandler(async (req, res) => {
   }
 });
 
+const getAllCustomers = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, query, userId } = req.query;
 
-export { createCustomer, customerList, deleteCustomer};
+
+  try {
+    let aggregationPipeline = [];
+
+    //filters videos based on a case-insensitive regular expression match in the title field
+    if (query) {
+      aggregationPipeline.push({
+        $match: {
+          title: {
+            $regex: query,
+            $options: "i",
+          },
+        },
+      });
+    }
+
+    if (userId) {
+      aggregationPipeline.push({
+        $match: { userId: userId },
+      });
+    }
+
+    // arranges videos in a specified order based on a given field and direction.
+
+
+    const videos = await Customer.aggregatePaginate({
+      pipeline: aggregationPipeline,
+      page,
+      limit,
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, videos, "videos fetched successfully"));
+  } catch (error) {
+    throw new ApiError(500, "Error while fetching videos");
+  }
+});
+
+const getCustomerById = asyncHandler(async (req, res) => {
+  try {
+    const { customerId } = req.params;
+    console.log(customerId);
+    const customer = await Customer.findById(customerId);
+
+    if (!customer) {
+      throw new ApiError(404, "Customer not found");
+    }
+
+    return res.json(new ApiResponse(200, { customer }, "Customer fetched successfully"));
+  } catch (error) {
+    throw new ApiError(400, "Error fetching customer data");
+  }
+});
+
+
+
+
+
+export { createCustomer, customerList, deleteCustomer,getCustomerById};

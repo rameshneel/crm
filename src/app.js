@@ -21,10 +21,17 @@ import customerRoutes from "./routes/customer.route.js";
 import leadRoutes from "./routes/lead.routes.js"
 
 //routes declaration
-app.use("/api", userRouter)
-app.use("/customers", customerRoutes);
-app.use("/leads", leadRoutes);
+app.use("/api/users", userRouter)
+app.use("/api/customers", customerRoutes);
+app.use("/api/leads", leadRoutes);
 
-// http://localhost:8000/api/v1/users/register
+app.use((err, req, res, next) => {
+    console.log(err.stack);
+    res.status(500).json({ error: "Something went wrong" });
+  });
+  
+  app.use((req, res) => {
+    res.status(404).json({ error: "No route found lol!" });
+  });
 
 export { app }
