@@ -34,7 +34,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ["admin", "salesman"],
-      default: "salesman", // Set a default role if not provided
+      default: "salesman", 
       required: true
     },
 
