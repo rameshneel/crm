@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-const DB_NAME="lead_crm"
+const DB_NAME="crm"
 
 
 const connectDB = async () => {
