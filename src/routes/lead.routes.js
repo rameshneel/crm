@@ -5,8 +5,7 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 router.use(verifyJWT); 
 
-router.post("/addlead",addLead);
-router.get("/lead/:id",addLead);
-router.get("/leadlist",getAllLeads);
+router.post("/addlead/:customer_id",addLead);
+router.get("/leadlist/:customer_id",getAllLeads);
 
 export default router;
