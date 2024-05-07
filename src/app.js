@@ -25,10 +25,10 @@ app.use("/api/users", userRouter)
 app.use("/api/customers", customerRoutes);
 app.use("/api/leads", leadRoutes);
 
-app.use((err, req, res, next) => {
-    console.log(err.stack);
-    res.status(500).json({ error: "Something went wrong" });
-  });
+// app.use((err, req, res, next) => {
+//     console.log(err.stack);
+//     res.status(500).json({ error: "Something went wrong" });
+//   });
   
   app.use((req, res) => {
     res.status(404).json({ error: "No route found lol!" });
