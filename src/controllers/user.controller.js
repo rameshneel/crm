@@ -6,6 +6,8 @@ import {sendWelcomeEmail} from "../utils/email.js"
 import jwt from "jsonwebtoken"
 import { sendPasswordResetEmail } from "../utils/sendPasswordResetEmail.js";
 import fs from "fs"
+import axios from 'axios';
+import FormData from 'form-data';
 
 
 const generateAccessAndRefereshTokens = async(userId) =>{
@@ -43,14 +45,23 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(409, " email  already exists")
     }
 
-    const avatarLocalPath = req.file?.path;
-    // if (!avatarLocalPath) {
-    //     throw new ApiError(400, "Avatar is required");
-    //   }
+    const avatarLocalPath = req.file.path;
+     console.log(req.file);
+     const formData = new FormData();
+     formData.append('file', fs.createReadStream(avatarLocalPath));
+     const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+     const apiResponse = await axios.post(apiURL, formData, {
+         headers: {
+             ...formData.getHeaders(),
+         }
+     });
+ 
+     console.log(apiResponse.data);
+     const avatarurl=apiResponse.data?.img_upload_path
    
     const user = await User.create({
         fullName,
-        avatar: avatarLocalPath,
+        avatar: avatarurl,
         email, 
         role,
         password,
@@ -84,7 +95,7 @@ const loginUser = asyncHandler(async (req, res) =>{
 
     const user = await User.findOne({
         $or: [{email}]
-    })
+})
 
     if (!user) {
         throw new ApiError(404, "User does not exist")

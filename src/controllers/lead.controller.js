@@ -4,6 +4,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Lead from "../models/lead.model.js";
 import { isValidObjectId } from "mongoose";
+import mongoose from 'mongoose';
+
 
 export const addLead = asyncHandler(async (req, res) => {
   const { customer_id} = req.params;
@@ -71,5 +73,87 @@ export const getAllLeads = asyncHandler(async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server Error" });
+  }
+});
+
+
+export const LeadDetailsss = asyncHandler(async (req, res) => {
+  const { lead_id } = req.params;
+  console.log(lead_id);
+  if (!isValidObjectId(lead_id)) {
+    throw new ApiError(400, "Invalid lead_id");
+  }
+  try {
+    const lead = await Lead.aggregate([
+      { $match: { _id: mongoose.Types.ObjectId(lead_id) } },
+      {
+        $lookup: {
+          from: 'customers',
+          localField: 'customer_id',
+          foreignField: '_id',
+          as: 'customer'
+        }
+      },
+      { $unwind: '$customer' },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'generated_by',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $project: {
+          _id: 0,
+          companyName: '$customer.companyName',
+          contactName: '$customer.contactName',
+          representativeName: '$user.fullName'
+        }
+      }
+    ]);
+
+    if (!lead.length) {
+      throw new ApiError("Lead Not Found!");
+    }
+
+    res.status(200).json(lead[0]);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
+export const LeadDetails = asyncHandler(async (req, res) => {
+  const { lead_id } = req.params;
+  if (!isValidObjectId(lead_id)) {
+    throw new ApiError(400, "Invalid lead_id");
+  }
+  try {
+    const lead = await Lead.findById(lead_id)
+      .populate({
+        path: 'customer_id',
+        select: 'companyName contactName'
+      })
+      .populate({
+        path: 'generated_by',
+        select: 'fullName'
+      });
+
+    if (!lead) {
+      throw new ApiError("Lead Not Found!");
+    }
+
+    // Extract necessary fields from the populated data
+    const { companyName, contactName } = lead.customer_id;
+    const { fullName } = lead.generated_by;
+
+    // Now you can use companyName, contactName, and fullName as needed
+    res.status(200).json({ companyName, contactName, fullName });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });

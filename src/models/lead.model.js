@@ -29,7 +29,8 @@ const LeadSchema = new Schema(
        required: true,
     },
     Appointement:{
-      type:Date
+      type: Schema.Types.ObjectId,
+      ref: "Appointment",
     },
     orderforced :{
       type:Number
