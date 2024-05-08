@@ -44,7 +44,6 @@ const registerUser = asyncHandler( async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, " email  already exists")
     }
-
     const avatarLocalPath = req.file.path;
      console.log(req.file);
      const formData = new FormData();
@@ -58,6 +57,7 @@ const registerUser = asyncHandler( async (req, res) => {
  
      console.log(apiResponse.data);
      const avatarurl=apiResponse.data?.img_upload_path
+
    
     const user = await User.create({
         fullName,
