@@ -1,8 +1,12 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
+<<<<<<< HEAD
 
 
+=======
+import path from "path"
+>>>>>>> 7b2f281d45ae61965ef47a571414e9c5f6c7e3f6
 const app = express()
 
 app.use(cors({
@@ -14,6 +18,7 @@ app.use(express.json({limit: "16kb"}))
 app.use(express.urlencoded({extended: true, limit: "16kb"}))
 app.use(express.static("Public"))
 app.use(cookieParser())
+
 
 
 //routes import
