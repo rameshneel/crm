@@ -3,7 +3,7 @@
 import multer from "multer";
 import path from "path";
 
-const allowedFileTypes = ['.jpg', '.jpeg', '.png', '.webp'];
+const allowedFileTypes = ['.jpg', '.jpeg', '.png',];
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
             
 });
 
-const limits = { fileSize: 20000000 };
+const limits = { fileSize: 51250};
 
 
 const fileFilter = (req, file, cb) => {

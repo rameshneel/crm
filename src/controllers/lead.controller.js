@@ -19,7 +19,6 @@ export const addLead = asyncHandler(async (req, res) => {
       lead_type,
       existing_website,
       outcome,
-      Appointement,
       orderforced,
       notes,
       status,
@@ -39,7 +38,6 @@ export const addLead = asyncHandler(async (req, res) => {
       lead_type,
       existing_website,
       outcome,
-      Appointement,
       orderforced,
       notes,
       status,
@@ -49,14 +47,13 @@ export const addLead = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, lead, "Lead Add Successfully"));
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: " internal Error Server Error" });
+    throw new ApiError(500, error.message, "Error while creating Lead");
   }
 });
 
 export const getAllLeads = asyncHandler(async (req, res) => {
   try {
     const user_id = req.user?._id;
-    const {customer_id} = req.params;
     const user = await User.findById(user_id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -76,16 +73,18 @@ export const getAllLeads = asyncHandler(async (req, res) => {
   }
 });
 
-
-export const LeadDetailsss = asyncHandler(async (req, res) => {
+export const LeadDetails = asyncHandler(async (req, res) => {
   const { lead_id } = req.params;
   console.log(lead_id);
   if (!isValidObjectId(lead_id)) {
     throw new ApiError(400, "Invalid lead_id");
   }
   try {
+    const objectId = new mongoose.Types.ObjectId(lead_id)
+    // const le=await Lead.findById(objectId)
+    console.log(le);
     const lead = await Lead.aggregate([
-      { $match: { _id: mongoose.Types.ObjectId(lead_id) } },
+      { $match: { _id:objectId }},
       {
         $lookup: {
           from: 'customers',
@@ -114,46 +113,134 @@ export const LeadDetailsss = asyncHandler(async (req, res) => {
       }
     ]);
 
+    // console.log(lead);
+
     if (!lead.length) {
       throw new ApiError("Lead Not Found!");
     }
-
-    res.status(200).json(lead[0]);
+    return res
+    .status(200)
+    .json(
+      new ApiResponse(200, lead[0], "Lead fetched successfully")
+    );
+    // res.status(200).json(lead[0]);
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    throw new ApiError(500, "Error while fetching Lead");
   }
 });
 
-
-export const LeadDetails = asyncHandler(async (req, res) => {
+export const updateLead = asyncHandler(async (req, res) => {
   const { lead_id } = req.params;
+  const userId = req.user?._id;
+  console.log("xyz");
   if (!isValidObjectId(lead_id)) {
     throw new ApiError(400, "Invalid lead_id");
   }
+  
   try {
-    const lead = await Lead.findById(lead_id)
-      .populate({
-        path: 'customer_id',
-        select: 'companyName contactName'
-      })
-      .populate({
-        path: 'generated_by',
-        select: 'fullName'
-      });
+    const {
+      lead_type,
+      existing_website,
+      outcome,
+      orderforced,
+      notes,
+      status,
+    } = req.body;
 
-    if (!lead) {
-      throw new ApiError("Lead Not Found!");
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User does not exist");
     }
 
-    // Extract necessary fields from the populated data
-    const { companyName, contactName } = lead.customer_id;
-    const { fullName } = lead.generated_by;
+    const lead = await Lead.findById(lead_id);
+    if (!lead) {
+      throw new ApiError(404, "Lead not found");
+    }
 
-    // Now you can use companyName, contactName, and fullName as needed
-    res.status(200).json({ companyName, contactName, fullName });
+    if (user.role !== "admin" && lead.generated_by.toString() !== userId) {
+      throw new ApiError(401, "Unauthorized request");
+    }
+
+    lead.lead_type = lead_type;
+    lead.existing_website = existing_website;
+    lead.outcome = outcome;
+    lead.updated_by = user._id;
+    lead.orderforced = orderforced;
+    lead.notes = notes;
+    lead.status = status; 
+
+    await lead.save();
+
+    return res.status(200).json(new ApiResponse(200, lead, "Lead updated successfully"));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
+
+export const deleteLead = asyncHandler(async (req, res) => {
+  const { lead_id } = req.params;
+  const userId = req.user?._id;
+  
+  if (!isValidObjectId(lead_id)) {
+    throw new ApiError(400, "Invalid lead_id");
+  }
+  
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const lead = await Lead.findById(lead_id);
+    if (!lead) {
+      throw new ApiError(404, "Lead not found");
+    }
+
+    // Ensure that only the user who generated the lead or an admin can delete it
+    if (user.role !== "admin" && lead.generated_by.toString() !== userId) {
+      throw new ApiError(401, "Unauthorized request");
+    }
+
+    await lead.remove();
+
+    return res.status(200).json(new ApiResponse(200, null, "Lead deleted successfully"));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+
+
+// export const LeadDetails = asyncHandler(async (req, res) => {
+//   const { lead_id } = req.params;
+//   if (!isValidObjectId(lead_id)) {
+//     throw new ApiError(400, "Invalid lead_id");
+//   }
+//   try {
+//     const lead = await Lead.findById(lead_id)
+//       .populate({
+//         path: 'customer_id',
+//         select: 'companyName contactName'
+//       })
+//       .populate({
+//         path: 'generated_by',
+//         select: 'fullName'
+//       });
+
+//     if (!lead) {
+//       throw new ApiError("Lead Not Found!");
+//     }
+
+//     // Extract necessary fields from the populated data
+//     const { companyName, contactName } = lead.customer_id;
+//     const { fullName } = lead.generated_by;
+
+//     // Now you can use companyName, contactName, and fullName as needed
+//     res.status(200).json({ companyName, contactName, fullName });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ message: "Internal Server Error" });
+//   }
+// });

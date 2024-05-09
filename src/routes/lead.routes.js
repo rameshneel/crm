@@ -1,11 +1,21 @@
 import express from "express";
-import { LeadDetails, addLead,getAllLeads } from "../controllers/lead.controller.js";
+import { LeadDetails, addLead,getAllLeads, updateLead } from "../controllers/lead.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { addAppointment, deleteAppointment, getAppointmentsByDate, updateAppointment } from "../controllers/appointment.controllers.js";
 
 const router = express.Router();
 router.use(verifyJWT); 
 
-router.post("/addlead/:customer_id",addLead);
-router.get("/leadlist/:lead_id",LeadDetails);
+router.post("/:customer_id",addLead);
+router.get("/:lead_id",LeadDetails);
+router.patch("/update/:lead_id",updateLead);
+router.get("/",getAllLeads); 
+
+//for Appointement Routes
+
+router.post("/appointments/:lead_id", addAppointment);
+router.delete("/appointments/:appointment_id", deleteAppointment);
+router.patch("/appointments/update/:appointment_id", updateAppointment);
+router.get("/appointments", getAppointmentsByDate);
 
 export default router;

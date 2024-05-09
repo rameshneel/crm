@@ -44,24 +44,30 @@ const registerUser = asyncHandler( async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, " email  already exists")
     }
-    const avatarLocalPath = req.file.path;
-     console.log(req.file);
-     const formData = new FormData();
-     formData.append('file', fs.createReadStream(avatarLocalPath));
-     const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-     const apiResponse = await axios.post(apiURL, formData, {
-         headers: {
-             ...formData.getHeaders(),
-         }
-     });
- 
-     console.log(apiResponse.data);
-     const avatarurl=apiResponse.data?.img_upload_path
+    let avatarurl
+    try {
+        const avatarLocalPath = req.file.path;
+         const formData = new FormData();
+         formData.append('file', fs.createReadStream(avatarLocalPath));
+         const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+         const apiResponse = await axios.post(apiURL, formData, {
+             headers: {
+                 ...formData.getHeaders(),
+             }
+         });
+         console.log(apiResponse.data);
+          avatarurl=apiResponse.data?.img_upload_path
+          if (!avatarurl) {
+            throw new Error("img_upload_path not found in API response");
+        }
+    } catch (error) {
+        throw new ApiError(401, error?.message || "avatar invalid ");
+    }
 
    
     const user = await User.create({
         fullName,
-        avatar: avatarurl,
+        avatar: avatarurl || "",
         email, 
         role,
         password,
@@ -174,7 +180,6 @@ const changeCurrentPassword = asyncHandler(async(req, res) => {
 
 const getCurrentUser = asyncHandler(async(req, res) => {
     console.log(req.user);
-    console.log("ghghghh");
     return res
     .status(200)
     .json(new ApiResponse(
@@ -300,6 +305,29 @@ const resetPasswordForForget = asyncHandler(async (req, res) => {
     }
 });
 
+const deleteUser = asyncHandler(async (req, res) => {
+    const userId = req.user._id; 
+    const isAdmin = req.user.role === 'admin'; 
+
+    if (!isAdmin) {
+        throw new ApiError(403, "Only admin users can delete users");
+    }
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            null,
+            "User deleted successfully"
+        )
+    );
+});
+
 
 export {
     registerUser,
@@ -311,5 +339,6 @@ export {
     updateUserAvatar,
    forgetPassword,
    forgetPasswordToken,
-   resetPasswordForForget
+   resetPasswordForForget,
+   deleteUser
 }

@@ -15,6 +15,11 @@ const LeadSchema = new Schema(
        ref: "User",
         required: true 
       },
+      updated_by: 
+    { 
+      type: Schema.Types.ObjectId,
+       ref: "User",
+      },
     lead_type: {
       type:String,
       enum: ["Referal","Cold call","Contact Metting","Old Client","Promate Client","Renewal"],

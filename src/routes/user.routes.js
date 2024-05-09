@@ -9,7 +9,8 @@ import {
     updateAccountDetails,
     resetPasswordForForget,
     forgetPasswordToken,
-    forgetPassword
+    forgetPassword,
+    deleteUser
 } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -30,5 +31,6 @@ router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateU
 router.route("/forget").post( forgetPassword)
 router.route("/reset-password-token/:token").get(forgetPasswordToken);
 router.route('/reset-password/:token').post(resetPasswordForForget);
+router.route('/delete').delete(verifyJWT,deleteUser);
 
 export default router

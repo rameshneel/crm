@@ -1,40 +1,27 @@
 import mongoose from "mongoose";
 
 const appointmentSchema = new mongoose.Schema({
-    clientName: {
+    title: {
         type: String,
         required: true
     },
-    contactNumber: {
+    content: {
+        type: String,
+    },
+    time: {
         type: String,
         required: true
     },
-    appointmentType: {
-        type: String,
-        required: true
-    },
-    appointmentDate: {
+    date: {
         type: Date,
         required: true
     },
-    durationInMinutes: {
-        type: Number,
-        required: true
-    },
-    location: {
-        type: String
-    },
-    reminderEnabled: {
-        type: Boolean,
-        default: false
-    },
-    cancellationPolicy: {
-        type: String,
-        default: "24 hours prior notice required for cancellation"
+    lead: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Lead'
     }
 });
 
-// Create appointment model
 const Appointment = mongoose.model('Appointment', appointmentSchema);
 
-module.exports = Appointment;
+export default Appointment;

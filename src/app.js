@@ -1,10 +1,8 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
-
-
+import { ApiError } from "./utils/ApiError.js"
 const app = express()
-
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
     credentials: true
@@ -31,9 +29,18 @@ app.use("/api/leads", leadRoutes);
 //     console.log(err.stack);
 //     res.status(500).json({ error: "Something went wrong" });
 //   });
+
+app.use((err, req, res, next) => {
+  if (err instanceof ApiError) {
+      res.status(err.statusCode).json({ success: false, message: err.message });
+  } else {
+      console.error(err); 
+      res.status(500).json({ success: false, error: "Internal server error" });
+  }
+})
   
   app.use((req, res) => {
-    res.status(404).json({ error: "No route found lol!" });
+    res.status(404).json({ error: "No route found" });
   });
 
 export { app }
