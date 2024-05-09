@@ -195,12 +195,32 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
     if (!fullName) {
         throw new ApiError(400, "All fields are required")
     }
-
+    let avatarurl
+    try {
+        const avatarLocalPath = req.file.path;
+         const formData = new FormData();
+         formData.append('file', fs.createReadStream(avatarLocalPath));
+         const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+         const apiResponse = await axios.post(apiURL, formData, {
+             headers: {
+                 ...formData.getHeaders(),
+             }
+         });
+         console.log(apiResponse.data);
+          avatarurl=apiResponse.data?.img_upload_path
+          if (!avatarurl) {
+            throw new Error("img_upload_path not found in API response");
+        }
+    } catch (error) {
+        throw new ApiError(401, error?.message || "avatar invalid ");
+    }
+  
     const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
                 fullName,
+                avatar:avatarurl
                
             }
         },
