@@ -19,7 +19,7 @@ const createCustomer = asyncHandler(async (req, res) => {
     });
 
     if (existedCustomer) {
-      throw new ApiError(409, "email already exists");
+      throw new ApiError(422, "email already exists");
     }
 
     const activeuser = req.user?._id;
