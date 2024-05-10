@@ -79,10 +79,12 @@ export const LeadDetails = asyncHandler(async (req, res) => {
   if (!isValidObjectId(lead_id)) {
     throw new ApiError(400, "Invalid lead_id");
   }
+  const leads = await Lead.findById(lead_id)
+    console.log(leads);
   try {
     const objectId = new mongoose.Types.ObjectId(lead_id)
     // const le=await Lead.findById(objectId)
-    console.log(le);
+    console.log("le");
     const lead = await Lead.aggregate([
       { $match: { _id:objectId }},
       {
@@ -113,7 +115,7 @@ export const LeadDetails = asyncHandler(async (req, res) => {
       }
     ]);
 
-    // console.log(lead);
+    console.log("lead",lead);
 
     if (!lead.length) {
       throw new ApiError("Lead Not Found!");
@@ -219,6 +221,8 @@ export const deleteLead = asyncHandler(async (req, res) => {
 //     throw new ApiError(400, "Invalid lead_id");
 //   }
 //   try {
+//     const leads = await Lead.findById(lead_id)
+//     console.log(leads);
 //     const lead = await Lead.findById(lead_id)
 //       .populate({
 //         path: 'customer_id',
@@ -228,7 +232,7 @@ export const deleteLead = asyncHandler(async (req, res) => {
 //         path: 'generated_by',
 //         select: 'fullName'
 //       });
-
+//   console.log("lead",lead);
 //     if (!lead) {
 //       throw new ApiError("Lead Not Found!");
 //     }
