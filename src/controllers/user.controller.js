@@ -256,6 +256,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 const forgetPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
+  if (!email) {
+    throw new ApiError(400, "email is required");
+  }
   try {
     const user = await User.findOne({ email });
     if (!user) {
