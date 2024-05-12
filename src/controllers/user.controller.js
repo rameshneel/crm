@@ -259,7 +259,7 @@ const forgetPassword = asyncHandler(async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new ApiError(404,[], "User not found");
+      throw new ApiError(404,"User not found");
     }
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
       user._id
