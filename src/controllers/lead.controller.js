@@ -65,7 +65,13 @@ export const getAllLeads = asyncHandler(async (req, res) => {
       leads = await Lead.find({ generated_by: user_id });
     }
 
-    return res.status(200).json({ leads });
+   return res.status(200).json(
+      new ApiResponse(
+        200,
+        leads,
+        "lead Retrieved Successfully"
+      )
+    );
   } catch (error) {
    throw error
   }
