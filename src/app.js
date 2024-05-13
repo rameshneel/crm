@@ -1,5 +1,4 @@
-import express from "express"
-import cors from "cors"
+
 import cookieParser from "cookie-parser"
 import { ApiError } from "./utils/ApiError.js"
 const app = express()
@@ -9,11 +8,11 @@ const app = express()
 //      allowedHeaders: ['Content-Type', 'cookie','Accept'],
     
 // }))
-const corsOptions = {
-  origin: '*', // Allow only requests from this origin
-  methods: ['GET', 'POST'],      // Allow only these HTTP methods
-  allowedHeaders: ['Content-Type'], // Allow only these headers
-};
+// const corsOptions = {
+//   origin: '*', // Allow only requests from this origin
+//   methods: ['GET', 'POST'],      // Allow only these HTTP methods
+//   allowedHeaders: ['Content-Type'], // Allow only these headers
+// };
 
 app.use(cors(corsOptions));
 app.use(express.json({limit: "16kb"}))
