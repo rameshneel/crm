@@ -46,8 +46,7 @@ export const addLead = asyncHandler(async (req, res) => {
       .status(201)
       .json(new ApiResponse(200, lead, "Lead Add Successfully"));
   } catch (error) {
-    console.error(error);
-    throw new ApiError(500, error.message, "Error while creating Lead");
+    throw error;
   }
 });
 
@@ -68,8 +67,7 @@ export const getAllLeads = asyncHandler(async (req, res) => {
 
     return res.status(200).json({ leads });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Server Error" });
+   throw error
   }
 });
 
@@ -127,7 +125,7 @@ export const LeadDetails = asyncHandler(async (req, res) => {
     );
     // res.status(200).json(lead[0]);
   } catch (error) {
-    throw new ApiError(500, "Error while fetching Lead");
+   throw error;
   }
 });
 
@@ -175,8 +173,7 @@ export const updateLead = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(200, lead, "Lead updated successfully"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Internal Server Error" });
+   throw error;
   }
 });
 
@@ -208,8 +205,7 @@ export const deleteLead = asyncHandler(async (req, res) => {
 
     return res.status(200).json(new ApiResponse(200, null, "Lead deleted successfully"));
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Internal Server Error" });
+    throw error;
   }
 });
 

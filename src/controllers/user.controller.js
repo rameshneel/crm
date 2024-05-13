@@ -58,7 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new Error("img_upload_path not found in API response");
     }
   } catch (error) {
-    throw new ApiError(401, error?.message || "avatar invalid ");
+    throw error;
   }
 
   const user = await User.create({
@@ -280,10 +280,7 @@ const forgetPassword = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    console.error("Error requesting password reset:", error);
-    res
-      .status(error.statusCode || 500)
-      .json(new ApiResponse(error.statusCode || 500, error.message));
+   throw error;
   }
 });
 
@@ -299,8 +296,7 @@ const forgetPasswordToken = asyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, "Email Token Verified successfully"));
   } catch (error) {
-    console.error("Error verifying email token:", error);
-    res.status(400).json(new ApiResponse(400, error.message));
+   throw error;
   }
 });
 
@@ -328,10 +324,7 @@ const resetPasswordForForget = asyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, {}, "Password reset successfully"));
   } catch (error) {
-    console.error("Error resetting password:", error);
-    res
-      .status(error.statusCode || 401)
-      .json(new ApiResponse(error.statusCode || 401, error.message));
+    throw error;
   }
 });
 

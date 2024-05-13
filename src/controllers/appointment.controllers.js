@@ -39,7 +39,7 @@ const addAppointment = asyncHandler(async (req, res) => {
         new ApiResponse(200, appointment, "Appointment Added Successfully")
       );
   } catch (error) {
-    throw new ApiError(500, error.message, "Error while creating appointment");
+  throw error
   }
 });
 
@@ -61,7 +61,7 @@ const deleteAppointment = asyncHandler(async (req, res) => {
       .status(200)
       .json(new ApiResponse(200, {}, "Appointment Deleted Successfully"));
   } catch (error) {
-    throw new ApiError(500, error.message, "Error while deleting appointment");
+   throw error
   }
 });
 
@@ -115,7 +115,7 @@ const updateAppointment = asyncHandler(async (req, res) => {
       )
     );
   } catch (error) {
-    throw new ApiError(500, error.message, "Error while updating appointment");
+    throw error
   }
 });
 
@@ -146,11 +146,7 @@ const getAppointmentsByDate = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    throw new ApiError(
-      500,
-      error.message,
-      "Error while retrieving appointments by date"
-    );
+   throw error
   }
 });
 

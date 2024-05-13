@@ -47,8 +47,7 @@ const createCustomer = asyncHandler(async (req, res) => {
       )
     );
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: " internal error Server Error" });
+  throw error;
   }
 });
 
@@ -82,7 +81,7 @@ const customerList = asyncHandler(async (req, res) => {
       )
     );
   } catch (error) {
-    throw new ApiError(400, "Customer List Error");
+   throw error;
   }
 });
 
@@ -137,7 +136,7 @@ const updateCustomer = asyncHandler(async (req, res) => {
         new ApiResponse(200, updatedCustomer, "Customer Updated Successfully")
       );
   } catch (error) {
-    throw new ApiError(500, error.message, "Error while updating Customer");
+   throw error;
   }
 });
 
@@ -165,7 +164,7 @@ const deleteCustomer = asyncHandler(async (req, res) => {
       return res.status(401).json(new ApiResponse(401, {}, "Unauthorized"));
     }
   } catch (error) {
-    throw new ApiError(400, "Delete Customer Error");
+   throw error;
   }
 });
 
@@ -183,7 +182,7 @@ const getCustomerById = asyncHandler(async (req, res) => {
       new ApiResponse(200, { customer }, "Customer fetched successfully")
     );
   } catch (error) {
-    throw new ApiError(400, "Error fetching customer data");
+    throw error;
   }
 });
 

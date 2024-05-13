@@ -5,12 +5,12 @@ const sendWelcomeEmail = async (email, password) => {
 
     const transporter = nodemailer.createTransport({
      
-      host: "sandbox.smtp.mailtrap.io",
-      port: 587,
+      host: "smtp.gmail.com",
+      port: 465,
       secure: false, 
       auth: {
-        user: "2791fd57575442",
-        pass: "4f14b5bb9a8625",
+        user: "rameshtest151@gmail.com",
+        pass: "myhg bieh owvf qnfz",
       },
     });
 
