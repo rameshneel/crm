@@ -256,10 +256,13 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 const forgetPassword = asyncHandler(async (req, res) => {
   const { email } = req.body;
+  if (!email) {
+    throw new ApiError(400, "email is required");
+  }
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      throw new ApiError(404,[], "User not found");
+      throw new ApiError(404,"User not found");
     }
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
       user._id
@@ -280,7 +283,10 @@ const forgetPassword = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-   throw error;
+    console.error("Error requesting password reset:", error);
+    res
+      .status(error.statusCode || 500)
+      .json(new ApiResponse(error.statusCode || 500, error.message));
   }
 });
 
