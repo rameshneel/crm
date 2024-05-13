@@ -2,10 +2,17 @@
 import dotenv from "dotenv"
 import connectDB from "./db/index.js";
 import {app} from './app.js'
+import express from "express"
+import cors from "cors"
 dotenv.config({
     path: './.env'
 })
 
+const corsOptions = {
+  origin: '*', // Allow only requests from this origin
+  methods: ['GET', 'POST'],      // Allow only these HTTP methods
+  allowedHeaders: ['Content-Type'], // Allow only these headers
+};
 
 connectDB()
 .then(() => {
