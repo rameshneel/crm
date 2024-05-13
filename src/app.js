@@ -51,26 +51,11 @@ function errorHandler(err, req, res, next) {
 
 app.use(errorHandler); 
 
-function errorHandler(err, req, res, next) {
-    if (err instanceof ApiError) {
-        console.error(`API Error: ${err.message}`);
-        if (err.errors.length > 0) {
-            console.error('Validation Errors:', err.errors);
-        }
-        
-        return res.status(err.statusCode).json({
-            success: false,
-            message: err.message,
-            errors: err.errors
-        });
-    }
-    console.error('Internal Server Error:', err);
-    return res.status(500).json({
-        success: false,
-        message: "Internal Server Error"
-    });
-}
 
 app.use(errorHandler);        
+
+app.use((req, res) => {
+    res.status(404).json({ error: "No route found" });
+  });
 
 export { app }
