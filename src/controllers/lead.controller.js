@@ -5,6 +5,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import Lead from "../models/lead.model.js";
 import { isValidObjectId } from "mongoose";
 import mongoose from 'mongoose';
+import Customer from "../models/customer.model.js";
 
 
 export const addLead = asyncHandler(async (req, res) => {
@@ -14,6 +15,12 @@ export const addLead = asyncHandler(async (req, res) => {
   if (!isValidObjectId(customer_id)) {
     throw new ApiError(400, "Invalid customer_id");
   }
+
+  const customer = await User.findById(customer_id);
+  if (!customer) {
+    throw new ApiError(404, "Customers does not exist");
+  }
+  
   try {
     const {
       lead_type,
@@ -41,7 +48,9 @@ export const addLead = asyncHandler(async (req, res) => {
       orderforced,
       notes,
       status,
+      
     });
+     
     return res
       .status(201)
       .json(new ApiResponse(200, lead, "Lead Add Successfully"));
@@ -60,9 +69,13 @@ export const getAllLeads = asyncHandler(async (req, res) => {
 
     let leads;
     if (user.role === "admin") {
-      leads = await Lead.find();
+      leads = await Lead.find().populate({
+                path: 'customer_id',
+               });
     } else if (user.role === "salesman") {
-      leads = await Lead.find({ generated_by: user_id });
+      leads = await Lead.find({ generated_by: user_id }).populate({
+        path: 'customer_id',
+       });
     }
 
     return res.status(200).json(
