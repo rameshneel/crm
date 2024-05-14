@@ -9,8 +9,8 @@ const sendWelcomeEmail = async (email, password) => {
       port: 465,
       secure: false, 
       auth: {
-        user: "rameshtest151@gmail.com",
-        pass: "myhg bieh owvf qnfz",
+        user: "e47754d0c631df",
+        pass: "4a3aaf25610b11",
       },
     });
 

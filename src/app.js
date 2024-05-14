@@ -62,11 +62,8 @@ function errorHandler(err, req, res, next) {
 
 app.use(errorHandler); 
 
-
-app.use(errorHandler);        
-
 app.use((req, res) => {
-    res.status(404).json({ error: "No route found" });
-  });
+    res.status(404).json({ message: "No route found" });
+  }); 
 
 export { app }

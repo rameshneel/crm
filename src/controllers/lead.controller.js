@@ -81,11 +81,11 @@ export const getAllLeads = asyncHandler(async (req, res) => {
                });
     } else if (user.role === "salesman") {
       leads = await Lead.find({ generated_by: user_id }).populate({
-        path: 'customer_id',
-       });
+                path: 'customer_id',
+               });
     }
 
-    return res.status(200).json(
+   return res.status(200).json(
       new ApiResponse(
         200,
         leads,
