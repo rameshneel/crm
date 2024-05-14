@@ -5,8 +5,8 @@ const sendWelcomeEmail = async (email, password) => {
 
     const transporter = nodemailer.createTransport({
      
-      host: "smtp.gmail.com",
-      port: 465,
+      host: "smtp.ethereal.email",
+      port: 587,
       secure: false, 
       auth: {
         user: "rameshtest151@gmail.com",
