@@ -1,4 +1,4 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
+ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -114,7 +114,7 @@ const loginUser = asyncHandler(async (req, res) => {
      httpOnly: true,
       secure:true,
       // secure: false,
-      SameSite:"None",
+      SameSite:"Lax",
       maxAge: 900000
   };
 
