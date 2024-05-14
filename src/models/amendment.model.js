@@ -35,6 +35,17 @@ const amendmentschema = new Schema(
       type: String,
       enum: ["In Query", "Complete","In Process"],
     },
+    generated_by: 
+    { 
+      type: Schema.Types.ObjectId,
+       ref: "User",
+        required: true 
+      },
+      updated_by: 
+    { 
+      type: Schema.Types.ObjectId,
+       ref: "User",
+      },
   },
   { timestamps: true }
 );

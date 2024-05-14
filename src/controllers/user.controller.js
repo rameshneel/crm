@@ -77,7 +77,10 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
 
-  await sendWelcomeEmail(email, password);
+  const sentemail = await sendWelcomeEmail(email, password);
+  if(!sentemail){
+    throw new ApiError(500, "sending email error");
+  }
 
   return res
     .status(201)
@@ -111,10 +114,13 @@ const loginUser = asyncHandler(async (req, res) => {
   );
 
   const options = {
-     httpOnly: true,
-      secure:true,
-      maxAge: 900000
-  };
+    httpOnly: true,
+     secure:true,
+     // secure: false,
+     sameSite: "none",
+     // SameSite:"Lax",
+     maxAge: 900000
+ };
 
   return res
     .status(200)

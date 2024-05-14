@@ -16,7 +16,14 @@ export const addLead = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid customer_id");
   }
 
-  const customer = await User.findById(customer_id);
+  const customer = await Customer.findByIdAndUpdate(
+    customer_id,{
+    $set:{
+      hasLead:true
+    }
+  },
+  { new: true }
+);
   if (!customer) {
     throw new ApiError(404, "Customers does not exist");
   }
