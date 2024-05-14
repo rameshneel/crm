@@ -7,6 +7,15 @@ app.use(cors({
     origin: ['http://localhost:3000','https://localhost:3000','http://localhost:5173'],
     credentials: true,
     secure: false,
+     optionSuccessStatus: 200,
+    Headers: true,
+    exposedHeaders: 'Set-Cookie',
+    methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+   allowedHeaders: [
+    'Access-Control-Allow-Origin',
+    'Content-Type',
+    'Authorization'
+  ]
 }))
 
 app.use(express.json({limit: "16kb"}))
