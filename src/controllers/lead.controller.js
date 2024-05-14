@@ -78,12 +78,14 @@ export const getAllLeads = asyncHandler(async (req, res) => {
     if (user.role === "admin") {
       leads = await Lead.find().populate({
                 path: 'customer_id',
-                select: 'fullName avatar'
+               }).populate({
+                path: 'generated_by',
                });
     } else if (user.role === "salesman") {
       leads = await Lead.find({ generated_by: user_id }).populate({
                 path: 'customer_id',
-                select: 'fullName avatar'
+               }).populate({
+                path: 'generated_by',
                });
     }
 
