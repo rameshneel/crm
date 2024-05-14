@@ -77,7 +77,11 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
 
-  await sendWelcomeEmail(email, password);
+ const sentemail = await sendWelcomeEmail(email, password);
+  if(!sentemail){
+    throw new ApiError(500, "sending email error");
+  }
+
 
   return res
     .status(201)
