@@ -380,7 +380,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
   try {
     const user = await User.findById(userId)
     if (!user) {
-      throw new ApiError("User Not Found!");
+      throw new ApiError(404,"User Not Found!");
     }
 
     res.status(200).json(new ApiResponse(200,user, "User fetech Successfully"));
