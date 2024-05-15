@@ -364,7 +364,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
   if (req.user.role !== 'admin') {
     throw new ApiError(403, "Only admins can access this resource");
   }
-  const users = await User.find().select("-password -refreshToken -resetToken");
+  const users = await User.find()
   return res
     .status(200)
     .json(new ApiResponse(200, users, "All users retrieved successfully"));
