@@ -28,6 +28,10 @@ const userSchema = new Schema(
       minlength: [8, 'Password must be at least 8 characters long'],
       // Implement further checks for password strength if necessary
     },
+    mobileNo: {
+      type: String,
+      required: true,
+    },
     refreshToken: {
       type: String
     },
