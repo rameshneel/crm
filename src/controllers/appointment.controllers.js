@@ -11,6 +11,7 @@ const addAppointment = asyncHandler(async (req, res) => {
   }
   try {
     const { title, content, time, date } = req.body;
+    console.log(req.body);
 
     const existingAppointment = await Appointment.findOne({ date,time });
 
