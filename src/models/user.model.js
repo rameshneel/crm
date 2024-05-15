@@ -32,6 +32,9 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    address: {
+      type: String,
+    },
     refreshToken: {
       type: String
     },

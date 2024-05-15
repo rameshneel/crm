@@ -29,7 +29,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  const { fullName, email, password, role,mobileNo } = req.body;
+  const { fullName, email, password, role,mobileNo, address} = req.body;
 
   if ([fullName, email, password, role,mobileNo].some((field) => field?.trim() === "")) {
     throw new ApiError(400, "All fields are required");
@@ -68,7 +68,8 @@ const registerUser = asyncHandler(async (req, res) => {
     email,
     role,
     password,
-    mobileNo
+    mobileNo,
+    address
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -79,10 +80,10 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Something went wrong while registering the user");
   }
 
- const sentemail = await sendWelcomeEmail(email, password);
-  if(!sentemail){
-    throw new ApiError(500, "sending email error");
-  }
+//  const sentemail = await sendWelcomeEmail(email, password);
+//   if(!sentemail){
+//     throw new ApiError(500, "sending email error");
+//   }
 
 
   return res
