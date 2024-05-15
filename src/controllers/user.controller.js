@@ -8,6 +8,7 @@ import { sendPasswordResetEmail } from "../utils/sendPasswordResetEmail.js";
 import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
+import { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -370,6 +371,24 @@ const getAllUsers = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, users, "All users retrieved successfully"));
 });
 
+ const userDetails = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  console.log(userId);
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Invalid User_id");
+  }
+  try {
+    const user = await User.findById(userId)
+    if (!user) {
+      throw new ApiError("User Not Found!");
+    }
+
+    res.status(200).json(new ApiResponse(200,user, "User fetech Successfully"));
+  } catch (error) {
+  throw error
+  }
+});
+
 
 export {
   registerUser,
@@ -383,5 +402,6 @@ export {
   forgetPasswordToken,
   resetPasswordForForget,
   deleteUser,
-  getAllUsers
+  getAllUsers,
+  userDetails
 };

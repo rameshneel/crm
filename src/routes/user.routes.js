@@ -11,7 +11,8 @@ import {
     forgetPasswordToken,
     forgetPassword,
     deleteUser,
-    getAllUsers
+    getAllUsers,
+    userDetails
 } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -26,7 +27,7 @@ router.route("/login").post(loginUser)
 //secured routes
 router.route("/logout").post(verifyJWT,  logoutUser)
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)
-router.route("/current-user").get(verifyJWT, getCurrentUser)
+router.route("/:userId").get(verifyJWT, userDetails)
 router.route("/update-account").patch(verifyJWT,upload.single("avatar"), updateAccountDetails)
 router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
 router.route("/forget").post( forgetPassword)
