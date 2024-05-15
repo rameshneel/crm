@@ -360,6 +360,17 @@ const deleteUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "User deleted successfully"));
 });
 
+const getAllUsers = asyncHandler(async (req, res) => {
+  if (req.user.role !== 'admin') {
+    throw new ApiError(403, "Only admins can access this resource");
+  }
+  const users = await User.find().select("-password -refreshToken -resettoken resetToken");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, users, "All users retrieved successfully"));
+});
+
+
 export {
   registerUser,
   loginUser,
@@ -372,4 +383,5 @@ export {
   forgetPasswordToken,
   resetPasswordForForget,
   deleteUser,
+  getAllUsers
 };
