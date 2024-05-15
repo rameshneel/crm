@@ -9,13 +9,12 @@ import Customer from "../models/customer.model.js";
 
 
 export const addLead = asyncHandler(async (req, res) => {
-  const { customer_id} = req.params;
+  
   const userId = req.user?._id;
-   console.log("customer:",customer_id,"userid:",userId);
+  const { customer_id} = req.params;
   if (!isValidObjectId(customer_id)) {
     throw new ApiError(400, "Invalid customer_id");
   }
-
   const customer = await Customer.findByIdAndUpdate(
     customer_id,{
     $set:{
@@ -140,6 +139,7 @@ export const LeadDetails = asyncHandler(async (req, res) => {
           _id: 0,
           companyName: '$customer.companyName',
           contactName: '$customer.contactName',
+          Address: '$customer.address',
           representativeName: '$user.fullName'
         }
       }
