@@ -13,7 +13,7 @@ const addAppointment = asyncHandler(async (req, res) => {
     const { title, content, time, date } = req.body;
     console.log(req.body);
 
-    const existingAppointment = await Appointment.findOne({ date,time });
+    const existingAppointment = await Appointment.findOne({ date});
 
     if (existingAppointment) {
       return res
