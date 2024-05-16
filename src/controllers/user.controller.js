@@ -170,61 +170,61 @@ const registerUser = asyncHandler(async (req, res, next) => {
   }
 });
 
-
-
-const loginUser = asyncHandler(async (req, res) => {
+const loginUser = asyncHandler(async (req, res,next) => {
   const { email, password } = req.body;
 
   if (!(email &&password)) {
     throw new ApiError(400, "All input is required");
   }
 
-  const user = await User.findOne({
-    $or: [{ email }],
-  });
-
-  if (!user) {
-    throw new ApiError(404, "User does not exist");
-  }
-  const isPasswordValid = await user.isPasswordCorrect(password);
-  if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid user Password credentials");
-  }
-  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
-    user._id
-  );
-
-  const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
-
-  const options = {
-     httpOnly: true,
-      secure:true,
-      // secure: false,
-      sameSite: "none",
-      // SameSite:"Lax",
-      // maxAge: 900000
-  };
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200,
-        {
-          user: loggedInUser,
-          accessToken,
-          refreshToken,
-        },
-        "User logged In Successfully"
-      )
+  try {
+    const user = await User.findOne({
+      $or: [{ email }],
+    });
+  
+    if (!user) {
+      throw new ApiError(404, "User does not exist");
+    }
+    const isPasswordValid = await user.isPasswordCorrect(password);
+    if (!isPasswordValid) {
+      throw new ApiError(401, "Invalid user Password credentials");
+    }
+    const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+      user._id
     );
+  
+    const loggedInUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+  
+    const options = {
+       httpOnly: true,
+        secure:true,
+        // secure: false,
+        sameSite: "none",
+        // SameSite:"Lax",
+        // maxAge: 900000
+    };
+  
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            user: loggedInUser,
+            accessToken,
+            refreshToken,
+          },
+          "User logged In Successfully"
+        )
+      );
+  } catch (error) {
+    return next(error);
+  }
 });
-
-
 
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
@@ -251,22 +251,26 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User logged Out"));
 });
 
-const changeCurrentPassword = asyncHandler(async (req, res) => {
+const changeCurrentPassword = asyncHandler(async (req, res,next) => {
   const { oldPassword, newPassword } = req.body;
 
-  const user = await User.findById(req.user?._id);
-  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
-
-  if (!isPasswordCorrect) {
-    throw new ApiError(400, "Invalid old password");
-  }
-
-  user.password = newPassword;
-  await user.save({ validateBeforeSave: false });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, {}, "Password changed successfully"));
+ try {
+   const user = await User.findById(req.user?._id);
+   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+ 
+   if (!isPasswordCorrect) {
+     throw new ApiError(400, "Invalid old password");
+   }
+ 
+   user.password = newPassword;
+   await user.save({ validateBeforeSave: false });
+ 
+   return res
+     .status(200)
+     .json(new ApiResponse(200, {}, "Password changed successfully"));
+ } catch (error) {
+  return next(error);
+ }
 });
 
 const getCurrentUser = asyncHandler(async (req, res) => {
@@ -276,46 +280,69 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, req.user, "User fetched successfully"));
 });
 
-const updateAccountDetails = asyncHandler(async (req, res) => {
-  const { fullName } = req.body;
-
-  if (!fullName) {
-    throw new ApiError(400, "All fields are required");
-  }
-  let avatarurl;
+const updateAccountDetails = asyncHandler(async (req, res, next) => {
   try {
-    const avatarLocalPath = req.file.path;
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(avatarLocalPath));
-    const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-    const apiResponse = await axios.post(apiURL, formData, {
-      headers: {
-        ...formData.getHeaders(),
-      },
-    });
-    console.log(apiResponse.data);
-    avatarurl = apiResponse.data?.img_upload_path;
-    if (!avatarurl) {
-      throw new Error("img_upload_path not found in API response");
+    const { fullName, mobileNo, address } = req.body;
+
+    // // Check if all fields are empty
+    // if (![fullName, mobileNo, address].some(field => field !== undefined && field.trim() !== '')) {
+    //   throw new ApiError(400, "At least one field is required for update");
+    // }
+
+    if (![fullName, mobileNo, address, req.file].some(field => {
+      if (field === undefined) return false;
+      if (typeof field === 'string') return field.trim() !== '';
+      if (typeof field === 'object') return field !== null;
+    })) {
+      throw new ApiError(400, "At least one field is required for update");
     }
-  } catch (error) {
-    throw new ApiError(401, error?.message || "avatar invalid ");
-  }
 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    {
-      $set: {
-        fullName,
-        avatar: avatarurl,
+    let avatarurl = "";
+    if (req.file && req.file.path) {
+      const avatarLocalPath = req.file.path;
+      try {
+        const formData = new FormData();
+        formData.append("file", fs.createReadStream(avatarLocalPath));
+        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+        const apiResponse = await axios.post(apiURL, formData, {
+          headers: {
+            ...formData.getHeaders(),
+          },
+        });
+        console.log(apiResponse.data);
+        avatarurl = apiResponse.data?.img_upload_path;
+        if (!avatarurl) {
+          throw new Error("img_upload_path not found in API response");
+        }
+      } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid avatar");
+      }
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set: {
+          fullName,
+          avatar: avatarurl,
+          mobileNo,
+          address
+        },
       },
-    },
-    { new: true }
-  ).select("-password");
+      { new: true }
+    ).select("-password");
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Account details updated successfully"));
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Account details updated successfully"));
+  } catch (error) {
+    // Pass the error to the next middleware (errorHandler)
+    return next(error);
+  }
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
@@ -347,16 +374,54 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Avatar image updated successfully"));
 });
 
-const forgetPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    throw new ApiError(400, "email is required");
-  }
+// const forgetPassword = asyncHandler(async (req, res) => {
+//   const { email } = req.body;
+//   if (!email) {
+//     throw new ApiError(400, "email is required");
+//   }
+//   try {
+//     const user = await User.findOne({ email });
+//     if (!user) {
+//       throw new ApiError(404,"User not found");
+//     }
+//     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
+//       user._id
+//     );
+//     user.refreshToken = refreshToken;
+//     const resetToken = accessToken;
+//     user.resetToken = resetToken;
+//     user.resetTokenExpiry = Date.now() + 2 * 60 * 60 * 1000;
+//     await user.save();
+//     await sendPasswordResetEmail(user.email, resetToken);
+//     res
+//       .status(200)
+//       .json(
+//         new ApiResponse(
+//           200,
+//           user.email,
+//           "Password reset email sent successfully"
+//         )
+//       );
+//   } catch (error) {
+//     console.error("Error requesting password reset:", error);
+//     res
+//       .status(error.statusCode || 500)
+//       .json(new ApiResponse(error.statusCode || 500, error.message));
+//   }
+// });
+
+const forgetPassword = asyncHandler(async (req, res, next) => {
   try {
+    const { email } = req.body;
+    if (!email) {
+      throw new ApiError(400, "Email is required");
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
-      throw new ApiError(404,"User not found");
+      throw new ApiError(404, "User not found");
     }
+
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(
       user._id
     );
@@ -366,24 +431,37 @@ const forgetPassword = asyncHandler(async (req, res) => {
     user.resetTokenExpiry = Date.now() + 2 * 60 * 60 * 1000;
     await user.save();
     await sendPasswordResetEmail(user.email, resetToken);
-    res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          user.email,
-          "Password reset email sent successfully"
-        )
-      );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        user.email,
+        "Password reset email sent successfully"
+      )
+    );
   } catch (error) {
-    console.error("Error requesting password reset:", error);
-    res
-      .status(error.statusCode || 500)
-      .json(new ApiResponse(error.statusCode || 500, error.message));
+    return next(error);
   }
 });
 
-const forgetPasswordToken = asyncHandler(async (req, res) => {
+
+// const forgetPasswordToken = asyncHandler(async (req, res) => {
+//   const { token } = req.params;
+//   try {
+//     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+//     const user = await User.findById(decoded._id);
+//     if (!user || Date.now() > user.resetTokenExpiry) {
+//       throw new ApiError(404, "Invalid or expired token");
+//     }
+//     res
+//       .status(200)
+//       .json(new ApiResponse(200, "Email Token Verified successfully"));
+//   } catch (error) {
+//    throw error;
+//   }
+// });
+
+const forgetPasswordToken = asyncHandler(async (req, res, next) => {
   const { token } = req.params;
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -391,13 +469,40 @@ const forgetPasswordToken = asyncHandler(async (req, res) => {
     if (!user || Date.now() > user.resetTokenExpiry) {
       throw new ApiError(404, "Invalid or expired token");
     }
-    res
-      .status(200)
-      .json(new ApiResponse(200, "Email Token Verified successfully"));
+    return res.status(200).json(new ApiResponse(200, "Email Token Verified successfully"));
   } catch (error) {
-   throw error;
+    return next(error);
   }
 });
+
+
+// const resetPasswordForForget = asyncHandler(async (req, res) => {
+//   const { password, confirmPassword } = req.body;
+//   const { token } = req.params;
+//   if (
+//     [password, confirmPassword].some((field) => !field || field.trim() === "")
+//   ) {
+//     throw new ApiError(400, "All fields are required");
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+//     const user = await User.findById(decoded._id);
+//     if (!user || Date.now() > user.resetTokenExpiry) {
+//       throw new ApiError(404, "Invalid or expired token");
+//     }
+//     user.password = password;
+//     user.refreshToken = null;
+//     user.resetToken = null;
+//     user.resetTokenExpiry = null;
+//     await user.save();
+//     res
+//       .status(200)
+//       .json(new ApiResponse(200, {}, "Password reset successfully"));
+//   } catch (error) {
+//     throw error;
+//   }
+// });
 
 const resetPasswordForForget = asyncHandler(async (req, res) => {
   const { password, confirmPassword } = req.body;
@@ -427,50 +532,103 @@ const resetPasswordForForget = asyncHandler(async (req, res) => {
   }
 });
 
-const deleteUser = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
-  const isAdmin = req.user.role === "admin";
 
-  if (!isAdmin) {
-    throw new ApiError(403, "Only admin users can delete users");
-  }
-
-  const deletedUser = await User.findByIdAndDelete(userId);
-
-  if (!deletedUser) {
-    throw new ApiError(404, "User not found");
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, null, "User deleted successfully"));
-});
-
-const getAllUsers = asyncHandler(async (req, res) => {
-  if (req.user.role !== 'admin') {
-    throw new ApiError(403, "Only admins can access this resource");
-  }
-  const users = await User.find()
-  return res
-    .status(200)
-    .json(new ApiResponse(200, users, "All users retrieved successfully"));
-});
-
- const userDetails = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
-  console.log(userId);
-  if (!isValidObjectId(userId)) {
-    throw new ApiError(400, "Invalid User_id");
-  }
+const deleteUser = asyncHandler(async (req, res, next) => {
   try {
-    const user = await User.findById(userId)
-    if (!user) {
-      throw new ApiError(404,"User Not Found!");
+    const userId = req.user._id;
+    const isAdmin = req.user.role === "admin";
+
+    // Check if user is admin
+    if (!isAdmin) {
+      throw new ApiError(403, "Only admin users can delete users");
     }
 
-    res.status(200).json(new ApiResponse(200,user, "User fetech Successfully"));
+    // Delete user
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    // Check if user was deleted
+    if (!deletedUser) {
+      throw new ApiError(404, "User not found");
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "User deleted successfully"));
   } catch (error) {
-  throw error
+    // Pass the error to the next middleware (errorHandler)
+    return next(error);
+  }
+});
+
+
+// const getAllUsers = asyncHandler(async (req, res) => {
+//   if (req.user.role !== 'admin') {
+//     throw new ApiError(403, "Only admins can access this resource");
+//   }
+//   const users = await User.find()
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, users, "All users retrieved successfully"));
+// });
+
+const getAllUsers = asyncHandler(async (req, res, next) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      throw new ApiError(403, "Only admins can access this resource");
+    }
+
+    // Fetch all users
+    const users = await User.find();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, users, "All users retrieved successfully"));
+  } catch (error) {
+    // Pass the error to the next middleware (errorHandler)
+    return next(error);
+  }
+});
+
+
+//  const userDetails = asyncHandler(async (req, res) => {
+//   const { userId } = req.params;
+//   console.log(userId);
+//   if (!isValidObjectId(userId)) {
+//     throw new ApiError(400, "Invalid User_id");
+//   }
+//   try {
+//     const user = await User.findById(userId)
+//     if (!user) {
+//       throw new ApiError(404,"User Not Found!");
+//     }
+
+//     res.status(200).json(new ApiResponse(200,user, "User fetech Successfully"));
+//   } catch (error) {
+//   throw error
+//   }
+// });
+
+
+const userDetails = asyncHandler(async (req, res, next) => {
+  const { userId } = req.params;
+  console.log(userId);
+  // Check if userId is a valid ObjectId
+  if (!isValidObjectId(userId)) {
+    throw new ApiError(400, "Invalid User ID");
+  }
+  try {
+    // Find user by userId
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User Not Found");
+    }
+
+    // Return user details
+    return res.status(200).json(new ApiResponse(200, user, "User fetched successfully"));
+  } catch (error) {
+    // Pass the error to the next middleware (errorHandler)
+    return next(error);
   }
 });
 
@@ -490,3 +648,4 @@ export {
   getAllUsers,
   userDetails
 };
+ 
