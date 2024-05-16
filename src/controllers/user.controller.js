@@ -28,68 +28,149 @@ const generateAccessAndRefereshTokens = async (userId) => {
   }
 };
 
-const registerUser = asyncHandler(async (req, res) => {
-  const { fullName, email, password, role,mobileNo, address} = req.body;
+// const registerUser = asyncHandler(async (req, res) => {
+//   const { fullName, email, password, role,mobileNo, address} = req.body;
 
-  if ([fullName, email, password, role,mobileNo].some((field) => field?.trim() === "")) {
-    throw new ApiError(400, "All fields are required");
-  }
+//   try {
+//     if ([fullName, email, password, role,mobileNo].some((field) => field?.trim() === "")) {
+//       throw new ApiError(400, "All fields are required");
+//     }
+  
+//     const existedUser = await User.findOne({
+//       $or: [{ email }],
+//     });
+  
+//     if (existedUser) {
+//       throw new ApiError(409, " email  already exists");
+//     }
+//     let avatarurl;
+//     const avatarLocalPath = req.file.path;
+//     try {
+     
+//       const formData = new FormData();
+//       formData.append("file", fs.createReadStream(avatarLocalPath));
+//       const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+//       const apiResponse = await axios.post(apiURL, formData, {
+//         headers: {
+//           ...formData.getHeaders(),
+//         },
+//       });
+//       console.log(apiResponse.data);
+//       avatarurl = apiResponse.data?.img_upload_path;
+//       if (!avatarurl) {
+//         throw new Error("img_upload_path not found in API response");
+//       }
+//     } catch (error) {
+//       throw error;
+//     }
+  
+//     const user = await User.create({
+//       fullName,
+//       avatar: avatarurl || "",
+//       email,
+//       role,
+//       password,
+//       mobileNo,
+//       address
+//     });
+  
+//     const createdUser = await User.findById(user._id).select(
+//       "-password -refreshToken -resettoken "
+//     );
+  
+//     if (!createdUser) {
+//       throw new ApiError(500, "Something went wrong while registering the user");
+//     }
+  
+//   //  const sentemail = await sendWelcomeEmail(email, password);
+//   //   if(!sentemail){
+//   //     throw new ApiError(500, "sending email error");
+//   //   }
+  
+  
+//     return res
+//       .status(201)
+//       .json(new ApiResponse(200, createdUser, "User registered Successfully"));
+  
+//   } catch (error) {
+    
+//      throw error
+//   }});
 
-  const existedUser = await User.findOne({
-    $or: [{ email }],
-  });
+const registerUser = asyncHandler(async (req, res, next) => {
+  const { fullName, email, password, role, mobileNo, address } = req.body;
 
-  if (existedUser) {
-    throw new ApiError(409, " email  already exists");
-  }
-  let avatarurl;
   try {
-    const avatarLocalPath = req.file.path;
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(avatarLocalPath));
-    const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-    const apiResponse = await axios.post(apiURL, formData, {
-      headers: {
-        ...formData.getHeaders(),
-      },
-    });
-    console.log(apiResponse.data);
-    avatarurl = apiResponse.data?.img_upload_path;
-    if (!avatarurl) {
-      throw new Error("img_upload_path not found in API response");
+    if ([fullName, email, password, role, mobileNo].some((field) => field?.trim() === "")) {
+      throw new ApiError(400, "All fields are required");
     }
+
+    const existedUser = await User.findOne({
+      $or: [{ email }],
+    });
+
+    if (existedUser) {
+      throw new ApiError(409, "Email already exists");
+    }
+
+    let avatarurl = "";
+
+    if (req.file && req.file.path) {
+      const avatarLocalPath = req.file.path;
+      try {
+        const formData = new FormData();
+        formData.append("file", fs.createReadStream(avatarLocalPath));
+        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+        const apiResponse = await axios.post(apiURL, formData, {
+          headers: {
+            ...formData.getHeaders(),
+          },
+        });
+        console.log(apiResponse.data);
+        avatarurl = apiResponse.data?.img_upload_path;
+        if (!avatarurl) {
+          throw new Error("img_upload_path not found in API response");
+        }
+      } catch (error) {
+        console.error("Error uploading avatar:", error.message);
+        // You might want to handle this error differently based on your requirements
+      }
+    }
+
+    const user = await User.create({
+      fullName,
+      avatar: avatarurl || "",
+      email,
+      role,
+      password,
+      mobileNo,
+      address,
+    });
+
+    const createdUser = await User.findById(user._id).select(
+      "-password -refreshToken -resettoken "
+    );
+
+    if (!createdUser) {
+      throw new ApiError(500, "Something went wrong while registering the user");
+    }
+
+    // const sentemail = await sendWelcomeEmail(email, password);
+    // if(!sentemail){
+    //   throw new ApiError(500, "sending email error");
+    // }
+
+    return res
+      .status(201)
+      .json(new ApiResponse(200, createdUser, "User registered Successfully"));
+
   } catch (error) {
-    throw error;
+    // Pass the error to the next middleware (errorHandler)
+    return next(error);
   }
-
-  const user = await User.create({
-    fullName,
-    avatar: avatarurl || "",
-    email,
-    role,
-    password,
-    mobileNo,
-    address
-  });
-
-  const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken -resettoken "
-  );
-
-  if (!createdUser) {
-    throw new ApiError(500, "Something went wrong while registering the user");
-  }
-
-//  const sentemail = await sendWelcomeEmail(email, password);
-//   if(!sentemail){
-//     throw new ApiError(500, "sending email error");
-//   }
-
-
-  return res
-    .status(201)
-    .json(new ApiResponse(200, createdUser, "User registered Successfully"));
 });
+
+
 
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -142,6 +223,8 @@ const loginUser = asyncHandler(async (req, res) => {
       )
     );
 });
+
+
 
 const logoutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
