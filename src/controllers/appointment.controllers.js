@@ -56,13 +56,13 @@ const addAppointment = asyncHandler(async (req, res) => {
 //     const { title, content, time, date } = req.body;
 
 
-//     // const datetimes = new Date(date);
-//     // console.log("date:",datetimes);
-//     // console.log("time",time);
+//     const datetimes = new Date(date).toLocaleDateString();
+//     console.log("date:",datetimes);
+//     console.log("time",time);
 
-//     // const timeParts = time.split(':');
-//     // console.log(timeParts);
-//     const d=`${date}T${time}`
+//     const timeParts = time.split(':');
+//     console.log(timeParts);
+//     const d=`${date}T${time}.000+00:00`
 //     console.log(d);
 
 //     // const d = datetime.toISOString().substring(0,11)+timeParts[0]+":"+timeParts[1]+datetime.toISOString().substring(16);
@@ -71,26 +71,26 @@ const addAppointment = asyncHandler(async (req, res) => {
 //     // datetime.setUTCHours(parseInt(timeParts[0], 10), parseInt(timeParts[1], 10), parseInt(timeParts[2], 10), 0);
 //     // console.log("date time changed" ,datetime);
 
-//     // const existingAppointment = await Appointment.findOne({ date,time });
+//     const existingAppointment = await Appointment.findOne({ date:d});
 
-//     // if (existingAppointment) {
-//     //   return res
-//     //     .status(400)
-//     //     .json(
-//     //       new ApiResponse(
-//     //         400,
-//     //         null,
-//     //         "An appointment already exists for this date"
-//     //       )
-//     //     );
-//     // }
-//     // const appointment = await Appointment.create({
-//     //   title,
-//     //   content,
-//     //   time,
-//     //   date,
-//     //   lead: lead_id,
-//     // });
+//     if (existingAppointment) {
+//       return res
+//         .status(400)
+//         .json(
+//           new ApiResponse(
+//             400,
+//             null,
+//             "An appointment already exists for this date"
+//           )
+//         );
+//     }
+//     const appointment = await Appointment.create({
+//       title,
+//       content,
+//       time,
+//       date:d,
+//       lead: lead_id,
+//     });
 
 //     return res
 //       .status(201)
@@ -193,13 +193,7 @@ const getAppointmentsByDate = asyncHandler(async (req, res) => {
     });
     console.log(appointments);
     if (appointments.length === 0) {
-      return res.status(200).json(
-        new ApiResponse(
-          200,
-          null,
-          "Appointment not found"
-        )
-      );
+      throw new ApiError(200,"An appointment already exists for this date")
 
     }
     return res
