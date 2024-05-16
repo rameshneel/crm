@@ -193,7 +193,7 @@ const getAppointmentsByDate = asyncHandler(async (req, res) => {
     });
     console.log(appointments);
     if (appointments.length === 0) {
-      throw new ApiError(200,"An appointment already exists for this date")
+      throw new ApiError(200,"Appointment not found")
 
     }
     return res
