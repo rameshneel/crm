@@ -56,21 +56,22 @@ const customerList = asyncHandler(async (req, res) => {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
 
-    let page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
-    let skip = (page - 1) * limit;
+    // let page = parseInt(req.query.page) || 1;
+    // let limit = parseInt(req.query.limit) || 10;
+    // let skip = (page - 1) * limit;
 
     let customers;
-    let totalCount;
+    // let totalCount;
 
     if (user.role === "admin") {
-      customers = await Customer.find().skip(skip).limit(limit);
-      totalCount = await Customer.countDocuments();
+      customers = await Customer.find()
+      // .skip(skip).limit(limit);
+      // totalCount = await Customer.countDocuments();
     } else if (user.role === "salesman") {
       customers = await Customer.find({ createdBy: activeUser })
-        .skip(skip)
-        .limit(limit);
-      totalCount = await Customer.countDocuments({ createdBy: activeUser });
+        // .skip(skip)
+        // .limit(limit);
+      // totalCount = await Customer.countDocuments({ createdBy: activeUser });
     }
 
     return res.json(
