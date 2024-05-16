@@ -278,7 +278,7 @@ const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
     console.log(appointments);
 
     if (appointments.length === 0) {
-      throw new ApiError(404, "Appointment not found");
+      throw new ApiError(202, "Appointment not found");
     }
     return res
       .status(200)
