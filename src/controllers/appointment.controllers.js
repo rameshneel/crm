@@ -45,7 +45,7 @@ import Appointment from "../models/appointement.model.js";
 //   }
 // });
 
-const addAppointment = asyncHandler(async (req, res) => {
+const addAppointment = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
   if (!isValidObjectId(lead_id)) {
     throw new ApiError(400, "Invalid lead_id");
@@ -95,7 +95,7 @@ const addAppointment = asyncHandler(async (req, res) => {
   }
 });
 
-const deleteAppointment = asyncHandler(async (req, res) => {
+const deleteAppointment = asyncHandler(async (req, res, next) => {
   const { appointment_id } = req.params;
   if (!isValidObjectId(appointment_id)) {
     throw new ApiError(400, "Invalid appointment_id");
@@ -172,7 +172,7 @@ const deleteAppointment = asyncHandler(async (req, res) => {
 // });
 
 
-const updateAppointment = asyncHandler(async (req, res) => {
+const updateAppointment = asyncHandler(async (req, res, next) => {
   const { appointment_id } = req.params;
   console.log(appointment_id);
   if (!isValidObjectId(appointment_id)) {
@@ -260,7 +260,7 @@ const updateAppointment = asyncHandler(async (req, res) => {
 //   }
 // });
 
-const getAppointmentsByDate = asyncHandler(async (req, res) => {
+const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
   const {date} = req.query;
 
   if (!date) {
