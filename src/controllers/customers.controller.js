@@ -77,7 +77,7 @@ const customerList = asyncHandler(async (req, res) => {
     return res.json(
       new ApiResponse(
         200,
-        { customers, totalCount },
+        { customers},
         "Customers fetched successfully"
       )
     );
