@@ -37,9 +37,9 @@ const createCustomer = asyncHandler(async (req, res) => {
     const customer = await newCustomer.save();
     const createCustomer = await Customer.findById(customer._id);
 
-    return res.status(200).json(
+    return res.status(201).json(
       new ApiResponse(
-        200,
+        201,
         {
           createCustomer,
         },
