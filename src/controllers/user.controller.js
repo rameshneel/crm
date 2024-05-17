@@ -112,7 +112,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
 const loginUser = asyncHandler(async (req, res,next) => {
   const { email, password } = req.body;
 
-  if (!(email &&password)) {
+  if (!(email && password)) {
     throw new ApiError(400, "All input is required");
   }
 
