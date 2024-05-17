@@ -4,7 +4,6 @@ import {
     logoutUser, 
     registerUser, 
     changeCurrentPassword, 
-    getCurrentUser, 
     updateUserAvatar, 
     updateAccountDetails,
     resetPasswordForForget,
@@ -12,7 +11,8 @@ import {
     forgetPassword,
     deleteUser,
     getAllUsers,
-    userDetails
+    userDetails,
+    deleteUsers
 } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -34,6 +34,7 @@ router.route("/forget").post( forgetPassword)
 router.route("/reset-password-token/:token").get(forgetPasswordToken);
 router.route('/reset-password/:token').post(resetPasswordForForget);
 router.route('/delete').delete(verifyJWT,deleteUser);
+router.route('/delete/:userId').delete(verifyJWT,deleteUsers);
 router.route('/').get(verifyJWT,getAllUsers);
 
 export default router
