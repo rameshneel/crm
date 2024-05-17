@@ -5,24 +5,21 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId } from "mongoose";
 
-const createCustomer = asyncHandler(async (req, res) => {
+const createCustomer = asyncHandler(async (req, res, next) => {
   try {
-    const { companyName, contactName, mobileNo, phoneNo, email, address } =
-      req.body;
+    const { companyName, contactName, mobileNo, phoneNo, email, address } = req.body;
 
     if (!companyName || !mobileNo || !email || !address) {
       throw new ApiError(400, "All fields are required");
     }
 
-    const existedCustomer = await Customer.findOne({
-      $or: [{ email }],
-    });
+    const existedCustomer = await Customer.findOne({ email });
 
     if (existedCustomer) {
-      return res.status(402).json({ message: "Email already exists" }); 
+      throw new ApiError(409, "Email already exists");
     }
 
-    const activeuser = req.user?._id;
+    const activeUser = req.user?._id;
     const newCustomer = new Customer({
       companyName,
       contactName,
@@ -30,118 +27,81 @@ const createCustomer = asyncHandler(async (req, res) => {
       phoneNo,
       email,
       address,
-      createdBy: activeuser,
+      createdBy: activeUser,
     });
-    console.log(newCustomer);
-    // Save the customer to the database
+
     const customer = await newCustomer.save();
-    const createCustomer = await Customer.findById(customer._id);
+    const createdCustomer = await Customer.findById(customer._id);
 
     return res.status(201).json(
-      new ApiResponse(
-        201,
-        {
-          createCustomer,
-        },
-        "Customer registered Successfully"
-      )
+      new ApiResponse(201, { createdCustomer }, "Customer registered successfully")
     );
   } catch (error) {
-  throw error;
+    return next(error);
   }
 });
 
-const customerList = asyncHandler(async (req, res) => {
+const customerList = asyncHandler(async (req, res, next) => {
   try {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
-
-    // let page = parseInt(req.query.page) || 1;
-    // let limit = parseInt(req.query.limit) || 10;
-    // let skip = (page - 1) * limit;
-
     let customers;
-    // let totalCount;
 
     if (user.role === "admin") {
-      customers = await Customer.find()
-      // .skip(skip).limit(limit);
-      // totalCount = await Customer.countDocuments();
+      customers = await Customer.find();
     } else if (user.role === "salesman") {
-      customers = await Customer.find({ createdBy: activeUser })
-        // .skip(skip)
-        // .limit(limit);
-      // totalCount = await Customer.countDocuments({ createdBy: activeUser });
+      customers = await Customer.find({ createdBy: activeUser });
     }
 
-    return res.json(
-      new ApiResponse(
-        200,
-        { customers},
-        "Customers fetched successfully"
-      )
-    );
+    return res.json(new ApiResponse(200, { customers }, "Customers fetched successfully"));
   } catch (error) {
-   throw error;
+    return next(error);
   }
 });
 
-const updateCustomer = asyncHandler(async (req, res) => {
+const updateCustomer = asyncHandler(async (req, res, next) => {
+  console.log("thhgtht");
   const { customer_id } = req.params;
   const userId = req.user?._id;
-  console.log(customer_id);
 
   if (!isValidObjectId(customer_id)) {
-    throw new ApiError(400, "Invalid customer_id");
+    return next(new ApiError(400, "Invalid customer_id"));
   }
 
   try {
-    const { companyName, contactName, mobileNo, phoneNo, email, address } =
-      req.body;
+    const { companyName, contactName, mobileNo, phoneNo, email, address } = req.body;
+    // const atemail = await Customer.findOne(email) 
     const user = await User.findById(userId);
     if (!user) {
       throw new ApiError(404, "User does not exist");
     }
     const customer = await Customer.findById(customer_id);
-   
+
     if (!customer) {
-      throw new ApiError(404, "Customer not fond");
+      throw new ApiError(404, "Customer not found");
     }
 
-    if (user.role !== "admin" && customer.createdBy.toString()!== userId) {
+    if (user.role !== "admin" && customer.createdBy.toString() !== userId) {
       throw new ApiError(401, "Unauthorized request");
     }
-      console.log("thghgth");
+
     const updatedCustomer = await Customer.findByIdAndUpdate(
       customer_id,
-      {
-        companyName,
-        contactName,
-        mobileNo,
-        phoneNo,
-        email,
-        address,
-      },
+      { companyName, contactName, mobileNo, phoneNo, email, address },
       { new: true }
     );
 
     if (!updatedCustomer) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, null, "customer not found"));
+      throw new ApiError(404, "Customer not found");
     }
 
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(200, updatedCustomer, "Customer Updated Successfully")
-      );
+    return res.status(200).json(new ApiResponse(200, updatedCustomer, "Customer updated successfully"));
   } catch (error) {
-   throw error;
+    return next(error);
   }
 });
 
-const deleteCustomer = asyncHandler(async (req, res) => {
+const deleteCustomer = asyncHandler(async (req, res, next) => {
   try {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
@@ -149,41 +109,37 @@ const deleteCustomer = asyncHandler(async (req, res) => {
     const customer = await Customer.findById(customerId);
 
     if (!customer) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, {}, "Customer not found"));
+      throw new ApiError(404, "Customer not found");
     }
 
-    // Check if the user has permission to delete the customer
-    if (
-      user.role === "admin" ||
-      (user.role === "salesman" && customer.createdBy.equals(activeUser))
-    ) {
+    if (user.role === "admin" || (user.role === "salesman" && customer.createdBy.equals(activeUser))) {
       await Customer.findByIdAndDelete(customerId);
       return res.status(204).end();
     } else {
-      return res.status(401).json(new ApiResponse(401, {}, "Unauthorized"));
+      throw new ApiError(401, "Unauthorized");
     }
   } catch (error) {
-   throw error;
+    return next(error);
   }
 });
 
-const getCustomerById = asyncHandler(async (req, res) => {
+const getCustomerById = asyncHandler(async (req, res, next) => {
   try {
     const { customerId } = req.params;
-    console.log(customerId);
+
+    if (!isValidObjectId(customerId)) {
+      throw new ApiError(400, "Invalid Customer ID");
+    }
+
     const customer = await Customer.findById(customerId);
 
     if (!customer) {
       throw new ApiError(404, "Customer not found");
     }
 
-    return res.json(
-      new ApiResponse(200, { customer }, "Customer fetched successfully")
-    );
+    return res.json(new ApiResponse(200, { customer }, "Customer fetched successfully"));
   } catch (error) {
-    throw error;
+    return next(error);
   }
 });
 
