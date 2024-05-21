@@ -7,6 +7,7 @@ import { User } from "../models/user.model.js";
 
 const addAppointment = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
+  const user = req.user?._id;
   if (!isValidObjectId(lead_id)) {
     throw new ApiError(400, "Invalid lead_id");
   }
@@ -42,7 +43,8 @@ const addAppointment = asyncHandler(async (req, res, next) => {
       time,
       date:d,
       lead: lead_id,
-      dummydate: d1
+      dummydate: d1,
+      createdBy:user
     });
 
     return res
@@ -132,40 +134,80 @@ const updateAppointment = asyncHandler(async (req, res, next) => {
   }
 });
 
+// const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
+//   const {date} = req.query;
+//   const user=req.user?._id
+//   if (!date) {
+//     throw new ApiError(400, "Date is required");
+//   } 
+//   try {
+//     let appointments;
+//     const searchDate = date;
+//     console.log("search date =",searchDate);
+    
+//     if (user.role === "admin") {
+//      appointments = await Appointment.find({
+//       dummydate: { $eq: searchDate+"T00:00:00.000Z"},
+//     })
+//     console.log("yjhy",appointments);
+//     //  if (appointments.length === 0) {
+//     //   throw new ApiError(202, "Appointment not found");
+//     // }
+//   } else if (user.role === "salesman") {
+//     appointments = await Appointment.find({
+//       dummydate: { $eq: searchDate+"T00:00:00.000Z"},
+//     })
+//     console.log("gftgtg",appointments);
+//     // if (appointments.length === 0) {
+//     //   throw new ApiError(202, "Appointment not found");
+//     // }
+//   }
+//   console.log("appointment",appointments);
+//     return res
+//       .status(200)
+//       .json(
+//         new ApiResponse(
+//           200,
+//           appointments,
+//           "Appointments Retrieved Successfully"
+//         )
+//       );
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
 const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
-  const {date} = req.query;
-  const user=req.user?._id
+  const { date } = req.query;
+  const userId = req.user?._id; 
+
   if (!date) {
     throw new ApiError(400, "Date is required");
   }
   try {
-    const searchDate = date;
-    console.log("search date =",searchDate);
-     let appointments;
+    const searchDate = date + "T00:00:00.000Z"; 
+    console.log("search date =", searchDate);
+      let appointments;
+      const user=await User.findById(userId)
+      console.log(user);
     if (user.role === "admin") {
-     appointments = await Appointment.find({
-      dummydate: { $eq: searchDate+"T00:00:00.000Z"},
-    })
-     if (appointments.length === 0) {
-      throw new ApiError(202, "Appointment not found");
+       appointments = await Appointment.find({
+        dummydate:searchDate,
+      });
+      console.log(appointments);
+    } else if (user.role === "salesman") {
+      appointments = await Appointment.find({
+        dummydate: { $eq: searchDate}
+      }).populate({path: 'generated_by'});
+      console.log(appointments);
     }
-  } else if (user.role === "salesman") {
-    appointments = await Appointment.find({
-      dummydate: { $eq: searchDate+"T00:00:00.000Z"},
-    })
     if (appointments.length === 0) {
       throw new ApiError(202, "Appointment not found");
     }
-  }
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          appointments,
-          "Appointments Retrieved Successfully"
-        )
-      );
+
+    return res.status(200).json(
+      new ApiResponse(200, appointments, "Appointments Retrieved Successfully")
+    );
   } catch (error) {
     return next(error);
   }
