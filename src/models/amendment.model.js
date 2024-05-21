@@ -8,12 +8,12 @@ const amendmentschema = new Schema(
       ref: "Customer",
       required: true,
     },
-    user: 
-    { 
-      type: Schema.Types.ObjectId,
-       ref: "User",
-        required: true 
-      },
+    // user: 
+    // { 
+    //   type: Schema.Types.ObjectId,
+    //    ref: "User",
+    //     required: true 
+    //   },
    
       date_current: {
         type: Date,
