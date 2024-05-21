@@ -145,16 +145,18 @@ const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
     if (user.role === "admin") {
      appointments = await Appointment.find({
       dummydate: { $eq: searchDate+"T00:00:00.000Z"},
-    });
+    })
+     if (appointments.length === 0) {
+      throw new ApiError(202, "Appointment not found");
+    }
   } else if (user.role === "salesman") {
     appointments = await Appointment.find({
       dummydate: { $eq: searchDate+"T00:00:00.000Z"},
-    });
-  }
-
+    })
     if (appointments.length === 0) {
       throw new ApiError(202, "Appointment not found");
     }
+  }
     return res
       .status(200)
       .json(
