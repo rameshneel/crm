@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { isValidObjectId } from "mongoose";
 import Appointment from "../models/appointement.model.js";
+import { User } from "../models/user.model.js";
 
 const addAppointment = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
@@ -133,20 +134,23 @@ const updateAppointment = asyncHandler(async (req, res, next) => {
 
 const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
   const {date} = req.query;
-
+  const user=req.user?._id
   if (!date) {
     throw new ApiError(400, "Date is required");
   }
-
   try {
-    // const searchDate = new Date(date);
     const searchDate = date;
     console.log("search date =",searchDate);
-
-    const appointments = await Appointment.find({
+     let appointments;
+    if (user.role === "admin") {
+     appointments = await Appointment.find({
       dummydate: { $eq: searchDate+"T00:00:00.000Z"},
     });
-    console.log(appointments);
+  } else if (user.role === "salesman") {
+    appointments = await Appointment.find({
+      dummydate: { $eq: searchDate+"T00:00:00.000Z"},
+    });
+  }
 
     if (appointments.length === 0) {
       throw new ApiError(202, "Appointment not found");
