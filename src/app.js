@@ -9,6 +9,7 @@ app.use(
       "http://localhost:3000",
       "https://localhost:3000",
       "http://localhost:5173",
+      "https://high-oaks-media-crm.vercel.app"
     ],
     credentials: true,
     secure: false,
@@ -34,12 +35,14 @@ import userRouter from "./routes/user.routes.js";
 import customerRoutes from "./routes/customer.route.js";
 import leadRoutes from "./routes/lead.routes.js";
 import newCustomerRoutes from "./routes/newCustomer.routes.js";
+import amendmentRoutes from "./routes/amendment.routes.js";
 
 //routes declaration
 app.use("/api/users", userRouter);
 app.use("/api/customers", customerRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/newcustomers", newCustomerRoutes);
+app.use("/api/amendments", amendmentRoutes);
 
 // app.use((err, req, res, next) => {
 //     console.log(err.stack);
@@ -64,6 +67,8 @@ function errorHandler(err, req, res, next) {
   return res.status(500).json({
     success: false,
     message: err.message,
+    // errors: err.errors,
+      stack: err.stack,
   });
 }
 
