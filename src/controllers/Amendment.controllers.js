@@ -2,7 +2,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { isValidObjectId } from "mongoose";
-import Appointment from "../models/appointement.model.js";
 import Amendment from "../models/amendment.model.js";
 import { User } from "../models/user.model.js";
 import Customer from "../models/customer.model.js";
@@ -54,14 +53,6 @@ const addAmendment = asyncHandler(async (req, res, next) => {
         new ApiResponse(201, appointment, "Appointment Added Successfully")
       );
   } catch (err) {
-    // let message = "Internal Server Error";
-
-    // if (err.name === "ValidationError") {
-    //   const missingFields = Object.keys(err.errors).join(", ");
-    //   message = `Validation Error: ${missingFields} are required`;
-    // }
-
-    // next(new ApiError(500, message));
     next(err)
   }
 });
@@ -71,21 +62,22 @@ const getAllAmendment = asyncHandler(async (req, res,next) => {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
 
-    let page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit) || 10;
-    let skip = (page - 1) * limit;
+    // let page = parseInt(req.query.page) || 1;
+    // let limit = parseInt(req.query.limit) || 10;
+    // let skip = (page - 1) * limit;
 
     let amendments;
-    let totalCount;
+    // let totalCount;
 
     if (user.role === "admin") {
-      amendments = await Amendment.find().skip(skip).limit(limit);
-      totalCount = await Amendment.countDocuments();
+      amendments = await Amendment.find()
+      // .skip(skip).limit(limit);
+      // totalCount = await Amendment.countDocuments();
     } else if (user.role === "salesman") {
       amendments = await Amendment.find({ generated_by: activeUser })
-        .skip(skip)
-        .limit(limit);
-      totalCount = await Amendment.countDocuments({ generated_by: activeUser });
+        // .skip(skip)
+        // .limit(limit);
+      // totalCount = await Amendment.countDocuments({ generated_by: activeUser });
     }
 
     return res.json(
@@ -140,22 +132,22 @@ const updateAmendment = asyncHandler(async (req, res) => {
   if (!isValidObjectId(amendmentId)) {
     throw new ApiError(400, "Invalid AmendmentId");
   }
-  // if (!addAmendment) {
-  //   throw new ApiError(404, "Amendment does not exist");
-  // }
-  const { customer_status, date_complete, priority, status }=req.body;
-    // const dateComplete=new Date(date_complete) 
-    //  console.log(dateComplete);
-    //    console.log(dateComplete);
+  const { customer_status, date_complete, priority, status } = req.body;
 
-    if (![customer_status,date_complete,priority,status ].some(field => {
+  if (![customer_status, date_complete, priority, status].some(field => {
       if (field === undefined) return false;
       if (typeof field === 'string') return field.trim() !== '';
-      if (typeof field === 'object') return field !== null;
-    })) {
+  })) {
       throw new ApiError(400, "At least one field is required for update");
-    }
-
+  }
+  
+  if (date_complete) {
+      const isValidDate = !isNaN(Date.parse(date_complete));
+      if (!isValidDate) {
+          throw new ApiError(400, "Invalid date format for Date Complete");
+      }
+  }
+  
   const updateObj = {
     customer_status,
     date_complete,
@@ -165,7 +157,7 @@ const updateAmendment = asyncHandler(async (req, res) => {
   };
 
   const amendment = await Amendment.findByIdAndUpdate(
-    req.params.id,
+    amendmentId,
     { $set: updateObj },
     { new: true }
   );
@@ -178,6 +170,7 @@ const updateAmendment = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, amendment, "Amendment updated successfully"));
 });
+
 
 export { addAmendment, getAllAmendment, getAmendmentById, updateAmendment };
 
