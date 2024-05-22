@@ -25,6 +25,7 @@ const addAppointment = asyncHandler(async (req, res, next) => {
     console.log(d);
 
     const existingAppointment = await Appointment.findOne({ time,date:d});
+   
 
     if (existingAppointment) {
       return res
@@ -180,6 +181,8 @@ const updateAppointment = asyncHandler(async (req, res, next) => {
 const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
   const { date } = req.query;
   const userId = req.user?._id; 
+  const { lead_id } = req.params;
+  
 
   if (!date) {
     throw new ApiError(400, "Date is required");
@@ -192,12 +195,12 @@ const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
       console.log(user);
     if (user.role === "admin") {
        appointments = await Appointment.find({
-        dummydate:searchDate,
+        dummydate:searchDate,lead:lead_id
       });
       console.log(appointments);
     } else if (user.role === "salesman") {
       appointments = await Appointment.find({
-        dummydate: { $eq: searchDate}
+        dummydate: { $eq: searchDate},lead:lead_id
       }).populate({path: 'generated_by'});
       console.log(appointments);
     }

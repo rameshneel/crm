@@ -22,7 +22,12 @@ const appointmentSchema = new mongoose.Schema({
     },
     dummydate: {
         type: Date,
-    }
+    },
+    createdBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
 });
 
 const Appointment = mongoose.model('Appointment', appointmentSchema);
