@@ -16,10 +16,11 @@ import {
 } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { uploadFile } from "../helper/multererror.js";
+
 
 const router = Router()
-router.route("/").post(
-    upload.single("avatar"),
+router.route("/").post(uploadFile,
     registerUser
     )
 router.route("/login").post(loginUser)

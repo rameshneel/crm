@@ -104,7 +104,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
       .json(new ApiResponse(200, createdUser, "User registered Successfully"));
 
   } catch (error) {
-    // Pass the error to the next middleware (errorHandler)
     return next(error);
   }
 });
