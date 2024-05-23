@@ -441,8 +441,8 @@ const forgetPasswordToken = asyncHandler(async (req, res, next) => {
     if (!user || Date.now() > user.resetTokenExpiry) {
       throw new ApiError(404, "Invalid or expired token");
     }
-    return res.redirect(302,  `https://high-oaks-media-crm.vercel.app/resetpassword?token=${token}`);
-    // return res.status(200).json(new ApiResponse(200, "Email Token Verified successfully"));
+    // return res.redirect(302,  `https://high-oaks-media-crm.vercel.app/resetpassword?token=${token}`);
+    return res.status(200).json(new ApiResponse(200, "Email Token Verified successfully"));
     
   } catch (error) {
     return next(error);
