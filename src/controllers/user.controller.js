@@ -453,29 +453,28 @@ const resetPasswordForForget = asyncHandler(async (req, res) => {
   const { password, confirmPassword } = req.body;
   const { token } = req.query;
 
-  // if (
-  //   [password, confirmPassword].some((field) => !field || field.trim() === "")
-  // ) {
-  //   throw new ApiError(400, "All fields are required");
-  // }
-
   if (!password || !confirmPassword || password.trim() !== confirmPassword.trim()) {
     throw new ApiError(400, "Passwords do not match");
   }
+
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    const user = await User.findById(decoded._id);
-    if (!user || Date.now() > user.resetTokenExpiry) {
+    
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: decoded._id, resetTokenExpiry: { $gt: Date.now() } }, 
+      { 
+        password: password,
+        refreshToken: null,
+        resetToken: null,
+        resetTokenExpiry: null
+      }, 
+      { new: true } 
+    );
+
+    if (!updatedUser) {
       throw new ApiError(404, "Invalid or expired token");
     }
-    user.password = password;
-    user.refreshToken = null;
-    user.resetToken = null;
-    user.resetTokenExpiry = null;
-    await user.save();
-    res
-      .status(200)
-      .json(new ApiResponse(200, {}, "Password reset successfully"));
+    res.status(200).json(new ApiResponse(200, {}, "Password reset successfully"));
   } catch (error) {
     throw error;
   }
