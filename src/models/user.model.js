@@ -25,8 +25,8 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [8, 'Password must be at least 8 characters long'],
-      // Implement further checks for password strength if necessary
+      // minlength: [8, 'Password must be at least 8 characters long'],
+      // // Implement further checks for password strength if necessary
     },
     mobileNo: {
       type: String,
