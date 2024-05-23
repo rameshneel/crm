@@ -33,7 +33,7 @@ router.route("/update-account").patch(verifyJWT,upload.single("avatar"), updateA
 router.route("/update-avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvatar)
 router.route("/forget").post( forgetPassword)
 router.route("/reset-password-token/:token").get(forgetPasswordToken);
-router.route('/reset-password/:token').post(resetPasswordForForget);
+router.route('/reset-password/').post(resetPasswordForForget);
 router.route('/delete').delete(verifyJWT,deleteUser);
 router.route('/delete/:userId').delete(verifyJWT,deleteUsers);
 router.route('/').get(verifyJWT,getAllUsers);
