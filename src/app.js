@@ -16,7 +16,7 @@ app.use(
     optionSuccessStatus: 200,
     Headers: true,
     exposedHeaders: "Set-Cookie",
-    methods: ["GET", "PUT", "POST", "DELETE", "OPTIONS"],
+    methods: ["GET", "PUT", "POST", "DELETE","PATCH","OPTIONS"],
     allowedHeaders: [
       "Access-Control-Allow-Origin",
       "Content-Type",
