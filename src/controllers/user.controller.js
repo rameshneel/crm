@@ -555,6 +555,25 @@ const deleteUsers = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getUserById = asyncHandler(async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!isValidObjectId(userId)) {
+      throw new ApiError(400, "Invalid user ID");
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    return res.json(new ApiResponse(200, user, "Customer fetched successfully"));
+  } catch (error) {
+    return next(error);
+  }
+});
 
 
 
@@ -571,6 +590,7 @@ export {
   deleteUser,
   getAllUsers,
   userDetails,
-  deleteUsers
+  deleteUsers,
+  getUserById
 };
  
