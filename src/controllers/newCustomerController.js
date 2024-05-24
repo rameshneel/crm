@@ -1,29 +1,121 @@
+import Customer from "../models/customer.model.js";
 import NewCustomer from "../models/newCustomer.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-const createNewCustomer = async (req, res) => {
-  try {
-    const newCustomer = new NewCustomer(req.body);
-    const savedCustomer = await newCustomer.save();
-    res
-      .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          savedCustomer,
-          "New customer form created successfully"
-        )
-      );
-  } catch (error) {
-    console.error("Error in creating new customer form:", error);
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      res.status(400).json(new ApiResponse(400, null, messages.join(", ")));
-    } else {
-      res.status(500).json(new ApiResponse(500, null, "Internal Server Error"));
-    }
+// const createNewCustomer = async (req, res) => {
+//   try {
+//     const newCustomer = new NewCustomer(req.body);
+//     const savedCustomer = await newCustomer.save();
+//     res
+//       .status(201)
+//       .json(
+//         new ApiResponse(
+//           201,
+//           savedCustomer,
+//           "New customer form created successfully"
+//         )
+//       );
+//   } catch (error) {
+//     console.error("Error in creating new customer form:", error);
+//     if (error.name === "ValidationError") {
+//       const messages = Object.values(error.errors).map((err) => err.message);
+//       res.status(400).json(new ApiResponse(400, null, messages.join(", ")));
+//     } else {
+//       res.status(500).json(new ApiResponse(500, null, "Internal Server Error"));
+//     }
+//   }
+// };
+
+const createNewCustomer = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+    const { customer_id } = req.params;
+  if (!customer_id || !isValidObjectId(customer_id)) {
+    return next(new ApiError(400, 'Invalid or missing Customer ID'));
   }
-};
+
+  if (!isValidObjectId(customer_id)) {
+    return next(new ApiError(400, "Invalid customer_id"));
+  }
+  const customerI = await Customer.findById(customer_id);
+  if (!customerI) {
+    return next(new ApiError(404, 'customer does not exist'));
+  }
+  
+  const {
+    typeOfCustomer,
+    currentDomain,
+    newDomain,
+    domainInfo,
+    domainTransferred,
+    registrarName,
+    customerEmails,
+    theme,
+    colours,
+    companyLogo,
+    images,
+    notesForDesign,
+    pageName,
+    emailCurrent,
+    productFlowStatus,
+    productFlow,
+    techincalMaster,
+    copywriterTracker,
+    copywriterRequired,
+    contentRequired,
+    customerPostcode,
+    customerPhoneNumber,
+    socialMedia,
+    keyPhrasesAgreed,
+    keyAreasAgreed,
+    blogToBeAdded,
+    preferredPageNamesForBlog,
+    googleReviews,
+    contactInformation,
+    notesForCopywriter,
+  } = req.body;
+
+  try {
+    const newCustomer = await NewCustomer.create({
+      customer:customer_id,
+      typeOfCustomer,
+      currentDomain,
+      newDomain,
+      domainInfo,
+      domainTransferred,
+      registrarName,
+      customerEmails,
+      theme,
+      colours,
+      companyLogo,
+      images,
+      notesForDesign,
+      pageName,
+      emailCurrent,
+      productFlowStatus,
+      productFlow,
+      techincalMaster,
+      copywriterTracker,
+      copywriterRequired,
+      contentRequired,
+      customerPostcode,
+      customerPhoneNumber,
+      socialMedia,
+      keyPhrasesAgreed,
+      keyAreasAgreed,
+      blogToBeAdded,
+      preferredPageNamesForBlog,
+      googleReviews,
+      contactInformation,
+      notesForCopywriter,
+      createdBy: userId,
+    });
+
+    return res.status(201).json(new ApiResponse(201, newCustomer, 'Customer created successfully'));
+  } catch (error) {
+    return next(error);
+  }
+});
 
 const getAllCustomers = async (req, res) => {
   try {

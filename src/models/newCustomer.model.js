@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 const newCustomerSchema = new mongoose.Schema(
   {
     customer: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     typeOfCustomer: {
@@ -17,7 +18,10 @@ const newCustomerSchema = new mongoose.Schema(
     newDomain: {
       type: String,
     },
-    domainTransferred: {
+    domainInfo: {
+      type: String,
+    },
+    domainTransferred: {   
       type: String,
       enum: ["N/A", "No", "Yes"],
       required: true,
@@ -28,6 +32,7 @@ const newCustomerSchema = new mongoose.Schema(
         return this.domainTransferred === "No";
       },
     },
+    
     // username: {
     //   type: String,
     //   required: function () {
@@ -40,6 +45,7 @@ const newCustomerSchema = new mongoose.Schema(
     //     return this.domainTransferred === "No";
     //   },
     // },
+
     customerEmails: {
       type: {
         type: String,
@@ -91,6 +97,24 @@ const newCustomerSchema = new mongoose.Schema(
     },
     notesForDesign: {
       type: String,
+    },
+    pageName:{
+      type: String,
+    },
+    emailCurrent:{
+     type:String
+    },
+    productFlowStatus:{
+      type:String
+    },
+    productFlow:{
+      type:String
+    },
+    techincalMaster:{
+      type:String
+    },
+    copywriterTracker:{
+      type:String
     },
     copywriterRequired: {
       type: String,
@@ -164,6 +188,12 @@ const newCustomerSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    updated_by: 
+    { 
+      type: mongoose.Schema.Types.ObjectId,
+       ref: "User",
+      },
+
   },
   { timestamps: true }
 );
@@ -171,6 +201,19 @@ const newCustomerSchema = new mongoose.Schema(
 const NewCustomer = mongoose.model("NewCustomer", newCustomerSchema);
 
 export default NewCustomer;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // import mongoose from "mongoose";
 
