@@ -78,7 +78,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
         console.error("Error uploading avatar:", error.message);
       }
     }
-
     const user = await User.create({
       fullName,
       avatar: avatarurl || "",
@@ -425,7 +424,7 @@ const forgetPassword = asyncHandler(async (req, res, next) => {
       new ApiResponse(
         200,
         user.email,
-        "Password reset email sent successfully"
+        "Reset-Password email sent successfully"
       )
     );
   } catch (error) {
@@ -459,17 +458,19 @@ const resetPasswordForForget = asyncHandler(async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        console.log(decoded);
     
     const updatedUser = await User.findOneAndUpdate(
       { _id: decoded._id, resetTokenExpiry: { $gt: Date.now() } }, 
       { 
-        password: password,
         refreshToken: null,
         resetToken: null,
         resetTokenExpiry: null
       }, 
       { new: true } 
     );
+     updatedUser.password=password
+     await updatedUser.save({ validateBeforeSave: false });
 
     if (!updatedUser) {
       throw new ApiError(404, "Invalid or expired token");
