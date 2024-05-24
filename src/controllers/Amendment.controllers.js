@@ -6,54 +6,93 @@ import Amendment from "../models/amendment.model.js";
 import { User } from "../models/user.model.js";
 import Customer from "../models/customer.model.js";
 
+// const addAmendment = asyncHandler(async (req, res, next) => {
+//   const { customerId } = req.params;
+//   const userId = req.user?._id;
+
+//   if (!isValidObjectId(customerId)) {
+//     throw new ApiError(400, "Invalid customer_id");
+//   }
+//   const activeCustomer = await Customer.findById(customerId)
+
+//     if (!activeCustomer) {
+//       throw new ApiError(404, "Customer not found");
+//     }
+
+//   try {
+//     const { date_current, customer_status, priority, status } = req.body;
+//     const date=new Date(date_current)
+//     console.log(req.body);
+
+//     const existingAppointment = await Amendment.findOne({date});
+
+//     if (existingAppointment) {
+//       return res
+//         .status(400)
+//         .json(
+//           new ApiResponse(
+//             400,
+//             existingAppointment,
+//             "An amendment already exists for this date"
+//           )
+//         );
+//     }
+
+//     const appointment = await Amendment.create({
+//       date_current:date,
+//       customer_status,
+//       priority,
+//       status,
+//       customer: customerId,
+//       generated_by: userId,
+//     });
+
+//     return res
+//       .status(201)
+//       .json(
+//         new ApiResponse(201, appointment, "Appointment Added Successfully")
+//       );
+//   } catch (err) {
+//     next(err)
+//   }
+// });
+
 const addAmendment = asyncHandler(async (req, res, next) => {
   const { customerId } = req.params;
   const userId = req.user?._id;
 
   if (!isValidObjectId(customerId)) {
-    throw new ApiError(400, "Invalid customer_id");
+    throw new ApiError(400, "Invalid customerId");
   }
-  const activeCustomer = await Customer.findById(customerId)
-
-    if (!activeCustomer) {
-      throw new ApiError(404, "Customer not found");
-    }
 
   try {
-    const { date_current, customer_status, priority, status } = req.body;
-    const date=new Date(date_current)
-    console.log(req.body);
+    const { date_current, customer_status, priority, status } = req.body;    
+    const existingAmendment = await Amendment.findOne({ customer: customerId });
 
-    const existingAppointment = await Amendment.findOne({date});
-
-    if (existingAppointment) {
+    if (existingAmendment) {
       return res
         .status(400)
         .json(
-          new ApiResponse(
-            400,
-            existingAppointment,
-            "An amendment already exists for this date"
-          )
+          new ApiResponse(400, null, "An amendment already exists for this customer.")
+        );
+    } else {
+      const appointment = await Amendment.create({
+        date_current,
+        customer_status,
+        priority,
+        status,
+        customer: customerId,
+        generated_by: userId,
+      });
+
+      return res
+        .status(201)
+        .json(
+          new ApiResponse(200, appointment, "Amendment Added Successfully")
         );
     }
-
-    const appointment = await Amendment.create({
-      date_current:date,
-      customer_status,
-      priority,
-      status,
-      customer: customerId,
-      generated_by: userId,
-    });
-
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(201, appointment, "Appointment Added Successfully")
-      );
   } catch (err) {
-    next(err)
+    next(err);
   }
 });
 
@@ -99,7 +138,6 @@ const getAmendmentById = asyncHandler(async (req, res,next) => {
   if (!isValidObjectId(amendmentId)) {
     throw new ApiError(400, "Invalid amendmentId");
   }
-  
   try {
     const amendment = await Amendment.findById(amendmentId).populate({
       path:"customer",
