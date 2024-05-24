@@ -66,14 +66,18 @@ const addAmendment = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const { date_current, customer_status, priority, status } = req.body;    
+    const { date_current, customer_status, priority, status } = req.body;
     const existingAmendment = await Amendment.findOne({ customer: customerId });
 
     if (existingAmendment) {
       return res
         .status(400)
         .json(
-          new ApiResponse(400, null, "An amendment already exists for this customer.")
+          new ApiResponse(
+            400,
+            null,
+            "An amendment already exists for this customer."
+          )
         );
     } else {
       const appointment = await Amendment.create({
@@ -96,7 +100,7 @@ const addAmendment = asyncHandler(async (req, res, next) => {
   }
 });
 
-const getAllAmendment = asyncHandler(async (req, res,next) => {
+const getAllAmendment = asyncHandler(async (req, res, next) => {
   try {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
@@ -109,20 +113,20 @@ const getAllAmendment = asyncHandler(async (req, res,next) => {
     // let totalCount;
 
     if (user.role === "admin") {
-      amendments = await Amendment.find()
+      amendments = await Amendment.find();
       // .skip(skip).limit(limit);
       // totalCount = await Amendment.countDocuments();
     } else if (user.role === "salesman") {
-      amendments = await Amendment.find({ generated_by: activeUser })
-        // .skip(skip)
-        // .limit(limit);
+      amendments = await Amendment.find({ generated_by: activeUser });
+      // .skip(skip)
+      // .limit(limit);
       // totalCount = await Amendment.countDocuments({ generated_by: activeUser });
     }
 
     return res.json(
       new ApiResponse(
         200,
-        { amendments, totalCount },
+         amendments ,
         "Amendment fetched successfully"
       )
     );
@@ -131,7 +135,7 @@ const getAllAmendment = asyncHandler(async (req, res,next) => {
   }
 });
 
-const getAmendmentById = asyncHandler(async (req, res,next) => {
+const getAmendmentById = asyncHandler(async (req, res, next) => {
   const { amendmentId } = req.params;
   console.log(amendmentId);
 
@@ -139,24 +143,26 @@ const getAmendmentById = asyncHandler(async (req, res,next) => {
     throw new ApiError(400, "Invalid amendmentId");
   }
   try {
-    const amendment = await Amendment.findById(amendmentId).populate({
-      path:"customer",
-      // select:"contactName "
-    }).populate({
-      path:"generated_by",
-      select: 'fullName avatar'
-    });
+    const amendment = await Amendment.findById(amendmentId)
+      .populate({
+        path: "customer",
+        // select:"contactName "
+      })
+      .populate({
+        path: "generated_by",
+        select: "fullName avatar",
+      });
     if (!amendment) {
       throw new ApiError(404, "Amendment Not Found!");
     }
-    
-  const user_id = req.user?._id;
-  const user = await User.findById(user_id);
-  if (!user) {
-    return next(new ApiError(404, "User not found"));
-  }
 
-   return res
+    const user_id = req.user?._id;
+    const user = await User.findById(user_id);
+    if (!user) {
+      return next(new ApiError(404, "User not found"));
+    }
+
+    return res
       .status(200)
       .json(new ApiResponse(200, amendment, "Amendment fetech Successfully"));
   } catch (error) {
@@ -172,20 +178,22 @@ const updateAmendment = asyncHandler(async (req, res) => {
   }
   const { customer_status, date_complete, priority, status } = req.body;
 
-  if (![customer_status, date_complete, priority, status].some(field => {
+  if (
+    ![customer_status, date_complete, priority, status].some((field) => {
       if (field === undefined) return false;
-      if (typeof field === 'string') return field.trim() !== '';
-  })) {
-      throw new ApiError(400, "At least one field is required for update");
+      if (typeof field === "string") return field.trim() !== "";
+    })
+  ) {
+    throw new ApiError(400, "At least one field is required for update");
   }
-  
+
   if (date_complete) {
-      const isValidDate = !isNaN(Date.parse(date_complete));
-      if (!isValidDate) {
-          throw new ApiError(400, "Invalid date format for Date Complete");
-      }
+    const isValidDate = !isNaN(Date.parse(date_complete));
+    if (!isValidDate) {
+      throw new ApiError(400, "Invalid date format for Date Complete");
+    }
   }
-  
+
   const updateObj = {
     customer_status,
     date_complete,
@@ -209,28 +217,34 @@ const updateAmendment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, amendment, "Amendment updated successfully"));
 });
 
+const getAmendmentsByStatus = asyncHandler(async (req, res) => {
+  const { status } = req.query;
+ 
+  try {
+    const amendments = await Amendment.find({ status:status })
+      .populate("customer")
+      .populate("generated_by")
+    res.status(200).json(new ApiResponse(200, amendments, "Amendment updated successfully"));
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
-export { addAmendment, getAllAmendment, getAmendmentById, updateAmendment };
+export { addAmendment, getAllAmendment, getAmendmentById, updateAmendment,getAmendmentsByStatus };
 
-
-
-
-
-
-
-  // let amendment;
-  // if (user.role === "admin") {
-  //   amendment = await Amendment.find().populate({
-  //     path: 'customer',
-  //   }).populate({
-  //     path: 'generated_by',
-  //     select: 'fullName avatar'
-  //   });
-  // } else if (user.role === "salesman") {
-  //   amendment = await Amendment.find({ generated_by: user_id }).populate({
-  //     path: 'customer',
-  //   }).populate({
-  //     path: 'generated_by',
-  //     select: 'fullName avatar'
-  //   });
-  // }
+// let amendment;
+// if (user.role === "admin") {
+//   amendment = await Amendment.find().populate({
+//     path: 'customer',
+//   }).populate({
+//     path: 'generated_by',
+//     select: 'fullName avatar'
+//   });
+// } else if (user.role === "salesman") {
+//   amendment = await Amendment.find({ generated_by: user_id }).populate({
+//     path: 'customer',
+//   }).populate({
+//     path: 'generated_by',
+//     select: 'fullName avatar'
+//   });
+// }
