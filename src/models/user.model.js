@@ -53,6 +53,14 @@ const userSchema = new Schema(
       type: Date,
       default: null,
     },
+    jobtitle: {
+      type: String,
+      required: true,
+    },
+    clock: {
+      type: Date,
+      default: Date.now,
+    }
   },
   {
     timestamps: true,
