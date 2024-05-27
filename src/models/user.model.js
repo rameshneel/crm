@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import timeZone from "moment-timezone"
 
 const userSchema = new Schema(
   {
@@ -57,10 +58,12 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    clock: {
-      type: Date,
-      default: Date.now,
-    }
+    // dateTime: {
+    //   type: Date,
+    // },
+    // timeZone:{
+    //   type:String,
+    // }
   },
   {
     timestamps: true,

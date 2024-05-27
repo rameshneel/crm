@@ -29,7 +29,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res, next) => {
-  const { fullName, email, password, role, mobileNo, address,jobtitle,clock } = req.body;
+  const { fullName, email, password, role, mobileNo, address,jobtitle } = req.body;
 
   try {
     if ([fullName, email, password, role, mobileNo].some((field) => field?.trim() === "")) {
@@ -87,7 +87,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
       mobileNo,
       address,
       jobtitle,
-      clock
     });
 
     const createdUser = await User.findById(user._id).select(
@@ -301,7 +300,7 @@ const changeCurrentPassword = asyncHandler(async (req, res,next) => {
 
 const updateAccountDetails = asyncHandler(async (req, res, next) => {
   try {
-    const { fullName, mobileNo, address,jobtitle,clock } = req.body;
+    const { fullName, mobileNo, address,jobtitle } = req.body;
 
     // // Check if all fields are empty
     // if (![fullName, mobileNo, address].some(field => field !== undefined && field.trim() !== '')) {
@@ -354,7 +353,6 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
           mobileNo,
           address,
           jobtitle,
-          clock
         },
       },
       { new: true }
@@ -558,10 +556,6 @@ const deleteUsers = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
-
-
-
-
 
 export {
   registerUser,
