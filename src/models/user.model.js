@@ -1,7 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import timeZone from "moment-timezone"
 
 const userSchema = new Schema(
   {
