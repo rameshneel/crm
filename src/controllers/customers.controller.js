@@ -4,16 +4,65 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId } from "mongoose";
+import fs from "fs";
+import axios from "axios";
+import FormData from "form-data";
 
 const createCustomer = asyncHandler(async (req, res, next) => {
   try {
-    const { companyName, contactName, mobileNo, phoneNo, email, address } = req.body;
+    const { companyName, contactName, mobileNo,landlineNo,streetNoName,
+      town, county, customerEmail,postcode,url, address, status,liveDate,
+      ssl, sitemap,htAccess, gaCode,newGACode, ordersRenewals,
+     } = req.body;
 
-    if (!companyName || !mobileNo || !email || !address) {
+     const existedUser = await Customer.findOne({
+      $or: [{ customerEmail }],
+    });
+
+     let avatarurl = "";
+     console.log(avatarurl);
+
+    if (req.file && req.file.path) {
+      const avatarLocalPath = req.file.path;
+      console.log(avatarLocalPath);
+
+    if (existedUser) {
+      fs.unlinkSync(avatarLocalPath)
+      throw new ApiError(409, "Email already exists");
+    }
+      try {
+        const formData = new FormData();
+        formData.append("file", fs.createReadStream(avatarLocalPath));
+        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+        const apiResponse = await axios.post(apiURL, formData, {
+          headers: {
+            ...formData.getHeaders(),
+          },
+        });
+        console.log(apiResponse.data);
+        avatarurl = apiResponse.data?.img_upload_path;
+        if (!avatarurl) {
+          throw new Error("img_upload_path not found in API response");
+        }
+
+        fs.unlink(avatarLocalPath, (err) => {
+          if (err) {
+            console.error("Error removing avatar file:", err.message);
+          } else {
+            console.log("Avatar file removed successfully");
+          }
+        });
+
+      } catch (error) {
+        console.error("Error uploading avatar:", error.message);
+      }
+    }
+
+    if (!companyName || !mobileNo || !customerEmail || !address) {
       throw new ApiError(400, "All fields are required");
     }
 
-    const existedCustomer = await Customer.findOne({ email });
+    const existedCustomer = await Customer.findOne({ customerEmail });
 
     if (existedCustomer) {
       throw new ApiError(409, "Email already exists");
@@ -24,9 +73,10 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       companyName,
       contactName,
       mobileNo,
-      phoneNo,
-      email,
-      address,
+      customerEmail,
+      landlineNo,streetNoName,town,county,postcode,url,status,liveDate,ssl,sitemap,htAccess,gaCode,newGACode,
+      logo:avatarurl
+      ,ordersRenewals,
       createdBy: activeUser,
     });
 
@@ -60,16 +110,56 @@ const customerList = asyncHandler(async (req, res, next) => {
 });
 
 const updateCustomer = asyncHandler(async (req, res, next) => {
-  console.log("thhgtht");
   const { customer_id } = req.params;
   const userId = req.user?._id;
-
   if (!isValidObjectId(customer_id)) {
     return next(new ApiError(400, "Invalid customer_id"));
   }
-
   try {
-    const { companyName, contactName, mobileNo, phoneNo, email, address } = req.body;
+    const { companyName, contactName, mobileNo,landlineNo,streetNoName,
+      town, county, customerEmail,postcode,url, address, status,liveDate,
+      ssl, sitemap,htAccess, gaCode,newGACode, ordersRenewals,
+     } = req.body;
+
+     let avatarurl = "";
+     console.log(avatarurl);
+
+    if (req.file && req.file.path) {
+      const avatarLocalPath = req.file.path;
+      console.log(avatarLocalPath);
+
+    if (existedUser) {
+      fs.unlinkSync(avatarLocalPath)
+      throw new ApiError(409, "Email already exists");
+    }
+      try {
+        const formData = new FormData();
+        formData.append("file", fs.createReadStream(avatarLocalPath));
+        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+        const apiResponse = await axios.post(apiURL, formData, {
+          headers: {
+            ...formData.getHeaders(),
+          },
+        });
+        console.log(apiResponse.data);
+        avatarurl = apiResponse.data?.img_upload_path;
+        if (!avatarurl) {
+          throw new Error("img_upload_path not found in API response");
+        }
+
+        fs.unlink(avatarLocalPath, (err) => {
+          if (err) {
+            console.error("Error removing avatar file:", err.message);
+          } else {
+            console.log("Avatar file removed successfully");
+          }
+        });
+
+      } catch (error) {
+        console.error("Error uploading avatar:", error.message);
+      }
+    }
+
     // const atemail = await Customer.findOne(email) 
     const user = await User.findById(userId);
     if (!user) {
@@ -87,7 +177,10 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
 
     const updatedCustomer = await Customer.findByIdAndUpdate(
       customer_id,
-      { companyName, contactName, mobileNo, phoneNo, email, address },
+      { companyName, contactName, mobileNo,landlineNo,streetNoName,
+        town, county, customerEmail,postcode,url, address, status,liveDate,
+        ssl, sitemap,htAccess, gaCode,newGACode, ordersRenewals,logo:avatarurl,
+         updatedBy:userId},
       { new: true }
     );
 
