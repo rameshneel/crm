@@ -11,7 +11,7 @@ import FormData from "form-data";
 const createCustomer = asyncHandler(async (req, res, next) => {
   try {
     const { companyName, contactName, mobileNo,landlineNo,streetNoName,
-      town, county, customerEmail,postcode,url, address, status,liveDate,
+      town, county, customerEmail,postcode,url, status,liveDate,
       ssl, sitemap,htAccess, gaCode,newGACode, ordersRenewals,
      } = req.body;
 
@@ -58,7 +58,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       }
     }
 
-    if (!companyName || !mobileNo || !customerEmail || !address) {
+    if (!companyName || !mobileNo || !customerEmail) {
       throw new ApiError(400, "All fields are required");
     }
 
@@ -74,7 +74,8 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       contactName,
       mobileNo,
       customerEmail,
-      landlineNo,streetNoName,town,county,postcode,url,status,liveDate,ssl,sitemap,htAccess,gaCode,newGACode,
+      landlineNo,streetNoName,town,county,postcode,url,
+      status,liveDate,ssl,sitemap,htAccess,gaCode,newGACode,
       logo:avatarurl
       ,ordersRenewals,
       createdBy: activeUser,
