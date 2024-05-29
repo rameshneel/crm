@@ -72,7 +72,8 @@ export const addLead = asyncHandler(async (req, res, next) => {
     if (!user) {
       return next(new ApiError(404, "User does not exist"));
     }
-
+   
+    
     const leadData = {
       generated_by: userId,
       lead_type,
@@ -85,11 +86,16 @@ export const addLead = asyncHandler(async (req, res, next) => {
       emailAddress,
       notes,
     };
-
+   
     if (customer_id) {
+       const customer = await Customer.findById(customer_id);
+       const contactName= customer.companyName
+      leadData.customerName=contactName
       leadData.customer_id = customer_id;
+     
     } else {
       leadData.customerName = customerName;
+      
     }
     const lead = await Lead.create(leadData);
 
