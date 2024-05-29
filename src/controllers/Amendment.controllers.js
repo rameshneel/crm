@@ -217,20 +217,35 @@ const updateAmendment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, amendment, "Amendment updated successfully"));
 });
 
-const getAmendmentsByStatus = asyncHandler(async (req, res) => {
+const getAmendmentsByStatus = asyncHandler(async (req, res,next) => {
   const { status } = req.query;
+  const activeUser = req.user?._id;
+  const user = await User.findById(activeUser);
  
   try {
-    const amendments = await Amendment.find({ status:status })
+    let amendment
+    if (user.role === "admin") {
+      amendment = await Amendment.find({ status:status })
       .populate("customer")
       .populate("generated_by")
-    res.status(200).json(new ApiResponse(200, amendments, "Amendment updated successfully"));
+    res.status(200).json(new ApiResponse(200, amendment, "Amendment updated successfully"));
+    } else if (user.role === "salesman") {
+       amendment = await Amendment.find({ status:status,generated_by:activeUser})
+      .populate("customer")
+      .populate("generated_by")
+    res.status(200).json(new ApiResponse(200, amendment, "Amendment updated successfully"));
+    }
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error)
   }
 });
 
 export { addAmendment, getAllAmendment, getAmendmentById, updateAmendment,getAmendmentsByStatus };
+
+
+
+
 
 // let amendment;
 // if (user.role === "admin") {
