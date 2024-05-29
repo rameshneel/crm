@@ -11,7 +11,7 @@ const customerSchema = new Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required:true
+     
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -20,11 +20,11 @@ const customerSchema = new Schema(
     },
     companyName: {
       type: String,
-      required: true,
+      // required: true, just fo
     },
     contactName: {
       type: String,
-      required: true,
+      // required: true , just for testing
     },
     mobileNo: {
       type: String,
@@ -94,34 +94,71 @@ const customerSchema = new Schema(
 );
 
 
+// customerSchema.pre('save', async function (next) {
+//   const customer = this;
+//   if (customer.isNew) {
+//     const lastCustomer = await mongoose.model('Customer').findOne().sort({ CustomerNo: -1 });
+//     let newCustomerNo = 'HOM101';
+//     if (lastCustomer && lastCustomer.customerNo) {
+//       const lastCustomerNo = lastCustomer.customerNo;
+//       const lastNumber = lastCustomerNo.startsWith('HOM') ? parseInt(lastCustomerNo.replace('HOM', ''), 10) : null;
+//       if (lastNumber !== null) {
+//         let found = true;
+//         let nextNumber = lastNumber + 1;
+//         while (found) {
+//           const potentialCustomerNo = 'HOM' + nextNumber;
+//           const existingCustomer = await mongoose.model('Customer').findOne({ customerNo: potentialCustomerNo });
+//           if (!existingCustomer) {
+//             found = false;
+//             newCustomerNo = potentialCustomerNo;
+//           } else {
+//             nextNumber++;
+//           }
+//         }
+//       }
+//     }
+
+//     customer.customerNo = newCustomerNo;
+//   }
+//   next();
+// });
+
+
 customerSchema.pre('save', async function (next) {
   const customer = this;
-  if (customer.isNew) {
-    const lastCustomer = await mongoose.model('Customer').findOne().sort({ CustomerNo: -1 });
-    let newCustomerNo = 'HOM101';
-    if (lastCustomer && lastCustomer.customerNo) {
-      const lastCustomerNo = lastCustomer.customerNo;
-      const lastNumber = lastCustomerNo.startsWith('HOM') ? parseInt(lastCustomerNo.replace('HOM', ''), 10) : null;
-      if (lastNumber !== null) {
-        let found = true;
-        let nextNumber = lastNumber + 1;
-        while (found) {
-          const potentialCustomerNo = 'HOM' + nextNumber;
-          const existingCustomer = await mongoose.model('Customer').findOne({ customerNo: potentialCustomerNo });
-          if (!existingCustomer) {
-            found = false;
-            newCustomerNo = potentialCustomerNo;
-          } else {
-            nextNumber++;
+  if (customer.isNew && !customer.customerNo) { // Ensure customerNo is not already set
+    try {
+      const lastCustomer = await mongoose.model('Customer').findOne().sort({ customerNo: -1 });
+      let newCustomerNo = 'HOM101';
+      if (lastCustomer && lastCustomer.customerNo) {
+        const lastCustomerNo = lastCustomer.customerNo;
+        const lastNumber = lastCustomerNo.startsWith('HOM') ? parseInt(lastCustomerNo.replace('HOM', ''), 10) : null;
+        if (lastNumber !== null) {
+          let found = true;
+          let nextNumber = lastNumber + 1;
+          while (found) {
+            const potentialCustomerNo = 'HOM' + nextNumber;
+            const existingCustomer = await mongoose.model('Customer').findOne({ customerNo: potentialCustomerNo });
+            if (!existingCustomer) {
+              found = false;
+              newCustomerNo = potentialCustomerNo;
+            } else {
+              nextNumber++;
+            }
           }
         }
       }
-    }
 
-    customer.customerNo = newCustomerNo;
+      customer.customerNo = newCustomerNo;
+      next();
+    } catch (error) {
+      next(error); // Pass any errors to the next middleware
+    }
+  } else {
+    next(); // If customerNo is already set or isNew is false, proceed to the next middleware
   }
-  next();
 });
+
 
 const Customer = mongoose.model("Customer", customerSchema);
 

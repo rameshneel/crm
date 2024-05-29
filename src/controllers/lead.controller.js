@@ -7,31 +7,91 @@ import { isValidObjectId } from "mongoose";
 import mongoose from 'mongoose';
 import Customer from "../models/customer.model.js";
 
+
+// export const addLead = asyncHandler(async (req, res, next) => {
+//   const userId = req.user?._id;
+//   const { customer_id } = req.params;
+//   if (!isValidObjectId(customer_id)) {
+//     return next(new ApiError(400, "Invalid customer_id"));
+//   }
+  
+//   try {
+//     const { lead_type,outcome,orderForecast,contactPerson,mobileNumber,
+//        notes,landlineNumber,currentWebsite,emailAddress,customerName} = req.body;
+//     const user = await User.findById(userId);
+//     if (!user) {
+//       return next(new ApiError(404, "User does not exist"));
+//     }
+
+//     const lead = await Lead.create({
+//       customer_id,
+//       generated_by: userId,
+//       lead_type,
+//       outcome,
+//       orderForecast,
+//       contactPerson,
+//       mobileNumber,
+//       landlineNumber,
+//       currentWebsite,
+//       emailAddress,
+//       customerName,
+//       notes,
+//     });
+
+//     return res.status(201).json(new ApiResponse(200, lead, "Lead added successfully"));
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
+
 export const addLead = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { customer_id } = req.params;
-  if (!isValidObjectId(customer_id)) {
+  const { customerName } = req.body;
+
+  if (!customer_id && !customerName) {
+    return next(new ApiError(400, "Either customer_id or customerName must be provided"));
+  }
+
+  if (customer_id && customerName) {
+    return next(new ApiError(400, "Only one of customer_id or customerName should be provided"));
+  }
+
+  if (customer_id && !isValidObjectId(customer_id)) {
     return next(new ApiError(400, "Invalid customer_id"));
   }
-  
+
   try {
-   
-    const { lead_type, existing_website, outcome, orderforced, notes, status } = req.body;
+    const {
+      lead_type, outcome, orderForecast, contactPerson, mobileNumber,
+      notes, landlineNumber, currentWebsite, emailAddress
+    } = req.body;
+    
     const user = await User.findById(userId);
     if (!user) {
       return next(new ApiError(404, "User does not exist"));
     }
 
-    const lead = await Lead.create({
-      customer_id,
+    const leadData = {
       generated_by: userId,
       lead_type,
-      existing_website,
       outcome,
-      orderforced,
+      orderForecast,
+      contactPerson,
+      mobileNumber,
+      landlineNumber,
+      currentWebsite,
+      emailAddress,
       notes,
-      status,
-    });
+    };
+
+    if (customer_id) {
+      leadData.customer_id = customer_id;
+    } else {
+      leadData.customerName = customerName;
+    }
+    const lead = await Lead.create(leadData);
 
     return res.status(201).json(new ApiResponse(200, lead, "Lead added successfully"));
   } catch (error) {
@@ -120,20 +180,41 @@ export const getAllLeads = asyncHandler(async (req, res, next) => {
 //   }
 // });
 
+
 export const updateLead = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
   const userId = req.user?._id;
+
   if (!isValidObjectId(lead_id)) {
     return next(new ApiError(400, "Invalid lead_id"));
   }
 
+  const {
+    lead_type,
+    outcome,
+    orderForecast,
+    contactPerson,
+    mobileNumber,
+    notes,
+    landlineNumber,
+    currentWebsite,
+    emailAddress,
+    // for customers
+    // companyName,
+    // contactName,
+    // streetNoName,
+    town,
+    county,
+    postcode,
+    status
+  } = req.body;
+
   try {
-    const { lead_type, existing_website, outcome, orderforced, notes, status } = req.body;
     const user = await User.findById(userId);
     if (!user) {
       return next(new ApiError(404, "User does not exist"));
     }
-
+     
     const lead = await Lead.findById(lead_id);
     if (!lead) {
       return next(new ApiError(404, "Lead not found"));
@@ -143,15 +224,64 @@ export const updateLead = asyncHandler(async (req, res, next) => {
       return next(new ApiError(401, "Unauthorized request"));
     }
 
+    // Update lead details
     lead.lead_type = lead_type;
-    lead.existing_website = existing_website;
+    lead.currentWebsite = currentWebsite;
     lead.outcome = outcome;
     lead.updated_by = user._id;
-    lead.orderforced = orderforced;
+    lead.orderForecast = orderForecast;
     lead.notes = notes;
-    lead.status = status;
-
+    lead.contactPerson = contactPerson;
+    lead.mobileNumber = mobileNumber;
+    lead.landlineNumber = landlineNumber;
+    lead.emailAddress = emailAddress;
     await lead.save();
+
+    if (outcome === 'SOLD') {
+      try {
+        const customerData = {
+          companyName:lead.customerName,
+          contactName: contactPerson,
+          mobileNo: mobileNumber,
+          landlineNo: landlineNumber,
+          customerEmail: emailAddress,
+          town,
+          county,
+          postcode,
+          url: currentWebsite,
+          createdBy: userId,
+          status
+        };
+        // console.log(customerData);
+        if (lead.customer_id) {
+          const customer = await Customer.findById(lead.customer_id);
+          console.log(customer);
+          if (!customer) {
+            return next(new ApiError(404, "Customer not found"));
+          }
+          await Customer.findByIdAndUpdate(lead.customer_id);
+        } else {
+          console.log("Before saving new customer");
+          const newCustomer = new Customer(customerData);
+          try {
+            await newCustomer.save();
+            console.log("After saving new customer");
+          } catch (saveError) {
+            console.error("Error saving new customer:", saveError);
+            return res.status(500).json({
+              success: false,
+              error: "Failed to save new customer",
+              message: saveError.message 
+            });
+          }
+          
+        }
+        await Lead.findByIdAndDelete(lead_id);
+        return res.status(200).json(new ApiResponse(200, null, "Lead updated and customer processed successfully"));
+      } catch (error) {
+        return next(new ApiError(500, "Failed to process customer or delete lead"));
+      }
+    }
 
     return res.status(200).json(new ApiResponse(200, lead, "Lead updated successfully"));
   } catch (error) {
@@ -188,7 +318,6 @@ export const deleteLead = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
-
 
 
 export const LeadDetails = asyncHandler(async (req, res,next) => {

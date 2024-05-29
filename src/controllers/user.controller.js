@@ -29,7 +29,7 @@ const generateAccessAndRefereshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res, next) => {
-  const { fullName, email, password, role, mobileNo, address,jobtitle } = req.body;
+  const { fullName, email, password, role, mobileNo, address,jobtitle,timeZone } = req.body;
 
   try {
     if ([fullName, email, password, role, mobileNo].some((field) => field?.trim() === "")) {
@@ -87,6 +87,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
       mobileNo,
       address,
       jobtitle,
+      timeZone
     });
 
     const createdUser = await User.findById(user._id).select(

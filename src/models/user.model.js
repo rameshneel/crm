@@ -60,9 +60,9 @@ const userSchema = new Schema(
     // dateTime: {
     //   type: Date,
     // },
-    // timeZone:{
-    //   type:String,
-    // }
+    timeZone:{
+      type:String,
+    }
   },
   {
     timestamps: true,

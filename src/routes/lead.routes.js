@@ -5,8 +5,11 @@ import { addAppointment, deleteAppointment, getAppointmentsByDate, updateAppoint
 
 const router = express.Router();
 router.use(verifyJWT); 
-
+//for params
 router.post("/:customer_id",addLead);
+//for req.body
+router.post("/", addLead);
+//all route
 router.get("/:lead_id",LeadDetails);
 router.patch("/update/:lead_id",updateLead);
 router.get("/",getAllLeads); 
