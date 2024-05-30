@@ -94,8 +94,12 @@ export const addLead = asyncHandler(async (req, res, next) => {
       leadData.customer_id = customer_id;
      
     } else {
+      const exsitsemailincustomer = await Customer.findOne({customerEmail:emailAddress});
+      console.log("CUSTOMER ",exsitsemailincustomer);
+       if(exsitsemailincustomer){
+        throw new ApiError(400,"Email already exists in Customer")
+       }
       leadData.customerName = customerName;
-      
     }
     const lead = await Lead.create(leadData);
 
@@ -264,13 +268,16 @@ export const updateLead = asyncHandler(async (req, res, next) => {
         // console.log(customerData);
         if (lead.customer_id) {
           const customer = await Customer.findById(lead.customer_id);
-          console.log(customer);
           if (!customer) {
             return next(new ApiError(404, "Customer not found"));
           }
           await Customer.findByIdAndUpdate(lead.customer_id);
         } else {
-          console.log("Before saving new customer");
+          // const existingCustomer = await Customer.findOne({ customerEmail: customerData.customerEmail });
+          // if (existingCustomer) {
+          //     throw new ApiError(400, "Email already exists in Customer");
+          // }
+          
           const newCustomer = new Customer(customerData);
           try {
             await newCustomer.save();
@@ -327,7 +334,6 @@ export const deleteLead = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
-
 
 export const LeadDetails = asyncHandler(async (req, res,next) => {
   const { lead_id } = req.params;

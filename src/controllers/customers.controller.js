@@ -79,6 +79,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       logo:avatarurl
       ,ordersRenewals,
       createdBy: activeUser,
+      vatInvoice:"https://ocw.mit.edu/courses/6-096-introduction-to-c-january-iap-2011/ccef8a1ec946adb5179925311e276a7b_MIT6_096IAP11_lec02.pdf"
     });
 
     const customer = await newCustomer.save();
@@ -99,7 +100,9 @@ const customerList = asyncHandler(async (req, res, next) => {
     let customers;
 
     if (user.role === "admin") {
-      customers = await Customer.find();
+      customers = await Customer.find().populate({
+        path: 'createdBy',
+      });
     } else if (user.role === "salesman") {
       customers = await Customer.find({ createdBy: activeUser });
     }

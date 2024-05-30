@@ -94,50 +94,20 @@ const customerSchema = new Schema(
 );
 
 
-// customerSchema.pre('save', async function (next) {
-//   const customer = this;
-//   if (customer.isNew) {
-//     const lastCustomer = await mongoose.model('Customer').findOne().sort({ CustomerNo: -1 });
-//     let newCustomerNo = 'HOM101';
-//     if (lastCustomer && lastCustomer.customerNo) {
-//       const lastCustomerNo = lastCustomer.customerNo;
-//       const lastNumber = lastCustomerNo.startsWith('HOM') ? parseInt(lastCustomerNo.replace('HOM', ''), 10) : null;
-//       if (lastNumber !== null) {
-//         let found = true;
-//         let nextNumber = lastNumber + 1;
-//         while (found) {
-//           const potentialCustomerNo = 'HOM' + nextNumber;
-//           const existingCustomer = await mongoose.model('Customer').findOne({ customerNo: potentialCustomerNo });
-//           if (!existingCustomer) {
-//             found = false;
-//             newCustomerNo = potentialCustomerNo;
-//           } else {
-//             nextNumber++;
-//           }
-//         }
-//       }
-//     }
-
-//     customer.customerNo = newCustomerNo;
-//   }
-//   next();
-// });
-
-
 customerSchema.pre('save', async function (next) {
   const customer = this;
-  if (customer.isNew && !customer.customerNo) { // Ensure customerNo is not already set
+  if (customer.isNew && !customer.customerNo) { 
     try {
       const lastCustomer = await mongoose.model('Customer').findOne().sort({ customerNo: -1 });
-      let newCustomerNo = 'HOM101';
+      let newCustomerNo = 'HOM:101';
       if (lastCustomer && lastCustomer.customerNo) {
         const lastCustomerNo = lastCustomer.customerNo;
-        const lastNumber = lastCustomerNo.startsWith('HOM') ? parseInt(lastCustomerNo.replace('HOM', ''), 10) : null;
+        const lastNumber = lastCustomerNo.startsWith('HOM:') ? parseInt(lastCustomerNo.replace('HOM:', ''), 10) : null;
         if (lastNumber !== null) {
           let found = true;
           let nextNumber = lastNumber + 1;
           while (found) {
-            const potentialCustomerNo = 'HOM' + nextNumber;
+            const potentialCustomerNo = 'HOM:' + nextNumber;
             const existingCustomer = await mongoose.model('Customer').findOne({ customerNo: potentialCustomerNo });
             if (!existingCustomer) {
               found = false;
