@@ -244,6 +244,9 @@ export const updateLead = asyncHandler(async (req, res, next) => {
     await lead.save();
 
     if (outcome === 'SOLD') {
+      if (!town || !county || !postcode) {
+        throw new ApiError(400,"Town,County,Postcode are Required");
+    }
       try {
         const customerData = {
           companyName:lead.customerName,
@@ -341,16 +344,15 @@ export const LeadDetails = asyncHandler(async (req, res,next) => {
       .populate({
         path: 'generated_by',
       });
-  console.log("lead",lead);
+
     if (!lead) {
       throw new ApiError("Lead Not Found!");
     }
 
-    // Extract necessary fields from the populated data
-    const { companyName, contactName } = lead.customer_id;
-    const { fullName } = lead.generated_by;
+    
+    // const { companyName, contactName } = lead.customer_id;
+    // const { fullName } = lead.generated_by;
 
-    // Now you can use companyName, contactName, and fullName as needed
     return res.status(200).json(new ApiResponse(200, lead, "Leads retrieved successfully"));
   } catch (error) {
    next(error)
