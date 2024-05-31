@@ -296,8 +296,10 @@ const updateOrder = asyncHandler(async (req, res, next) => {
         return next(new ApiError(401, "Unauthorized request"));
       }
   
-      await order.remove();
-  
+    //   await order.remove();
+       
+      await Order.findByIdAndDelete(order_id);
+     
       return res.status(200).json(new ApiResponse(200, {}, "Order deleted successfully"));
     } catch (error) {
       return next(error);
