@@ -276,7 +276,7 @@ const updateOrder = asyncHandler(async (req, res, next) => {
     const { order_id } = req.params;
     const userId = req.user?._id;
   
-    if (!mongoose.isValidObjectId(order_id)) {
+    if (!isValidObjectId(order_id)) {
       return next(new ApiError(400, "Invalid order ID"));
     }
   
