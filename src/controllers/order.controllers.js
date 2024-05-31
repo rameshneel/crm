@@ -123,7 +123,7 @@ import { User } from "../models/user.model.js";
         orders = await Order.find({ createdBy: user_id }).populate({
           path: 'customer',
         }).populate({
-          path: 'user_id',
+          path: 'createdBy',
           select: 'fullName avatar',
         });
       } else {
@@ -295,9 +295,6 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       if (user.role !== 'admin' && order.createdBy.toString() !== userId.toString()) {
         return next(new ApiError(401, "Unauthorized request"));
       }
-  
-    //   await order.remove();
-       
       await Order.findByIdAndDelete(order_id);
      
       return res.status(200).json(new ApiResponse(200, {}, "Order deleted successfully"));

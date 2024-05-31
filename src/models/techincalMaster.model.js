@@ -1,11 +1,29 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const techincalMasterSchema = new Schema({
-  customer: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
-  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  url: { type: String, required: true },
-  registerar: { type: String, required: true },
-  managedBy: {
+  customer: {
+     type: Schema.Types.ObjectId, 
+     ref: "Customer", 
+     required: true 
+    },
+    createdBy: { 
+    type: Schema.Types.ObjectId, 
+    ref: "User", 
+    required: true 
+  },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+    url: {
+      type: String,
+      required: true 
+    },
+  registerar:{ 
+    type: String, 
+    required: true 
+  },
+  managedBy:{
     type: String,
     enum: [
       "Client",
@@ -18,8 +36,11 @@ const techincalMasterSchema = new Schema({
     ],
     required: true,
   },
-  domainExpiryDate: { type: Date, required: true },
-  websiteHostedBy: {
+  domainExpiryDate: { 
+    type: Date, 
+    required: true 
+  },
+  websiteHostedBy:{
     type: String,
     enum: [
       "High Oaks Media",
@@ -45,7 +66,9 @@ const techincalMasterSchema = new Schema({
     ],
     required: true,
   },
-  notes: { type: String, required: true },
+  notes: { 
+    type: String, 
+  },
 });
 
 const TechincalMaster = mongoose.model(

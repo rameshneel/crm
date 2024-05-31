@@ -37,6 +37,7 @@ import leadRoutes from "./routes/lead.routes.js";
 import newCustomerRoutes from "./routes/newCustomer.routes.js";
 import amendmentRoutes from "./routes/amendment.routes.js";
 import orderRoutes from "./routes/order.routes.js";
+import technicalMasterRoutes from "./routes/techincalMaster.routes.js";
 
 //routes declaration
 app.use("/api/users", userRouter);
@@ -45,6 +46,7 @@ app.use("/api/leads", leadRoutes);
 app.use("/api/newcustomers", newCustomerRoutes);
 app.use("/api/amendments", amendmentRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/technicalmasters', technicalMasterRoutes);
 
 // app.use((err, req, res, next) => {
 //     console.log(err.stack);
