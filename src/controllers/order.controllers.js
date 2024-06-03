@@ -50,6 +50,41 @@ import { User } from "../models/user.model.js";
     return next(new ApiError(400, "Required fields are missing"));
   }
 
+  let avatarurl = "";
+  console.log(avatarurl);
+
+  if (req.file && req.file.path) {
+    const avatarLocalPath = req.file.path;
+    console.log(avatarLocalPath);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", fs.createReadStream(avatarLocalPath));
+      const apiURL =
+        "https://crm.neelnetworks.org/public/file_upload/api.php";
+      const apiResponse = await axios.post(apiURL, formData, {
+        headers: {
+          ...formData.getHeaders(),
+        },
+      });
+      console.log(apiResponse.data);
+      avatarurl = apiResponse.data?.img_upload_path;
+      if (!avatarurl) {
+        throw new Error("img_upload_path not found in API response");
+      }
+
+      fs.unlink(avatarLocalPath, (err) => {
+        if (err) {
+          console.error("Error removing avatar file:", err.message);
+        } else {
+          console.log("Avatar file removed successfully");
+        }
+      });
+    } catch (error) {
+      console.error("Error uploading avatar:", error.message);
+    }
+  } 
+
   if (
     orderType === "New Business" &&
     (!req.body.numberOfKeyPhrase || !req.body.numberOfKeyAreas)
@@ -77,7 +112,7 @@ import { User } from "../models/user.model.js";
       customerAccountNumber,
       customerSortCode,
       googleEmailRenewCampaign,
-      customerSignature,
+      customerSignature:avatarurl,
       renewalDate2024,
     //   contactName,
     //   mobileNo,
@@ -212,7 +247,6 @@ const updateOrder = asyncHandler(async (req, res, next) => {
         cashFlow,
         ddSetUp,
         invoiceSent,
-        generalMaster,
         vatInvoice,
         // contactName,
         // mobileNo,
@@ -251,7 +285,7 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       order.cashFlow = cashFlow;
       order.ddSetUp = ddSetUp;
       order.invoiceSent = invoiceSent;
-      order.generalMaster = generalMaster;
+      // order.generalMaster = generalMaster;
       order.vatInvoice = vatInvoice;
     //   order.contactName = contactName;
     //   order.mobileNo = mobileNo;
