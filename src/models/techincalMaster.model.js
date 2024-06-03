@@ -4,12 +4,10 @@ const techincalMasterSchema = new Schema({
   customer: {
      type: Schema.Types.ObjectId, 
      ref: "Customer", 
-     required: true 
     },
     createdBy: { 
     type: Schema.Types.ObjectId, 
     ref: "User", 
-    required: true 
   },
   updatedBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -17,54 +15,54 @@ const techincalMasterSchema = new Schema({
   },
     url: {
       type: String,
-      required: true 
+     
     },
   registerar:{ 
     type: String, 
-    required: true 
+   
   },
   managedBy:{
     type: String,
     enum: [
       "Client",
       "High Oaks Media",
-      "The directory guys",
+      "The Directory Guys",
       "Darker IT Solutions",
-      "yell.com",
-      "easyspace",
-      "PUK",
+      "Yell.com",
+      "Easyspace",
+      "PUK"
     ],
-    required: true,
+   
   },
   domainExpiryDate: { 
     type: Date, 
-    required: true 
+   
   },
   websiteHostedBy:{
     type: String,
     enum: [
       "High Oaks Media",
-      "client",
-      "not known",
-      "promote",
-      "PUK old server",
-      "thundercloud",
-      "the directory guys",
+      "Client",
+      "Not Known",
+      "Promote",
+      "PUK Old Server",
+      "ThunderCloud",
+      "The Directory Guys",
     ],
-    required: true,
+   
   },
   whoHostsEmail: {
     type: String,
     enum: [
-      "HOM/webmail",
-      "promote",
+      "HOM/Webmail",
+      "Promote",
       "HOM/Gmail",
-      "HOM/ox app suite",
-      "client",
+      "HOM/Ox App Suite",
+      "Client",
       "HOM/Microsoft",
       "N/A",
     ],
-    required: true,
+   
   },
   notes: { 
     type: String, 

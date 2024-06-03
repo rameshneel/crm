@@ -57,8 +57,10 @@ const getTechnicalMasterById = asyncHandler(async (req, res, next) => {
 
   try {
     const techMaster = await TechincalMaster.findById(id)
-      .populate("customer")
-      .populate("createdBy");
+      .populate("createdBy").populate({
+        path: "createdBy",
+        select: "fullName avatar",
+      });
 
     if (!techMaster) {
       return next(new ApiError(404, "Technical Master not found"));
@@ -150,7 +152,7 @@ const deleteTechnicalMaster = asyncHandler(async (req, res, next) => {
     ) {
       return next(new ApiError(401, "Unauthorized request"));
     }
-    await techMaster.remove();
+    await TechincalMaster.findByIdAndDelete(id)
 
     res
       .status(200)
@@ -167,14 +169,14 @@ const getAllTechnicalMasters = asyncHandler(async (req, res, next) => {
     if (!user) {
       return next(new ApiError(404, "User not found"));
     }
-    lettechMasters;
+    let techincalMasters;
     if (user.role === "admin") {
-      techMasters = await TechincalMaster.find().populate("customer").populate({
+      techincalMasters = await TechincalMaster.find().populate("customer").populate({
         path: "createdBy",
         select: "fullName avatar",
       });
     } else if (user.role === "salesman") {
-      techMasters = await TechincalMaster.find({ createdBy: user_id })
+      techincalMasters = await TechincalMaster.find({ createdBy: user_id })
         .populate("customer")
         .populate({
           path: "createdBy",
@@ -188,7 +190,7 @@ const getAllTechnicalMasters = asyncHandler(async (req, res, next) => {
       .json(
         new ApiResponse(
           200,
-          techMasters,
+          techincalMasters,
           "Technical Masters retrieved successfully"
         )
       );
