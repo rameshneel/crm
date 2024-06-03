@@ -16,7 +16,7 @@ const orderSchema = new Schema(
       required: true,
       },
       dateOfOrder:{
-       type:Date
+       type:Date,
       },
     orderType: {
         type:String,
@@ -25,12 +25,11 @@ const orderSchema = new Schema(
     },
     orderNo: {
         type: String,
-      
     },
     renewalStatus: {
         type:String,
-        enum: ["Meeting Booked","Sold","Dropped","Still to Contact","Hosting Only"],
-       
+        enum: ["Meeting Booked","Sold","Dropped","Still to Contact","Hosting Only",""],
+        required: true,
     },
     renewalNotes: {
         type: String,
@@ -42,7 +41,7 @@ const orderSchema = new Schema(
         type: String
     },
     dateOfOrder: {
-        type:String,
+        type:Date,
         required: true,
     },
     orderValue: {
@@ -59,19 +58,20 @@ const orderSchema = new Schema(
     },
     DdMonthly:{
         type: Number,
-       
+        required: true,
     },
     DdChange:{
         type: Number,
        
     },
     dateOfFirstDd:{
-        type: String,
-       
+        type: Date,
+        required: true,
     },
     depositMethod:{
         type: String,
-        enum: ["Cash Cheque","Direct","Direct Debit","N/A","Square Card Machine","SumUp"]
+        enum: ["Cash Cheque","Direct","Direct Debit","N/A","Square Card Machine","SumUp","Bank Transfer"],
+        required: true,
     },
     customerAccountName:{
         type: String
@@ -82,50 +82,50 @@ const orderSchema = new Schema(
     customerSortCode:{
         type: String
     },
-    customerSortCode:{
-        type: String
-    },
     googleEmailRenewCampaign:{
         type: String,
-        enum: ["N/A","Needs to be set up"]
+        enum: ["N/A","Needs to be set up", ""],
+        required: true,
     },
     customerSignature:{
         type: String
     },
     renewalDate2024:{
-        type: String,
-        required: true,
+        type: Date,
+       
     },
     increase:{
-        type: String,
-       
+        type: Number,
+        required: true,
     },
     expected2024OrderValue:{
-        type: String,
-       
+        type: Number,
+        required: true,
     },
     numberOfKeyPhrase:{
-        type: String,
+        type: Number,
     },
     numberOfKeyAreas:{
-        type: String,
+        type: Number,
     },
     cashFlow:{
-        type:Number
+        type:Number,
+        required: true,
     },
     ddSetUp:{
         type: String,
-        enum: ["Done","Blank","N/A"]
+        enum: ["Done","","N/A"],
+        required: true,
     },
     invoiceSent:{
         type: String,
-        enum:["Done","N/A","Blank"]
+        enum:["Done","","N/A"],
     },
-    generalMaster:{
-        type: String,
-    },
+    // generalMaster:{
+    //     type: String,
+    // },
     vatInvoice:{
-        type: String,
+        type: [String],
     },
     buildingAddress:{
       type: String,
