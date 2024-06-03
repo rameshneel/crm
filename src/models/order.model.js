@@ -96,11 +96,11 @@ const orderSchema = new Schema(
     },
     increase:{
         type: Number,
-        required: true,
+        // required: true,
     },
     expected2024OrderValue:{
         type: Number,
-        required: true,
+        // required: true,
     },
     numberOfKeyPhrase:{
         type: Number,
@@ -110,16 +110,16 @@ const orderSchema = new Schema(
     },
     cashFlow:{
         type:Number,
-        required: true,
+        // required: true,
     },
     ddSetUp:{
         type: String,
         enum: ["Done","","N/A"],
-        required: true,
+        // required: true,
     },
     invoiceSent:{
         type: String,
-        enum:["Done","","N/A"],
+        // enum:["Done","","N/A"],
     },
     // generalMaster:{
     //     type: String,
