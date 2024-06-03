@@ -9,7 +9,7 @@ router.use(verifyJWT);
 router.post("/",uploadFile1, createCustomer);
 router.get("/:customerId",getCustomerById);
 router.get("/",customerList);
-router.patch("/update/:customer_id",updateCustomer);
+router.patch("/update/:customer_id",uploadFile1,updateCustomer);
 export default router;
 
 

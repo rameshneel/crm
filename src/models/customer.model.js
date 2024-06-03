@@ -35,7 +35,6 @@ const customerSchema = new Schema(
     customerEmail: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
     },
