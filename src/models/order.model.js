@@ -28,8 +28,8 @@ const orderSchema = new Schema(
     },
     renewalStatus: {
         type:String,
-        enum: ["Meeting Booked","Sold","Dropped","Still to Contact","Hosting Only",""],
-        // required: true,
+        enum: ["Meeting Booked","Sold","Dropped","Still to Contact",""],
+        // required: true
     },
     renewalNotes: {
         type: String,
@@ -70,7 +70,7 @@ const orderSchema = new Schema(
     },
     depositMethod:{
         type: String,
-        enum: ["Cash Cheque","Direct","Direct Debit","N/A","Square Card Machine","SumUp","Bank Transfer"],
+        enum: ["Cash","Cheque","Direct Debit","N/A","Square Card Machine","SumUp","Bank Transfer"],
         required: true,
     },
     customerAccountName:{
