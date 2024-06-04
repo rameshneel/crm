@@ -196,117 +196,215 @@ import { User } from "../models/user.model.js";
     }
   });
 
-const updateOrder = asyncHandler(async (req, res, next) => {
-    const { order_id } = req.params;
-    const userId = req.user?._id;
+// const updateOrder = asyncHandler(async (req, res, next) => {
+//     const { order_id } = req.params;
+//     const userId = req.user?._id;
   
-    if (!isValidObjectId(order_id)) {
-      return next(new ApiError(400, "Invalid order ID"));
-    }
+//     if (!isValidObjectId(order_id)) {
+//       return next(new ApiError(400, "Invalid order ID"));
+//     }
   
-    try {
-      const user = await User.findById(userId);
-      if (!user) {
-        return next(new ApiError(404, "User not found"));
-      }
+//     try {
+//       const user = await User.findById(userId);
+//       if (!user) {
+//         return next(new ApiError(404, "User not found"));
+//       }
   
-      const order = await Order.findById(order_id);
-      if (!order) {
-        return next(new ApiError(404, "Order not found"));
-      }
+//       const order = await Order.findById(order_id);
+//       if (!order) {
+//         return next(new ApiError(404, "Order not found"));
+//       }
   
      
-      if (user.role !== 'admin' && order.createdBy.toString() !== userId.toString()) {
-        return next(new ApiError(401, "Unauthorized request"));
-      }
+//       if (user.role !== 'admin' && order.createdBy.toString() !== userId.toString()) {
+//         return next(new ApiError(401, "Unauthorized request"));
+//       }
   
-      const {
-        orderType,
-        renewalStatus,
-        renewalNotes,
-        renewalValue,
-        renewalApptDandT,
-        dateOfOrder,
-        orderValue,
-        deposit,
-        numberOfInstallments,
-        DdMonthly,
-        DdChange,
-        dateOfFirstDd,
-        depositMethod,
-        customerAccountName,
-        customerAccountNumber,
-        customerSortCode,
-        googleEmailRenewCampaign,
-        customerSignature,
-        renewalDate2024,
-        increase,
-        expected2024OrderValue,
-        numberOfKeyPhrase,
-        numberOfKeyAreas,
-        cashFlow,
-        ddSetUp,
-        invoiceSent,
-        vatInvoice,
-        // contactName,
-        // mobileNo,
-        // landlineNo,
-        // customerEmail,
-        buildingAddress,
-        // streetNoName,
-        // town,
-        // county,
-        // postcode
-      } = req.body;
+//       const {
+//         orderType,
+//         renewalStatus,
+//         renewalNotes,
+//         renewalValue,
+//         renewalApptDandT,
+//         dateOfOrder,
+//         orderValue,
+//         deposit,
+//         numberOfInstallments,
+//         DdMonthly,
+//         DdChange,
+//         dateOfFirstDd,
+//         depositMethod,
+//         customerAccountName,
+//         customerAccountNumber,
+//         customerSortCode,
+//         googleEmailRenewCampaign,
+//         customerSignature,
+//         renewalDate2024,
+//         increase,
+//         expected2024OrderValue,
+//         numberOfKeyPhrase,
+//         numberOfKeyAreas,
+//         cashFlow,
+//         ddSetUp,
+//         invoiceSent,
+//         vatInvoice,
+//         // contactName,
+//         // mobileNo,
+//         // landlineNo,
+//         // customerEmail,
+//         buildingAddress,
+//         // streetNoName,
+//         // town,
+//         // county,
+//         // postcode
+//       } = req.body;
   
-      order.orderType = orderType;
-      order.renewalStatus = renewalStatus;
-      order.renewalNotes = renewalNotes;
-      order.renewalValue = renewalValue;
-      order.renewalApptDandT = renewalApptDandT;
-      order.dateOfOrder = dateOfOrder;
-      order.orderValue = orderValue;
-      order.deposit = deposit;
-      order.numberOfInstallments = numberOfInstallments;
-      order.DdMonthly = DdMonthly;
-      order.DdChange = DdChange;
-      order.dateOfFirstDd = dateOfFirstDd;
-      order.depositMethod = depositMethod;
-      order.customerAccountName = customerAccountName;
-      order.customerAccountNumber = customerAccountNumber;
-      order.customerSortCode = customerSortCode;
-      order.googleEmailRenewCampaign = googleEmailRenewCampaign;
-      order.customerSignature = customerSignature;
-      order.renewalDate2024 = renewalDate2024;
-      order.increase = increase;
-      order.expected2024OrderValue = expected2024OrderValue;
-      order.numberOfKeyPhrase = numberOfKeyPhrase;
-      order.numberOfKeyAreas = numberOfKeyAreas;
-      order.cashFlow = cashFlow;
-      order.ddSetUp = ddSetUp;
-      order.invoiceSent = invoiceSent;
-      // order.generalMaster = generalMaster;
-      order.vatInvoice = vatInvoice;
-    //   order.contactName = contactName;
-    //   order.mobileNo = mobileNo;
-    //   order.landlineNo = landlineNo;
-    //   order.customerEmail = customerEmail;
-      order.buildingAddress = buildingAddress;
-    //   order.streetNoName = streetNoName;
-    //   order.town = town;
-    //   order.county = county;
-    //   order.postcode = postcode;
-      order.updatedBy=userId;
+//       order.orderType = orderType;
+//       order.renewalStatus = renewalStatus;
+//       order.renewalNotes = renewalNotes;
+//       order.renewalValue = renewalValue;
+//       order.renewalApptDandT = renewalApptDandT;
+//       order.dateOfOrder = dateOfOrder;
+//       order.orderValue = orderValue;
+//       order.deposit = deposit;
+//       order.numberOfInstallments = numberOfInstallments;
+//       order.DdMonthly = DdMonthly;
+//       order.DdChange = DdChange;
+//       order.dateOfFirstDd = dateOfFirstDd;
+//       order.depositMethod = depositMethod;
+//       order.customerAccountName = customerAccountName;
+//       order.customerAccountNumber = customerAccountNumber;
+//       order.customerSortCode = customerSortCode;
+//       order.googleEmailRenewCampaign = googleEmailRenewCampaign;
+//       order.customerSignature = customerSignature;
+//       order.renewalDate2024 = renewalDate2024;
+//       order.increase = increase;
+//       order.expected2024OrderValue = expected2024OrderValue;
+//       order.numberOfKeyPhrase = numberOfKeyPhrase;
+//       order.numberOfKeyAreas = numberOfKeyAreas;
+//       order.cashFlow = cashFlow;
+//       order.ddSetUp = ddSetUp;
+//       order.invoiceSent = invoiceSent;
+//       // order.generalMaster = generalMaster;
+//       order.vatInvoice = vatInvoice;
+//     //   order.contactName = contactName;
+//     //   order.mobileNo = mobileNo;
+//     //   order.landlineNo = landlineNo;
+//     //   order.customerEmail = customerEmail;
+//       order.buildingAddress = buildingAddress;
+//     //   order.streetNoName = streetNoName;
+//     //   order.town = town;
+//     //   order.county = county;
+//     //   order.postcode = postcode;
+//       order.updatedBy=userId;
   
-      await order.save();
+//       await order.save();
   
-      return res.status(200).json(new ApiResponse(200, order, "Order updated successfully"));
-    } catch (error) {
-      return next(error);
-    }
-  });
+//       return res.status(200).json(new ApiResponse(200, order, "Order updated successfully"));
+//     } catch (error) {
+//       return next(error);
+//     }
+//   });
 
- const deleteOrder = asyncHandler(async (req, res, next) => {
+const updateOrder = asyncHandler(async (req, res, next) => {
+  const { order_id } = req.params;
+  const userId = req.user?._id;
+
+  if (!isValidObjectId(order_id)) {
+    return next(new ApiError(400, "Invalid order ID"));
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return next(new ApiError(404, "User not found"));
+    }
+
+    const order = await Order.findById(order_id);
+    if (!order) {
+      return next(new ApiError(404, "Order not found"));
+    }
+
+    if (user.role !== 'admin' && order.createdBy.toString() !== userId.toString()) {
+      return next(new ApiError(401, "Unauthorized request"));
+    }
+
+    const {
+      orderType,
+      renewalStatus,
+      renewalNotes,
+      renewalValue,
+      renewalApptDandT,
+      dateOfOrder,
+      orderValue,
+      deposit,
+      numberOfInstallments,
+      DdMonthly,
+      DdChange,
+      dateOfFirstDd,
+      depositMethod,
+      customerAccountName,
+      customerAccountNumber,
+      customerSortCode,
+      googleEmailRenewCampaign,
+      customerSignature,
+      renewalDate2024,
+      increase,
+      expected2024OrderValue,
+      numberOfKeyPhrase,
+      numberOfKeyAreas,
+      cashFlow,
+      ddSetUp,
+      invoiceSent,
+      vatInvoice,
+      buildingAddress,
+    } = req.body;
+
+    const updateData = {
+      orderType,
+      renewalStatus,
+      renewalNotes,
+      renewalValue,
+      renewalApptDandT,
+      dateOfOrder,
+      orderValue,
+      deposit,
+      numberOfInstallments,
+      DdMonthly,
+      DdChange,
+      dateOfFirstDd,
+      depositMethod,
+      customerAccountName,
+      customerAccountNumber,
+      customerSortCode,
+      googleEmailRenewCampaign,
+      customerSignature,
+      renewalDate2024,
+      increase,
+      expected2024OrderValue,
+      numberOfKeyPhrase,
+      numberOfKeyAreas,
+      cashFlow,
+      ddSetUp,
+      invoiceSent,
+      vatInvoice,
+      buildingAddress,
+      updatedBy: userId,
+    };
+
+    const updatedOrder = await Order.findByIdAndUpdate(order_id, updateData, { new: true, runValidators: true });
+
+    if (!updatedOrder) {
+      return next(new ApiError(404, "Order not found after update"));
+    }
+
+    return res.status(200).json(new ApiResponse(200, updatedOrder, "Order updated successfully"));
+  } catch (error) {
+    return next(error);
+  }
+});
+
+const deleteOrder = asyncHandler(async (req, res, next) => {
     const { order_id } = req.params;
     const userId = req.user?._id;
   

@@ -29,7 +29,7 @@ const orderSchema = new Schema(
     renewalStatus: {
         type:String,
         enum: ["Meeting Booked","Sold","Dropped","Still to Contact","Hosting Only",""],
-        required: true,
+        // required: true,
     },
     renewalNotes: {
         type: String,
