@@ -6,7 +6,10 @@ const amendmentschema = new Schema(
     customer: {
       type: Schema.Types.ObjectId,
       ref: "Customer",
-      required: true,
+    },
+    refNo: {
+      type: String,
+      unique: true,
     },
     // user: 
     // { 
@@ -22,18 +25,21 @@ const amendmentschema = new Schema(
 
     customer_status: {
         type: String,
-        enum:{ values:["Live Site","Demo Link"],message:'{VALUE} is not supported' }
+        enum:{ values:["Live Site","Demo Link",""],message:'{VALUE} is not supported' },
+        required: true,
     },
     date_complete: {
         type: Date,
     },
     priority: {
       type: String,
-      enum:["Critical","Low"]
+      enum:["Critical","Low",""],
+      required: true,
     },
     status: {
       type: String,
-      enum: ["In Query", "Complete","In Process"],
+      enum: ["In Query", "Complete","In Process",""],
+      required:true,
     },
     generated_by: 
     { 
@@ -49,6 +55,41 @@ const amendmentschema = new Schema(
   },
   { timestamps: true }
 );
+
+amendmentschema.pre('save', async function (next) {
+  const amendment = this;
+  if (amendment.isNew && !amendment.refNo) { 
+    try {
+      const lastAmendment = await mongoose.model('Amendment').findOne().sort({ refNo: -1 });
+      let newAmendmentNo = 'A001';
+      if (lastAmendment && lastAmendment.refNo) {
+        const lastAmendmentNo = lastAmendment.refNo;
+        const lastNumber = lastAmendmentNo.startsWith('A') ? parseInt(lastAmendmentNo.replace('A', ''), 10) : null;
+        if (lastNumber !== null) {
+          let found = true;
+          let nextNumber = lastNumber + 1;
+          while (found) {
+            const potentialAmendmentNo = 'A' + nextNumber;
+            const existingAmendment = await mongoose.model('Amendment').findOne({ refNo: potentialAmendmentNo });
+            if (!existingAmendment) {
+              found = false;
+              newAmendmentNo = potentialAmendmentNo;
+            } else {
+              nextNumber++;
+            }
+          }
+        }
+      }
+
+      amendment.refNo = newAmendmentNo;
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
+    next();
+  }
+});
 
 const Amendment = mongoose.model("Amendment", amendmentschema);
 
