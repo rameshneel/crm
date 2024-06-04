@@ -58,7 +58,7 @@ const orderSchema = new Schema(
     },
     DdMonthly:{
         type: Number,
-        required: true,
+        // required: true,
     },
     DdChange:{
         type: Number,
