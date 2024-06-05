@@ -175,9 +175,40 @@ const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getAllAppointments = asyncHandler(async (req, res, next) => {
+  try {
+    const user_id = req.user?._id;
+    const user = await User.findById(user_id);
+    if (!user) {
+      return next(new ApiError(404, "User not found"));
+    }
+    let appointments;
+    if (user.role === "admin") {
+      appointments = await Appointment.find().populate("lead").populate({
+        path: "createdBy",
+        select: "fullName avatar",
+      });
+    } else {
+      return next(new ApiError(403, "Unauthorized access"));
+    }
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          appointments,
+          "Appointments all retrieved successfully"
+        )
+      );
+  } catch (error) {
+    next(error);
+  }
+});
+
 export {
   addAppointment,
   deleteAppointment,
   updateAppointment,
   getAppointmentsByDate,
+  getAllAppointments
 };

@@ -1,7 +1,7 @@
 import express from "express";
 import { LeadDetails, addLead,getAllLeads, updateLead } from "../controllers/lead.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { addAppointment, deleteAppointment, getAppointmentsByDate, updateAppointment } from "../controllers/appointment.controllers.js";
+import { addAppointment, deleteAppointment, getAllAppointments, getAppointmentsByDate, updateAppointment } from "../controllers/appointment.controllers.js";
 
 const router = express.Router();
 router.use(verifyJWT); 
@@ -20,5 +20,6 @@ router.post("/appointments/:lead_id", addAppointment);
 router.delete("/appointments/:appointment_id", deleteAppointment);
 router.patch("/appointments/update/:appointment_id", updateAppointment);
 router.get("/lead/appointments/:lead_id", getAppointmentsByDate);
+router.get("/",getAllAppointments);
 
 export default router;
