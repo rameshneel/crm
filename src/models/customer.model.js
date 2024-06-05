@@ -11,7 +11,7 @@ const customerSchema = new Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-     
+  
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -84,7 +84,8 @@ const customerSchema = new Schema(
       type: String,
     },
     ordersRenewals:{
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
     },
     
   },
