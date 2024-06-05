@@ -191,6 +191,10 @@ const getAllAppointments = asyncHandler(async (req, res, next) => {
     } else {
       return next(new ApiError(403, "Unauthorized access"));
     }
+
+    if (appointments.length === 0) {
+      throw new ApiError(202, "Appointment not found");
+    }
     res
       .status(200)
       .json(
