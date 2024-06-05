@@ -84,12 +84,12 @@ const orderSchema = new Schema(
     },
     googleEmailRenewCampaign:{
         type: String,
-        enum: ["N/A","Needs to be set up",""],
+        enum: ["N/A","Needs to be set up",' '],
         required: true,
     },
     customerSignature:{
         type: String,
-        required: true,
+        
     },
     renewalDate2024:{
         type: Date,
