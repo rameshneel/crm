@@ -20,6 +20,6 @@ router.post("/appointments/:lead_id", addAppointment);
 router.delete("/appointments/:appointment_id", deleteAppointment);
 router.patch("/appointments/update/:appointment_id", updateAppointment);
 router.get("/lead/appointments/:lead_id", getAppointmentsByDate);
-router.get("/",getAllAppointments);
+router.get("/appointments",getAllAppointments);
 
 export default router;
