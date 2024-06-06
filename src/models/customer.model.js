@@ -11,7 +11,6 @@ const customerSchema = new Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-  
     },
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -57,7 +56,7 @@ const customerSchema = new Schema(
     },
     status :{
       type: String,
-      enum: ["In Process","Live","Site Taken Down","Suspended","Upload","Will Get Cancelled"],
+      enum: ["IN PROCESS","LIVE","SITE TAKEN DOWN","SUSPENDED","UPLOAD","WILL GET CANCELLED"],
     },
     liveDate :{
       type: Date,
@@ -84,8 +83,7 @@ const customerSchema = new Schema(
       type: String,
     },
     ordersRenewals:{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
+      type: String,
     },
     
   },
