@@ -62,7 +62,6 @@ const orderSchema = new Schema(
     },
     DdChange:{
         type: Number,
-       
     },
     dateOfFirstDd:{
         type: Date,
@@ -89,7 +88,7 @@ const orderSchema = new Schema(
     },
     customerSignature:{
         type: String,
-        
+        required: true,
     },
     renewalDate2024:{
         type: Date,
