@@ -32,21 +32,20 @@ import FormData from "form-data";
     renewalDate2024,
 
   } = req.body;
+  console.log("order",orderType);
 
-  if (
-    !customer_id ||
-    !orderType ||
-    !dateOfOrder ||
-    !orderValue ||
-    !deposit ||
-    !numberOfInstallments ||
-    !renewalDate2024 
-  ) {
-    return next(new ApiError(400, "Required fields are missing"));
-  }
-
-
-
+  // if (
+  //   !customer_id ||
+  //   !orderType ||
+  //   !dateOfOrder ||
+  //   !orderValue ||
+  //   !deposit ||
+  //   !numberOfInstallments ||
+  //   !renewalDate2024 
+  // ) {
+  //   return next(new ApiError(400, "Required fields are missing"));
+  // }
+  log
 
   if (
     orderType === "New Business" &&
