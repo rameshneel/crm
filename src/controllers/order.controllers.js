@@ -45,8 +45,7 @@ import FormData from "form-data";
   // ) {
   //   return next(new ApiError(400, "Required fields are missing"));
   // }
-  log
-
+  
   if (
     orderType === "New Business" &&
     (!req.body.numberOfKeyPhrase || !req.body.numberOfKeyAreas)
