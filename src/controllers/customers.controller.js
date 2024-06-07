@@ -180,6 +180,8 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
       ordersRenewals,
     } = req.body;
 
+    const newlivedate= new Date(liveDate)
+
     if (
       ![customerEmail,].some((field) => {
         if (field === undefined) return false;
@@ -258,7 +260,7 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
         url,
         address,
         status,
-        liveDate,
+        liveDate:newlivedate,
         ssl,
         sitemap,
         htAccess,
