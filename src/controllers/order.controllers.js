@@ -386,7 +386,6 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       customerAccountNumber,
       customerSortCode,
       googleEmailRenewCampaign,
-      customerSignature,
       renewalDate2024,
       increase,
       expected2024OrderValue,
