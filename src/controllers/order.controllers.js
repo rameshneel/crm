@@ -17,15 +17,7 @@ import FormData from "form-data";
   }
   const {
      dateOfOrder,
-    //  contactName,
-    //  landlineNo, 
-    //  mobileNo, 
-    //  customerEmail,  
      buildingAddress,
-    // streetNoName,
-    // town,
-    // county,
-    // postcode,
     orderType,
     orderValue, 
     deposit,
@@ -53,40 +45,8 @@ import FormData from "form-data";
     return next(new ApiError(400, "Required fields are missing"));
   }
 
-  // let avatarurl = "";
-  // console.log(avatarurl);
 
-  // if (req.file && req.file.path) {
-  //   const avatarLocalPath = req.file.path;
-  //   console.log(avatarLocalPath);
 
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("file", fs.createReadStream(avatarLocalPath));
-  //     const apiURL =
-  //       "https://crm.neelnetworks.org/public/file_upload/api.php";
-  //     const apiResponse = await axios.post(apiURL, formData, {
-  //       headers: {
-  //         ...formData.getHeaders(),
-  //       },
-  //     });
-  //     console.log(apiResponse.data);
-  //     avatarurl = apiResponse.data?.img_upload_path;
-  //     if (!avatarurl) {
-  //       throw new Error("img_upload_path not found in API response");
-  //     }
-
-  //     fs.unlink(avatarLocalPath, (err) => {
-  //       if (err) {
-  //         console.error("Error removing avatar file:", err.message);
-  //       } else {
-  //         console.log("Avatar file removed successfully");
-  //       }
-  //     });
-  //   } catch (error) {
-  //     console.error("Error uploading avatar:", error.message);
-  //   }
-  // } 
 
   if (
     orderType === "New Business" &&
@@ -99,6 +59,16 @@ import FormData from "form-data";
       )
     );
   }
+
+  const DdMonthly = orderValue -deposit/ numberOfInstallments; 
+  console.log(DdMonthly);
+  const increase = 0.05 * orderValue; 
+  console.log(increase);
+  const expected2024OrderValue = orderValue + increase; 
+  console.log(expected2024OrderValue);
+  const cashFlow = (deposit / orderValue) * 100; 
+  console.log(cashFlow);
+
 
   try {
     const order = new Order({
@@ -117,16 +87,13 @@ import FormData from "form-data";
       googleEmailRenewCampaign,
       customerSignature,
       renewalDate2024,
-    //   contactName,
-    //   mobileNo,
-    //   landlineNo,
-    //   customerEmail,
       buildingAddress,
-    //   streetNoName,
-    //   town,
-    //   county,
-    //   postcode,
+      DdMonthly,
+      increase,
+      expected2024OrderValue,
+      cashFlow,
       numberOfKeyPhrase:
+      
         orderType === "New Business" ? req.body.numberOfKeyPhrase : undefined,
       numberOfKeyAreas:
         orderType === "New Business" ? req.body.numberOfKeyAreas : undefined,
