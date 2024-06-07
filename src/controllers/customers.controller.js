@@ -30,7 +30,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       newGACode,
       ordersRenewals,
     } = req.body;
-
+   const newlivedate= new Date(liveDate)
     const existedUser = await Customer.findOne({
       $or: [{ customerEmail }],
     });
@@ -97,7 +97,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       postcode,
       url,
       status,
-      liveDate,
+      liveDate:newlivedate,
       ssl,
       sitemap,
       htAccess,
