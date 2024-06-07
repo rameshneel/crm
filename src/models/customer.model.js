@@ -19,6 +19,7 @@ const customerSchema = new Schema(
     },
     companyName: {
       type: String,
+      required: true,
       // required: true, just fo
     },
     contactName: {

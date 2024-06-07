@@ -26,7 +26,7 @@ const amendmentschema = new Schema(
     customer_status: {
         type: String,
         enum:{ values:["Live Site","Demo Link",""],message:'{VALUE} is not supported' },
-        required: true,
+        // required: true,
     },
     date_complete: {
         type: Date,
@@ -34,18 +34,18 @@ const amendmentschema = new Schema(
     priority: {
       type: String,
       enum:["Critical","Low",""],
-      required: true,
+      // required: true,
     },
     status: {
       type: String,
       enum: ["In Query", "Complete","In Process",""],
-      required:true,
+      // required:true,
     },
     generated_by: 
     { 
       type: Schema.Types.ObjectId,
        ref: "User",
-        required: true 
+        // required: true 
       },
       updated_by: 
     { 

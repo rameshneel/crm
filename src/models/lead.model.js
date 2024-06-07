@@ -22,7 +22,7 @@ const LeadSchema = new Schema(
     { 
       type: Schema.Types.ObjectId,
        ref: "User",
-        required: true 
+       
       },
       updated_by: 
     { 
@@ -32,7 +32,7 @@ const LeadSchema = new Schema(
     lead_type: {
       type:String,
       enum: ["Referal","Cold call","Contact Metting","Old Client","Promate Client","Renewal"],
-      required: true,
+     
     },
     // existing_website: {
     //   type: String,
@@ -40,7 +40,7 @@ const LeadSchema = new Schema(
     outcome:{
        type :String,
        enum: ["Appointement Made","Callback","Not Interseted","SOLD","Arrange an Appointment"],
-       required: true,
+      
     },
     Appointement:{
       type: Schema.Types.ObjectId,
@@ -54,23 +54,21 @@ const LeadSchema = new Schema(
     },
     contactPerson :{
       type: String,
-      required: true,
+     
     },
     mobileNumber :{
       type: String,
-  
     },
     landlineNumber :{
       type: String,
-
     },
     currentWebsite :{
       type: String,
-  
+
     },
     emailAddress :{
       type: String,
-      required: true,
+     
     },
    
     // status: {
