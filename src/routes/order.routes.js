@@ -9,7 +9,7 @@ router.use(verifyJWT);
 router.post('/add/:customer_id',addOrder);
 router.get('/', getAllOrders);
 router.get("/:order_id",getOrderById)
-router.patch('/update/:order_id',uploadFile2, updateOrder)
+router.patch('/update/:order_id', updateOrder)
 router.delete('/delete/:order_id',deleteOrder);
 
 export default router;
