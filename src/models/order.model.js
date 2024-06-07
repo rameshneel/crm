@@ -11,17 +11,19 @@ const orderSchema = new Schema(
       ref: "User",
     },
     customer:{
+
       type: Schema.Types.ObjectId,
       ref: "Customer",
       required: true,
       },
       dateOfOrder:{
+
        type:Date,
       },
     orderType: {
         type:String,
         enum: ["Renewal","New Business"],
-        required: true,
+        // required: true,
     },
     orderNo: {
         type: String,
@@ -40,94 +42,109 @@ const orderSchema = new Schema(
     renewalApptDandT: {
         type: String
     },
-    dateOfOrder: {
-        type:Date,
-        required: true,
-    },
     orderValue: {
         type: Number,
-        required: true,
+        // required: true,
     },
     deposit: {
         type: Number,
-        required: true,
+        // required: true,
     },
     numberOfInstallments: {
         type: Number,
-        required: true,
+        // required: true,
     },
     DdMonthly:{
+
         type: Number,
         // required: true,
     },
     DdChange:{
+
         type: Number,
     },
     dateOfFirstDd:{
+
         type: Date,
-        required: true,
+        // required: true,
     },
     depositMethod:{
+
         type: String,
         enum: ["Cash","Cheque","Direct Debit","N/A","Square Card Machine","SumUp","Bank Transfer"],
-        required: true,
+        // required: true,
     },
     customerAccountName:{
+
         type: String
     },
     customerAccountNumber:{
+
         type: String
     },
     customerSortCode:{
+
         type: String
     },
     googleEmailRenewCampaign:{
+
         type: String,
         enum: ["N/A","Needs to be set up",' '],
-        required: true,
+        // required: true,
     },
     customerSignature:{
+
         type: String,
-        required: true,
+        // required: true,
     },
     renewalDate2024:{
+
         type: Date,
-       
     },
     increase:{
+
         type: Number,
         // required: true,
     },
     expected2024OrderValue:{
+
         type: Number,
         // required: true,
     },
     numberOfKeyPhrase:{
+
         type: Number,
     },
     numberOfKeyAreas:{
+
         type: Number,
     },
     cashFlow:{
+
         type:Number,
         // required: true,
     },
     ddSetUp:{
+
         type: String,
         enum: ["Done","","N/A"],
         // required: true,
     },
     invoiceSent:{
+
         type: String,
         // enum:["Done","","N/A"],
     },
     // generalMaster:{
+
     //     type: String,
     // },
     vatInvoice:{
+
         type: [String],
     },
     buildingAddress:{
+
       type: String,
     },
      // for customer database
@@ -150,6 +167,7 @@ const orderSchema = new Schema(
     //     trim: true,
     //   },
       // buildingAddress:{
+
       //   type: String,
       // },
     //   streetNoName: {
@@ -160,9 +178,11 @@ const orderSchema = new Schema(
     //     type: String,
     //   },
     //   county :{
+
     //     type: String,
     //   },
     //   postcode :{
+
     //     type: String,
     //   },
 

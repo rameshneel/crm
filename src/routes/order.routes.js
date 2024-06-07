@@ -6,7 +6,7 @@ import { uploadFile2 } from '../helper/multererror.js';
 const router = express.Router();
 router.use(verifyJWT); 
 
-router.post('/add/:customer_id',uploadFile2, addOrder);
+router.post('/add/:customer_id',addOrder);
 router.get('/', getAllOrders);
 router.get("/:order_id",getOrderById)
 router.patch('/update/:order_id',uploadFile2, updateOrder)

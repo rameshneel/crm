@@ -53,40 +53,40 @@ import FormData from "form-data";
     return next(new ApiError(400, "Required fields are missing"));
   }
 
-  let avatarurl = "";
-  console.log(avatarurl);
+  // let avatarurl = "";
+  // console.log(avatarurl);
 
-  if (req.file && req.file.path) {
-    const avatarLocalPath = req.file.path;
-    console.log(avatarLocalPath);
+  // if (req.file && req.file.path) {
+  //   const avatarLocalPath = req.file.path;
+  //   console.log(avatarLocalPath);
 
-    try {
-      const formData = new FormData();
-      formData.append("file", fs.createReadStream(avatarLocalPath));
-      const apiURL =
-        "https://crm.neelnetworks.org/public/file_upload/api.php";
-      const apiResponse = await axios.post(apiURL, formData, {
-        headers: {
-          ...formData.getHeaders(),
-        },
-      });
-      console.log(apiResponse.data);
-      avatarurl = apiResponse.data?.img_upload_path;
-      if (!avatarurl) {
-        throw new Error("img_upload_path not found in API response");
-      }
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("file", fs.createReadStream(avatarLocalPath));
+  //     const apiURL =
+  //       "https://crm.neelnetworks.org/public/file_upload/api.php";
+  //     const apiResponse = await axios.post(apiURL, formData, {
+  //       headers: {
+  //         ...formData.getHeaders(),
+  //       },
+  //     });
+  //     console.log(apiResponse.data);
+  //     avatarurl = apiResponse.data?.img_upload_path;
+  //     if (!avatarurl) {
+  //       throw new Error("img_upload_path not found in API response");
+  //     }
 
-      fs.unlink(avatarLocalPath, (err) => {
-        if (err) {
-          console.error("Error removing avatar file:", err.message);
-        } else {
-          console.log("Avatar file removed successfully");
-        }
-      });
-    } catch (error) {
-      console.error("Error uploading avatar:", error.message);
-    }
-  } 
+  //     fs.unlink(avatarLocalPath, (err) => {
+  //       if (err) {
+  //         console.error("Error removing avatar file:", err.message);
+  //       } else {
+  //         console.log("Avatar file removed successfully");
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error("Error uploading avatar:", error.message);
+  //   }
+  // } 
 
   if (
     orderType === "New Business" &&
@@ -115,7 +115,7 @@ import FormData from "form-data";
       customerAccountNumber,
       customerSortCode,
       googleEmailRenewCampaign,
-      customerSignature:avatarurl,
+      customerSignature,
       renewalDate2024,
     //   contactName,
     //   mobileNo,
@@ -362,12 +362,17 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       buildingAddress,
     } = req.body;
 
-
+     console.log("rtghrtgtrtgtrgtgtgtgtgtgtgtg");
+     const avatarLocalPath = req.file;   customerSignature
+     console.log(avatarLocalPath);
     let avatarurl = "";
     console.log(avatarurl);
+    const avatarLocalPat = req.file.customerSignature;   
+    console.log("HYHHHYH",avatarLocalPat);
+
   
     if (req.file && req.file.path) {
-      const avatarLocalPath = req.file.path;
+      
       console.log(avatarLocalPath);
   
       try {
