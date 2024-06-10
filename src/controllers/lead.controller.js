@@ -393,11 +393,13 @@ export const updateLead = asyncHandler(async (req, res, next) => {
         } catch (saveError) {
           return res.status(500).json({
             success: false,
-            error: "Failed to save new customer",
-            message: saveError.message
+            message: "Failed to save new customer",
+            error:saveError.message
           });
+          
         }
       }
+      console.log("erro nahi chyalo");
       await Lead.findByIdAndDelete(lead_id);
       return res.status(200).json(new ApiResponse(200, null, "Lead updated and customer processed successfully"));
     }
