@@ -1,7 +1,7 @@
 import express from 'express';
 import { addOrder, deleteOrder, getAllOrders, getOrderById, updateOrder } from '../controllers/order.controllers.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
-import { uploadFile2 } from '../helper/multererror.js';
+
 
 const router = express.Router();
 router.use(verifyJWT); 

@@ -187,6 +187,7 @@ orderSchema.pre("save", async function (next) {
         .model("Order")
         .findOne()
         .sort({ orderNo: -1 });
+        console.log("gtttttttttttttttttttttttttttttttttttt",lastorder);
       let newOrderNo = "HOM101";
       if (lastorder && lastorder.orderNo) {
         const lastOrderNo = lastorder.orderNo;

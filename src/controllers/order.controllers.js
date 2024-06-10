@@ -4,9 +4,7 @@ import {ApiError} from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import { isValidObjectId } from "mongoose";
 import { User } from "../models/user.model.js";
-import fs from "fs";
-import axios from "axios";
-import FormData from "form-data";
+
 
 
 //  const addOrder = asyncHandler(async (req, res, next) => {
@@ -204,7 +202,6 @@ const addOrder = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-
 
 //  const getAllOrders = asyncHandler(async (req, res, next) => {
 //     try {
