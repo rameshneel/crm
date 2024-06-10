@@ -9,19 +9,126 @@ import axios from "axios";
 import FormData from "form-data";
 
 
- const addOrder = asyncHandler(async (req, res, next) => {
+//  const addOrder = asyncHandler(async (req, res, next) => {
+//   const userId = req.user?._id;
+//   const { customer_id } = req.params;
+//   if (!isValidObjectId(customer_id)) {
+//     throw new ApiError(400, "Invalid Customer ID");
+//   }
+//   const {
+//      dateOfOrder,
+//      buildingAddress,
+//     orderType,
+//     orderValue, 
+//     deposit,
+//     depositMethod, 
+//     numberOfInstallments,
+//     dateOfFirstDd,
+//     customerAccountName,
+//     customerAccountNumber,
+//     customerSortCode,
+//     googleEmailRenewCampaign,
+//     customerSignature,
+//     renewalDate2024,
+
+//   } = req.body;
+//   // console.log("deposite",deposit);
+//   // console.log("ordervalue",orderValue);
+//   // console.log("numberof",numberOfInstallments);
+
+//   // if (
+//   //   !customer_id ||
+//   //   !orderType ||
+//   //   !dateOfOrder ||
+//   //   !orderValue ||
+//   //   !deposit ||
+//   //   !numberOfInstallments ||
+//   //   !renewalDate2024 
+//   // ) {
+//   //   return next(new ApiError(400, "Required fields are missing"));
+//   // }
+  
+//   if (
+//     orderType === "New Business" &&
+//     (!req.body.numberOfKeyPhrase || !req.body.numberOfKeyAreas)
+//   ) {
+//     return next(
+//       new ApiError(
+//         400,
+//         "Number of Key Phrases and Number of Key Areas are required for New Business orders"
+//       )
+//     );
+//   }
+  
+//   let orderValues = orderValue || 0;
+// let deposits = deposit || 0;
+// let numberOfInstallmentss = numberOfInstallments || 0;
+
+
+//    console.log("string");
+//   const DdMonthly = orderValues -deposits/ numberOfInstallmentss; 
+//   console.log("dd",DdMonthly);
+//   const increase = 0.05 * orderValues; 
+//   console.log("incre",increase);
+//   const expected2024OrderValue = orderValues + increase; 
+//   console.log("exp",expected2024OrderValue);
+//   const cashFlow = (deposits / orderValue) * 100; 
+//   console.log("cashflow",cashFlow);
+
+
+//   try {
+//     const order = new Order({
+//       createdBy: userId,
+//       customer: customer_id,
+//       orderType,
+//       dateOfOrder,
+//       orderValue,
+//       deposit,
+//       depositMethod,
+//       numberOfInstallments,
+//       dateOfFirstDd,
+//       customerAccountName,
+//       customerAccountNumber,
+//       customerSortCode,
+//       googleEmailRenewCampaign,
+//       customerSignature,
+//       renewalDate2024,
+//       buildingAddress,
+//       DdMonthly,
+//       increase,
+//       expected2024OrderValue,
+//       cashFlow,
+//       numberOfKeyPhrase:
+      
+//         orderType === "New Business" ? req.body.numberOfKeyPhrase : undefined,
+//       numberOfKeyAreas:
+//         orderType === "New Business" ? req.body.numberOfKeyAreas : undefined,
+//     });
+//     await order.save();
+//     res
+//       .status(201)
+//       .json(new ApiResponse(201, order, "Order created successfully"));
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { customer_id } = req.params;
+
+  // Validate customer_id
   if (!isValidObjectId(customer_id)) {
-    throw new ApiError(400, "Invalid Customer ID");
+    return next(new ApiError(400, "Invalid Customer ID"));
   }
+
   const {
-     dateOfOrder,
-     buildingAddress,
+    dateOfOrder,
+    buildingAddress,
     orderType,
-    orderValue, 
+    orderValue,
     deposit,
-    depositMethod, 
+    depositMethod,
     numberOfInstallments,
     dateOfFirstDd,
     customerAccountName,
@@ -30,43 +137,40 @@ import FormData from "form-data";
     googleEmailRenewCampaign,
     customerSignature,
     renewalDate2024,
-
+    numberOfKeyPhrase,
+    numberOfKeyAreas,
   } = req.body;
-  console.log("order",orderType);
 
+  
   // if (
   //   !customer_id ||
   //   !orderType ||
   //   !dateOfOrder ||
-  //   !orderValue ||
-  //   !deposit ||
-  //   !numberOfInstallments ||
-  //   !renewalDate2024 
+  //   !renewalDate2024 ||
+  //   (orderType === "New Business" && (!numberOfKeyPhrase || !numberOfKeyAreas))
   // ) {
   //   return next(new ApiError(400, "Required fields are missing"));
   // }
+
   
-  if (
-    orderType === "New Business" &&
-    (!req.body.numberOfKeyPhrase || !req.body.numberOfKeyAreas)
-  ) {
-    return next(
-      new ApiError(
-        400,
-        "Number of Key Phrases and Number of Key Areas are required for New Business orders"
-      )
-    );
-  }
+  const orderValues = orderValue || 0;
+  const deposits = deposit || 0;
+  const numberOfInstallmentss = numberOfInstallments || 0;
+  const safeNumberOfInstallments = numberOfInstallmentss || 1;
 
-  const DdMonthly = orderValue -deposit/ numberOfInstallments; 
-  console.log(DdMonthly);
-  const increase = 0.05 * orderValue; 
-  console.log(increase);
-  const expected2024OrderValue = orderValue + increase; 
-  console.log(expected2024OrderValue);
-  const cashFlow = (deposit / orderValue) * 100; 
-  console.log(cashFlow);
+  const DdMonthly = safeNumberOfInstallments > 0 ? (orderValues - deposits) / safeNumberOfInstallments : 0;
+  const increase = 0.05 * orderValues;
+  const expected2024OrderValue = orderValues + increase;
+  const cashFlow = orderValues !== 0 ? (deposits / orderValues) * 100 : 0;
 
+  console.log("string");
+  console.log("orderValue:", orderValues);
+  console.log("deposit:", deposits);
+  console.log("numberOfInstallments:", numberOfInstallmentss);
+  console.log("dd", DdMonthly);
+  console.log("incre", increase);
+  console.log("exp", expected2024OrderValue);
+  console.log("cashflow", cashFlow);
 
   try {
     const order = new Order({
@@ -74,10 +178,10 @@ import FormData from "form-data";
       customer: customer_id,
       orderType,
       dateOfOrder,
-      orderValue,
-      deposit,
+      orderValue: orderValues,
+      deposit: deposits,
       depositMethod,
-      numberOfInstallments,
+      numberOfInstallments: numberOfInstallmentss,
       dateOfFirstDd,
       customerAccountName,
       customerAccountNumber,
@@ -90,54 +194,51 @@ import FormData from "form-data";
       increase,
       expected2024OrderValue,
       cashFlow,
-      numberOfKeyPhrase:
-      
-        orderType === "New Business" ? req.body.numberOfKeyPhrase : undefined,
-      numberOfKeyAreas:
-        orderType === "New Business" ? req.body.numberOfKeyAreas : undefined,
+      numberOfKeyPhrase: orderType === "New Business" ? numberOfKeyPhrase : undefined,
+      numberOfKeyAreas: orderType === "New Business" ? numberOfKeyAreas : undefined,
     });
+
     await order.save();
-    res
-      .status(201)
-      .json(new ApiResponse(201, order, "Order created successfully"));
+    res.status(201).json(new ApiResponse(201, order, "Order created successfully"));
   } catch (error) {
     next(error);
   }
 });
 
- const getAllOrders = asyncHandler(async (req, res, next) => {
-    try {
-      const user_id = req.user?._id;
-      const user = await User.findById(user_id);
+
+//  const getAllOrders = asyncHandler(async (req, res, next) => {
+//     try {
+//       const user_id = req.user?._id;
+//       const user = await User.findById(user_id);
   
-      if (!user) {
-        return next(new ApiError(404, "User not found"));
-      }
+//       if (!user) {
+//         return next(new ApiError(404, "User not found"));
+//       }
   
-      let orders;
-      if (user.role === "admin") {
-        orders = await Order.find().populate({
-          path: 'customer',
-        }).populate({
-          path: 'createdBy',
-          select: 'fullName avatar',
-        });
-      } else if (user.role === "salesman") {
-        orders = await Order.find({ createdBy: user_id }).populate({
-          path: 'customer',
-        }).populate({
-          path: 'createdBy',
-          select: 'fullName avatar',
-        });
-      } else {
-        return next(new ApiError(403, "Unauthorized access"));
-      }
+//       let orders;
+//       if (user.role === "admin") {
+//         orders = await Order.find().populate({
+//           path: 'customer',
+//         }).populate({
+//           path: 'createdBy',
+//           select: 'fullName avatar',
+//         });
+//       } else if (user.role === "salesman") {
+//         orders = await Order.find({ createdBy: user_id }).populate({
+//           path: 'customer',
+//         }).populate({
+//           path: 'createdBy',
+//           select: 'fullName avatar',
+//         });
+//       } else {
+//         return next(new ApiError(403, "Unauthorized access"));
+//       }
   
-      return res.status(200).json(new ApiResponse(200, orders, "Orders retrieved successfully"));
-    } catch (error) {
-      return next(error);
-    }
-  });
+//       return res.status(200).json(new ApiResponse(200, orders, "Orders retrieved successfully"));
+//     } catch (error) {
+//       return next(error);
+//     }
+//   });
 
  const getOrderById = asyncHandler(async (req, res, next) => {
     const { order_id } = req.params;
@@ -441,5 +542,93 @@ const deleteOrder = asyncHandler(async (req, res, next) => {
       return next(error);
     }
   });
+
+  const getAllOrders = asyncHandler(async (req, res, next) => {
+    try {
+      const user_id = req.user?._id;
+      const user = await User.findById(user_id);
+  
+      if (!user) {
+        return next(new ApiError(404, "User not found"));
+      }
+  
+      let orders, totalSums;
+      
+      if (user.role === "admin") {
+        // Fetch all orders and aggregate totals
+        orders = await Order.find()
+          .populate({
+            path: 'customer',
+          })
+          .populate({
+            path: 'createdBy',
+            select: 'fullName avatar',
+          });
+        console.log(orders);
+        totalSums = await Order.aggregate([
+          {
+            $group: {
+              _id: null,
+              totalIncrease: { $sum: '$increase' },
+              totalExpected2024OrderValue: { $sum: '$expected2024OrderValue' },
+              totalOrderValue: { $sum: '$orderValue' },
+              totalDeposit: { $sum: '$deposit' },
+              totalDdMonthly: { $sum: '$DdMonthly' },
+              totalrenewalValue:{$sum:'$renewalValue'}
+            }
+          }
+        ]);
+        console.log('totalsum',totalSums);
+      } else if (user.role === "salesman") {
+        // Fetch only the orders created by the current user and aggregate totals
+        orders = await Order.find({ createdBy: user_id })
+          .populate({
+            path: 'customer',
+          })
+          .populate({
+            path: 'createdBy',
+            select: 'fullName avatar',
+          });
+  
+        totalSums = await Order.aggregate([
+          {
+            $match: { createdBy: user_id } // Filter by user ID
+          },
+          {
+            $group: {
+              _id: null,
+              totalIncrease: { $sum: '$increase' },
+              totalExpected2024OrderValue: { $sum: '$expected2024OrderValue' },
+              totalOrderValue: { $sum: '$orderValue' },
+              totalDeposit: { $sum: '$deposit' },
+              totalDdMonthly: { $sum: '$DdMonthly' },
+              totalrenewalValue:{$sum:'$renewalValue'},
+            }
+          }
+        ]);
+        console.log('totalsum',totalSums);
+      } else {
+        return next(new ApiError(403, "Unauthorized access"));
+      }
+  
+      // Extract the totals from the aggregation result
+      const totals = totalSums[0] || {
+        totalIncrease: 0,
+        totalExpected2024OrderValue: 0,
+        totalOrderValue: 0,
+        totalDeposit: 0,
+        totalDdMonthly: 0,
+        totalrenewalValue:0,
+      };
+  
+      return res.status(200).json(new ApiResponse(200, {
+        orders,
+        totals,
+      }, "Orders and their totals retrieved successfully"));
+    } catch (error) {
+      return next(error);
+    }
+  });
+  
 
 export{addOrder,getAllOrders,updateOrder,getOrderById,deleteOrder}
