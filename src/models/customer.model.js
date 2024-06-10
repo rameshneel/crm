@@ -57,7 +57,8 @@ const customerSchema = new Schema(
     },
     status :{
       type: String,
-      enum: ["IN PROCESS","LIVE","SITE TAKEN DOWN","SUSPENDED","UPLOAD","WILL GET CANCELLED"],
+      enum:{values:["","IN PROCESS","LIVE","SITE TAKEN DOWN","SUSPENDED","UPLOAD","WILL GET CANCELLED"],message:'{VALUE} is not supported'} ,
+      default:""
     },
     liveDate :{
       type: Date,
