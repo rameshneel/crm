@@ -363,9 +363,9 @@ export const updateLead = asyncHandler(async (req, res, next) => {
     );
 
     if (outcome === 'SOLD') {
-      if (!town || !county || !postcode) {
-        return next(new ApiError(400, "Town, County, Postcode are required"));
-      }
+      // if (!town || !county || !postcode) {
+      //   return next(new ApiError(400, "Town, County, Postcode are required"));
+      // }
 
       const customerData = {
         companyName: updatedLead.customerName,
