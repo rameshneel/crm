@@ -96,9 +96,9 @@ export const addLead = asyncHandler(async (req, res, next) => {
     } else {
       const exsitsemailincustomer = await Customer.findOne({customerEmail:emailAddress});
       console.log("CUSTOMER ",exsitsemailincustomer);
-       if(exsitsemailincustomer){
-        throw new ApiError(400,"Email already exists in Customer")
-       }
+      //  if(exsitsemailincustomer){
+      //   throw new ApiError(400,"Email already exists in Customer")
+      //  }
       leadData.customerName = customerName;
     }
     const lead = await Lead.create(leadData);
