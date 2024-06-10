@@ -31,16 +31,16 @@ const LeadSchema = new Schema(
       },
     lead_type: {
       type:String,
-      enum: ["Referal","Cold call","Contact Metting","Old Client","Promate Client","Renewal"],
-     
+      enum: ["","Referal","Cold call","Contact Metting","Old Client","Promate Client","Renewal"],
+       default: ""
     },
     // existing_website: {
     //   type: String,
     // },
     outcome:{
        type :String,
-       enum: ["Appointement Made","Callback","Not Interseted","SOLD","Arrange an Appointment"],
-      
+       enum: ["","Appointement Made","Callback","Not Interseted","SOLD","Arrange an Appointment"],
+        default: ""
     },
     Appointement:{
       type: Schema.Types.ObjectId,
