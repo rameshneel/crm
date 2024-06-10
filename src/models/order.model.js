@@ -20,16 +20,16 @@ const orderSchema = new Schema(
     },
     orderType: {
       type: String,
-      enum: ["Renewal", "New Business"],
-      // required: true,
+      enum: {values:["Renewal", "New Business",""],message:'{VALUE} is not supported'},
+      default:""
     },
     orderNo: {
       type: String,
     },
     renewalStatus: {
       type: String,
-      enum: ["Meeting Booked", "Sold", "Dropped", "Still to Contact", ""],
-      // required: true
+      enum: {values:["Meeting Booked", "Sold", "Dropped", "Still to Contact", ""],message:'{VALUE} is not supported'},
+      default:""
     },
     renewalNotes: {
       type: String,
@@ -65,16 +65,18 @@ const orderSchema = new Schema(
     },
     depositMethod: {
       type: String,
-      enum: [
+      enum: {values:[
         "Cash",
+        "",
         "Cheque",
         "Direct Debit",
         "N/A",
         "Square Card Machine",
         "SumUp",
         "Bank Transfer",
-      ],
-      // required: true,
+      ],message:'{VALUE} is not supported'},
+      default:""
+     
     },
     customerAccountName: {
       type: String,
@@ -87,8 +89,8 @@ const orderSchema = new Schema(
     },
     googleEmailRenewCampaign: {
       type: String,
-      enum: ["N/A", "Needs to be set up", " "],
-      // required: true,
+      enum:{values:["N/A","Needs to be set up", ""],message:'{VALUE} is not supported'} ,
+     default:""
     },
     customerSignature: {
       type: String,
@@ -117,8 +119,8 @@ const orderSchema = new Schema(
     },
     ddSetUp: {
       type: String,
-      enum: ["Done", "", "N/A"],
-      // required: true,
+      enum:{values:["Done","", "N/A"],message:'{VALUE} is not supported'} ,
+      default:""
     },
     invoiceSent: {
       type: String,
