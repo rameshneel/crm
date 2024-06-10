@@ -221,40 +221,7 @@ orderSchema.pre("save", async function (next) {
   }
 });
 
-// orderSchema.pre('save', async function (next) {
-//   const order = this;
-//   if (order.isNew && !order.orderNo) {
-//     try {
-//       const lastOrder = await mongoose.model('Order').findOne().sort({ orderNo: -1 });
-//       let newOrderNo = 'HOM101';
-//       if (lastOrder && lastOrder.orderNo) {
-//         const lastOrderNo = lastOrder.orderNo;
-//         const lastOrder = lastOrderNo.startsWith('HOM') ? parseInt(lastOrderNo.replace('HOM', ''), 10) : null;
-//         if (lastOrder !== null) {
-//           let found = true;
-//           let nextOrder = lastOrder + 1;
-//           while (found) {
-//             const potentialOrderNo = 'HOM' + nextOrder;
-//             const existingOrderNo = await mongoose.model('Order').findOne({ orderNo: potentialOrderNo });
-//             if (!existingOrderNo) {
-//               found = false;
-//               newOrderNo = potentialOrderNo;
-//             } else {
-//               nextOrder++;
-//             }
-//           }
-//         }
-//       }
 
-//       order.orderNo = newOrderNo;
-//       next();
-//     } catch (error) {
-//       next(error);
-//     }
-//   } else {
-//     next();
-//   }
-// });
 
 const Order = mongoose.model("Order", orderSchema);
 
