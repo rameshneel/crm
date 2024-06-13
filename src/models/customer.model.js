@@ -87,7 +87,10 @@ const customerSchema = new Schema(
     ordersRenewals:{
       type: String,
     },
-    
+    updates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Update',
+  }],
   },
   {
     timestamps: true,
@@ -99,7 +102,7 @@ customerSchema.pre('save', async function (next) {
   const customer = this;
   if (customer.isNew && !customer.customerNo) { 
     try {
-      const lastCustomer = await mongoose.model('Customer').findOne().sort({ customerNo: -1 });
+      const lastCustomer = await mongoose.model('Customer').findOne().sort({ customerNo: +1 });
       let newCustomerNo = 'HOM:101';
       if (lastCustomer && lastCustomer.customerNo) {
         const lastCustomerNo = lastCustomer.customerNo;
@@ -123,10 +126,10 @@ customerSchema.pre('save', async function (next) {
       customer.customerNo = newCustomerNo;
       next();
     } catch (error) {
-      next(error); // Pass any errors to the next middleware
+      next(error); 
     }
   } else {
-    next(); // If customerNo is already set or isNew is false, proceed to the next middleware
+    next();
   }
 });
 

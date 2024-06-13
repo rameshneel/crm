@@ -1,5 +1,5 @@
 import express from "express";
-import { createCustomer, customerList, getCustomerById, updateCustomer } from "../controllers/customers.controller.js";
+import { createCustomer, createCustomerUpdate, customerList, deleteUpdate, getAllUpdates, getCustomerById, replyToUpdate, toggleLike, updateCustomer, updateUpdate } from "../controllers/customers.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { uploadFile1 } from "../helper/multererror.js";
 
@@ -10,6 +10,18 @@ router.post("/",uploadFile1, createCustomer);
 router.get("/:customerId",getCustomerById);
 router.get("/",customerList);
 router.patch("/update/:customer_id",uploadFile1,updateCustomer);
+
+//update routes
+
+router.get('/updates/all/:customerId', getAllUpdates);
+router.post('/:customerId/updates', createCustomerUpdate);
+router.post('/updates/:updateId/reply', replyToUpdate)
+router.post('/updates/:updateId/like', toggleLike)
+router.patch('/:updateId',updateUpdate)
+router.delete('/:updateId',deleteUpdate)
+//   .patch(updateUpdate) 
+//   .delete(deleteUpdate);
+
 export default router;
 
 
