@@ -31,6 +31,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       htAccess,
       gaCode,
       newGACode,
+      createdBy,
       ordersRenewals,
     } = req.body;
    const newlivedate= new Date(liveDate)
@@ -108,7 +109,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       newGACode,
       logo: avatarurl,
       ordersRenewals,
-      createdBy: activeUser,
+      createdBy,
       vatInvoice:
         "https://ocw.mit.edu/courses/6-096-introduction-to-c-january-iap-2011/ccef8a1ec946adb5179925311e276a7b_MIT6_096IAP11_lec02.pdf",
     });
@@ -179,6 +180,7 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
       gaCode,
       newGACode,
       ordersRenewals,
+      createdBy
     } = req.body;
 
     const newlivedate= new Date(liveDate)
@@ -268,6 +270,7 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
         newGACode,
         ordersRenewals,
         logo: avatarurl,
+        createdBy,
         updatedBy: userId,
       },
       { new: true }
@@ -461,6 +464,7 @@ const getCustomerById = asyncHandler(async (req, res, next) => {
   }
 });
 
+
 //update for customers
 
  const createCustomerUpdate = asyncHandler(async (req, res,next) => {
@@ -492,7 +496,6 @@ const getCustomerById = asyncHandler(async (req, res, next) => {
      next(error)
   }
 });
-
 // const getAllUpdates = asyncHandler(async (req, res, next) => {
 //   const { customerId } = req.params;
 //   try {
