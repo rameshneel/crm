@@ -35,9 +35,9 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       ordersRenewals,
     } = req.body;
    const newlivedate= new Date(liveDate)
-    const existedUser = await Customer.findOne({
-      $or: [{ customerEmail }],
-    });
+    // const existedUser = await Customer.findOne({
+    //   $or: [{ customerEmail }],
+    // });
 
     let avatarurl = "";
     console.log(avatarurl);
@@ -46,10 +46,10 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       const avatarLocalPath = req.file.path;
       console.log(avatarLocalPath);
 
-      if (existedUser) {
-        fs.unlinkSync(avatarLocalPath);
-        throw new ApiError(409, "Email already exists");
-      }
+      // if (existedUser) {
+      //   fs.unlinkSync(avatarLocalPath);
+      //   throw new ApiError(409, "Email already exists");
+      // }
       try {
         const formData = new FormData();
         formData.append("file", fs.createReadStream(avatarLocalPath));
@@ -463,7 +463,6 @@ const getCustomerById = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
-
 
 //update for customers
 
