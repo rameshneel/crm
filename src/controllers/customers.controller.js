@@ -4,7 +4,6 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { isValidObjectId } from "mongoose";
-import mongoose from 'mongoose';
 import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
@@ -184,14 +183,14 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
     } = req.body;
 
     const newlivedate= new Date(liveDate)
-    if (
-      ![customerEmail,].some((field) => {
-        if (field === undefined) return false;
-        if (typeof field === "string") return field.trim() !== "";
-      })
-    ) {
-      throw new ApiError(400, "At least one field is required for update");
-    }
+    // if (
+    //   ![customerEmail,].some((field) => {
+    //     if (field === undefined) return false;
+    //     if (typeof field === "string") return field.trim() !== "";
+    //   })
+    // ) {
+    //   throw new ApiError(400, "At least one field is required for update");
+    // }
 
     let avatarurl = "";
     console.log(avatarurl);
