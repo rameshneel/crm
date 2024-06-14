@@ -5,112 +5,6 @@ import {ApiResponse} from "../utils/ApiResponse.js";
 import { isValidObjectId } from "mongoose";
 import { User } from "../models/user.model.js";
 
-
-
-//  const addOrder = asyncHandler(async (req, res, next) => {
-//   const userId = req.user?._id;
-//   const { customer_id } = req.params;
-//   if (!isValidObjectId(customer_id)) {
-//     throw new ApiError(400, "Invalid Customer ID");
-//   }
-//   const {
-//      dateOfOrder,
-//      buildingAddress,
-//     orderType,
-//     orderValue, 
-//     deposit,
-//     depositMethod, 
-//     numberOfInstallments,
-//     dateOfFirstDd,
-//     customerAccountName,
-//     customerAccountNumber,
-//     customerSortCode,
-//     googleEmailRenewCampaign,
-//     customerSignature,
-//     renewalDate2024,
-
-//   } = req.body;
-//   // console.log("deposite",deposit);
-//   // console.log("ordervalue",orderValue);
-//   // console.log("numberof",numberOfInstallments);
-
-//   // if (
-//   //   !customer_id ||
-//   //   !orderType ||
-//   //   !dateOfOrder ||
-//   //   !orderValue ||
-//   //   !deposit ||
-//   //   !numberOfInstallments ||
-//   //   !renewalDate2024 
-//   // ) {
-//   //   return next(new ApiError(400, "Required fields are missing"));
-//   // }
-  
-//   if (
-//     orderType === "New Business" &&
-//     (!req.body.numberOfKeyPhrase || !req.body.numberOfKeyAreas)
-//   ) {
-//     return next(
-//       new ApiError(
-//         400,
-//         "Number of Key Phrases and Number of Key Areas are required for New Business orders"
-//       )
-//     );
-//   }
-  
-//   let orderValues = orderValue || 0;
-// let deposits = deposit || 0;
-// let numberOfInstallmentss = numberOfInstallments || 0;
-
-
-//    console.log("string");
-//   const DdMonthly = orderValues -deposits/ numberOfInstallmentss; 
-//   console.log("dd",DdMonthly);
-//   const increase = 0.05 * orderValues; 
-//   console.log("incre",increase);
-//   const expected2024OrderValue = orderValues + increase; 
-//   console.log("exp",expected2024OrderValue);
-//   const cashFlow = (deposits / orderValue) * 100; 
-//   console.log("cashflow",cashFlow);
-
-
-//   try {
-//     const order = new Order({
-//       createdBy: userId,
-//       customer: customer_id,
-//       orderType,
-//       dateOfOrder,
-//       orderValue,
-//       deposit,
-//       depositMethod,
-//       numberOfInstallments,
-//       dateOfFirstDd,
-//       customerAccountName,
-//       customerAccountNumber,
-//       customerSortCode,
-//       googleEmailRenewCampaign,
-//       customerSignature,
-//       renewalDate2024,
-//       buildingAddress,
-//       DdMonthly,
-//       increase,
-//       expected2024OrderValue,
-//       cashFlow,
-//       numberOfKeyPhrase:
-      
-//         orderType === "New Business" ? req.body.numberOfKeyPhrase : undefined,
-//       numberOfKeyAreas:
-//         orderType === "New Business" ? req.body.numberOfKeyAreas : undefined,
-//     });
-//     await order.save();
-//     res
-//       .status(201)
-//       .json(new ApiResponse(201, order, "Order created successfully"));
-//   } catch (error) {
-//     next(error);
-//   }
-// });
-
 const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { customer_id } = req.params;
@@ -137,6 +31,7 @@ const addOrder = asyncHandler(async (req, res, next) => {
     renewalDate2024,
     numberOfKeyPhrase,
     numberOfKeyAreas,
+    createdBy,
   } = req.body;
 
   
@@ -172,7 +67,7 @@ const addOrder = asyncHandler(async (req, res, next) => {
 
   try {
     const order = new Order({
-      createdBy: userId,
+      createdBy:createdBy || userId,
       customer: customer_id,
       orderType,
       dateOfOrder,
@@ -197,6 +92,7 @@ const addOrder = asyncHandler(async (req, res, next) => {
     });
 
     await order.save();
+    console.log("save");
     res.status(201).json(new ApiResponse(201, order, "Order created successfully"));
   } catch (error) {
     next(error);
@@ -237,7 +133,7 @@ const addOrder = asyncHandler(async (req, res, next) => {
 //     }
 //   });
 
- const getOrderById = asyncHandler(async (req, res, next) => {
+const getOrderById = asyncHandler(async (req, res, next) => {
     const { order_id } = req.params;
   
     if (!isValidObjectId(order_id)) {
@@ -423,6 +319,7 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       invoiceSent,
       vatInvoice,
       buildingAddress,
+      createdBy
     } = req.body;
 
     
@@ -494,6 +391,7 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       invoiceSent,
       vatInvoice,
       buildingAddress,
+      createdBy,
       updatedBy: userId,
     };
 
@@ -540,7 +438,7 @@ const deleteOrder = asyncHandler(async (req, res, next) => {
     }
   });
 
-  const getAllOrders = asyncHandler(async (req, res, next) => {
+const getAllOrders = asyncHandler(async (req, res, next) => {
     try {
       const user_id = req.user?._id;
       const user = await User.findById(user_id);
@@ -626,6 +524,5 @@ const deleteOrder = asyncHandler(async (req, res, next) => {
       return next(error);
     }
   });
-  
-
+ 
 export{addOrder,getAllOrders,updateOrder,getOrderById,deleteOrder}
