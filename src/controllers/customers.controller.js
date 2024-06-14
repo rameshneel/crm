@@ -82,11 +82,11 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "CompanyName is required");
     }
 
-    const existedCustomer = await Customer.findOne({ customerEmail });
+    // const existedCustomer = await Customer.findOne({ customerEmail });
 
-    if (existedCustomer) {
-      throw new ApiError(409, "Email already exists");
-    }
+    // if (existedCustomer) {
+    //   throw new ApiError(409, "Email already exists");
+    // }
 
     const activeUser = req.user?._id;
     const newCustomer = new Customer({
