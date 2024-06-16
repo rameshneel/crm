@@ -9,14 +9,14 @@ app.use(
       "http://localhost:3000",
       "https://localhost:3000",
       "http://localhost:5173",
-      "https://high-oaks-media-crm.vercel.app"
+      "https://high-oaks-media-crm.vercel.app",
     ],
     credentials: true,
     secure: false,
     optionSuccessStatus: 200,
     Headers: true,
     exposedHeaders: "Set-Cookie",
-    methods: ["GET", "PUT", "POST", "DELETE","PATCH","OPTIONS"],
+    methods: ["GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: [
       "Access-Control-Allow-Origin",
       "Content-Type",
@@ -38,15 +38,17 @@ import newWebsite from "./routes/newWebsite.routes.js";
 import amendmentRoutes from "./routes/amendment.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import technicalMasterRoutes from "./routes/techincalMaster.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 //routes declaration
 app.use("/api/users", userRouter);
 app.use("/api/customers", customerRoutes);
 app.use("/api/leads", leadRoutes);
-app.use("/api/newwebsite",newWebsite );
+app.use("/api/newwebsite", newWebsite);
 app.use("/api/amendments", amendmentRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/technicalmasters', technicalMasterRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/technicalmasters", technicalMasterRoutes);
+app.use("/api/notification", notificationRoutes);
 
 // app.use((err, req, res, next) => {
 //     console.log(err.stack);
@@ -72,7 +74,7 @@ function errorHandler(err, req, res, next) {
     success: false,
     message: err.message,
     // errors: err.errors,
-      stack: err.stack,
+    stack: err.stack,
   });
 }
 
