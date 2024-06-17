@@ -277,6 +277,7 @@ const updateOrder = asyncHandler(async (req, res, next) => {
   }
 
   try {
+    
     const user = await User.findById(userId);
     if (!user) {
       return next(new ApiError(404, "User not found"));
@@ -322,7 +323,9 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       createdBy
     } = req.body;
 
-    
+    if (!isValidObjectId(createdBy)) {
+      return next(new ApiError(400, "Invalid assign id "));
+    }
 
     // let avatarurl = "";
     // console.log(avatarurl);
@@ -450,7 +453,6 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       let orders, totalSums;
       
       if (user.role === "admin") {
-        // Fetch all orders and aggregate totals
         orders = await Order.find()
           .populate({
             path: 'customer',
@@ -506,7 +508,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
         return next(new ApiError(403, "Unauthorized access"));
       }
   
-      // Extract the totals from the aggregation result
+    
       const totals = totalSums[0] || {
         totalIncrease: 0,
         totalExpected2024OrderValue: 0,
@@ -524,5 +526,253 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       return next(error);
     }
   });
- 
+
+ //update for oders
+
+  const createOrderUpdate = asyncHandler(async (req, res,next) => {
+    console.log("jh");
+      const userId = req.user?._id;
+      const { customerId } = req.params;
+    try {
+    
+      const { content,files, mentions } = req.body;
+      const update = new Update({
+        content,
+        createdBy: userId,
+        files: files || [],
+        mentions: mentions || [],
+      });
+  
+      await update.save();
+  
+      const customer = await Customer.findById(customerId);
+      if (!customer) {
+        throw new ApiError(404, "Customer not found");
+      }
+      customer.updates.push(update._id);
+      await customer.save();
+      return res.json(
+        new ApiResponse(201, { update }, "Update Created successfully")
+      );
+    } catch (error) {
+       next(error)
+    }
+  });
+  // const getAllUpdates = asyncHandler(async (req, res, next) => {
+  //   const { customerId } = req.params;
+  //   try {
+  //     const customerUpdates = await Customer.aggregate([
+  //       { $match: { _id: new mongoose.Types.ObjectId(customerId) } },
+  //       {
+  //         $lookup: {
+  //           from: 'updates', // The collection to join
+  //           localField: 'updates', // The field from the customer documents
+  //           foreignField: '_id', // The field from the updates collection
+  //           as: 'updates'
+  //         }
+  //       },
+  //       { $unwind: '$updates' }, // Unwind the updates array
+  //       {
+  //         $lookup: {
+  //           from: 'users',
+  //           localField: 'updates.createdBy',
+  //           foreignField: '_id',
+  //           as: 'updates.createdBy'
+  //         }
+  //       },
+  //       { $unwind: '$updates.createdBy' }, // Unwind the createdBy array
+  //       {
+  //         $lookup: {
+  //           from: 'users',
+  //           localField: 'updates.mentions',
+  //           foreignField: '_id',
+  //           as: 'updates.mentions'
+  //         }
+  //       },
+  //       { $limit: 10 }, // Limit the number of updates
+  //       { $sort: { 'updates.createdAt': -1 } }, // Sort updates by creation date
+  //       {
+  //         $project: {
+  //           'updates.content': 1,
+  //           'updates.files': 1,
+  //           'updates.createdBy.fullname': 1,
+  //           'updates.createdBy.avatar': 1,
+  //           'updates.mentions.fullname': 1,
+  //           'updates.mentions.avatar': 1
+  //         }
+  //       }
+  //     ]);
+  
+  //     if (!customerUpdates || customerUpdates.length === 0) {
+  //       throw new ApiError(404, 'No updates found for this customer');
+  //     }
+  
+  //     return res.json(new ApiResponse(200, customerUpdates, 'Updates retrieved successfully'));
+  //   } catch (error) {
+  //     next(error);
+  //   }
+  // });
+  
+  const populateRepliesUpToDepth = async (updates, depth) => {
+    if (depth === 0) return updates;
+  
+    for (const update of updates) {
+      // Populate the replies field of the current update
+      await update.populate({
+        path: 'replies',
+        populate: [
+          { path: 'createdBy', select: 'fullname avatar' },
+          { path: 'mentions', select: 'fullname avatar' }
+        ]
+      }); // Populate each reply's createdBy and mentions fields
+  
+      // If there are replies and we need to go deeper, recursively populate the replies
+      if (update.replies && update.replies.length > 0) {
+        await populateRepliesUpToDepth(update.replies, depth - 1);
+      }
+    }
+  
+    return updates;
+  };
+  const getAllUpdates = asyncHandler(async (req, res, next) => {
+    const { orderId } = req.params;
+  
+    try {
+      // Step 1: Find the customer and initially populate the updates
+      const customer = await Order.findById(customerId)
+        .select('contactName')
+        .populate({
+          path: 'updates',
+          populate: [
+            { path: 'createdBy', select: 'fullname avatar' },
+            { path: 'mentions', select: 'fullname avatar' }
+          ],
+          options: { limit: 10, sort: { createdAt: -1 } }
+        });
+  
+      if (!customer) {
+        throw new ApiError(404, 'Customer not found');
+      }
+  
+      // Step 2: Populate nested replies up to three levels deep
+      const populatedUpdates = await populateRepliesUpToDepth(customer.updates, 4);
+  
+      // Step 3: Return the populated updates
+      return res.json(new ApiResponse(200, populatedUpdates, 'Updates retrieved successfully'));
+    } catch (error) {
+      next(error);
+    }
+  });
+  const replyToUpdate = asyncHandler(async (req, res, next) => {
+    const userId = req.user?._id;
+    const { updateId } = req.params;
+    try {
+      const { content, files, mentions } = req.body;
+  
+      // Find the original update to which we want to add a reply
+      const originalUpdate = await Update.findById(updateId);
+      if (!originalUpdate) {
+        throw new ApiError(404, 'Original update not found');
+      }
+  
+      // Create the reply as a new update document
+      const reply = new Update({
+        content,
+        createdBy: userId,
+        files: files || [],
+        mentions: mentions || [],
+        replies: [], // Replies to a reply can be handled if needed
+      });
+  
+      // Save the reply document to the database
+      await reply.save();
+  
+      // Add the reply's ID to the original update's replies array and save
+      originalUpdate.replies.push(reply._id);
+      await originalUpdate.save();
+  
+      // Respond with the created reply
+      return res.json(new ApiResponse(201, { reply }, 'Reply created successfully'));
+    } catch (error) {
+      next(error); // Pass any error to the next middleware
+    }
+  });
+  const toggleLike = asyncHandler(async (req, res, next) => {
+    const userId = req.user?._id; 
+    const { updateId } = req.params;
+  
+    try {
+     
+      const update = await Update.findById(updateId);
+      if (!update) {
+        throw new ApiError(404, 'Update not found');
+      }
+  
+      const userLiked = update.likes.includes(userId);
+  
+      if (userLiked) {
+        update.likes = update.likes.filter(id => id.toString() !== userId.toString());
+        await update.save();
+        return res.json(new ApiResponse(200, { liked: false }, 'Update unliked successfully'));
+      } else {
+        update.likes.push(userId);
+        await update.save();
+        return res.json(new ApiResponse(200, { liked: true }, 'Update liked successfully'));
+      }
+    } catch (error) {
+      next(error); 
+    }
+  });
+  const updateUpdate = asyncHandler(async (req, res, next) => {
+    const { updateId } = req.params; 
+    const userId = req.user._id; 
+    const { content, files, mentions } = req.body; 
+  
+    try {
+      
+      const update = await Update.findById(updateId);
+  
+      if (!update) {
+        throw new ApiError(404, 'Update not found'); 
+      }
+  
+      if (!update.createdBy.equals(userId)) {
+        throw new ApiError(403, 'You are not authorized to update this content'); 
+      }
+  
+      const updatedUpdate = await Update.findByIdAndUpdate(
+        updateId,
+        { content, files, mentions },
+        { new: true, runValidators: true } // Return the new document after update
+      );
+  
+      return res.json(new ApiResponse(200, updatedUpdate, 'Update modified successfully'));
+    } catch (error) {
+      next(error); 
+    }
+  });
+  const deleteUpdate = asyncHandler(async (req, res, next) => {
+    const { updateId } = req.params; 
+    const userId = req.user._id; 
+  
+    try {
+    
+      const update = await Update.findById(updateId);
+  
+      if (!update) {
+        throw new ApiError(404, 'Update not found'); 
+      }
+  
+      if (!update.createdBy.equals(userId)) {
+        throw new ApiError(403, 'You are not authorized to delete this content'); 
+      }
+       
+      await Update.findByIdAndDelete(updateId);
+  
+      return res.json(new ApiResponse(200, {}, 'Update deleted successfully'));
+    } catch (error) {
+      next(error); 
+    }
+  });
+
 export{addOrder,getAllOrders,updateOrder,getOrderById,deleteOrder}
