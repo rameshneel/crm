@@ -399,7 +399,7 @@ export const updateLead = asyncHandler(async (req, res, next) => {
           
         }
       }
-      console.log("erro nahi chyalo");
+    
       await Lead.findByIdAndDelete(lead_id);
       return res.status(200).json(new ApiResponse(200, null, "Lead updated and customer processed successfully"));
     }
@@ -431,8 +431,8 @@ export const deleteLead = asyncHandler(async (req, res, next) => {
     if (user.role !== "admin" && lead.generated_by.toString() !== userId) {
       return next(new ApiError(401, "Unauthorized request"));
     }
-
-    await lead.remove();
+    await Lead.findByIdAndDelete(lead_id);
+    // await lead.remove();
 
     return res.status(200).json(new ApiResponse(200, null, "Lead deleted successfully"));
   } catch (error) {
