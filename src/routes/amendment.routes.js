@@ -1,6 +1,7 @@
 import express from "express";
 import {
   addAmendment,
+  deleteAmendment,
   getAllAmendment,
   getAmendmentById,
   getAmendmentsByStatus,
@@ -19,7 +20,8 @@ router.use(verifyJWT);
 
 router.route('/id/:amendmentId')
   .get(getAmendmentById)
-  .patch(updateAmendment);
+  .patch(updateAmendment)
+  .delete(deleteAmendment)
 
   router.route('/:customerId')
   .post(addAmendment);
