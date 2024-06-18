@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(verifyJWT); 
 //for params
 router.post("/:customer_id",addLead);
-router.post("/:customer_id",deleteLead);
+router.delete("/:customer_id",deleteLead);
 //for req.body
 router.post("/", addLead);
 //all route
