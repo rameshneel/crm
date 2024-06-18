@@ -85,6 +85,7 @@ const addAmendment = asyncHandler(async (req, res, next) => {
         customer_status,
         priority,
         status,
+        date_complete,
         customer: customerId,
         generated_by:generated_by|| userId,
       });
@@ -264,7 +265,6 @@ const getAmendmentsByStatus = asyncHandler(async (req, res, next) => {
 
 const deleteAmendment = asyncHandler(async (req, res, next) => {
   const { amendmentId } = req.params;
-
   try {
     const amendment = await Amendment.findById(amendmentId);
     if (!amendment) {
