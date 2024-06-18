@@ -66,7 +66,7 @@ const addAmendment = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const { date_current, customer_status, priority, status } = req.body;
+    const { date_current, customer_status, priority, status,generated_by } = req.body;
     const existingAmendment = await Amendment.findOne({ customer: customerId });
 
     if (existingAmendment) {
@@ -86,7 +86,7 @@ const addAmendment = asyncHandler(async (req, res, next) => {
         priority,
         status,
         customer: customerId,
-        generated_by: userId,
+        generated_by:generated_by|| userId,
       });
 
       return res
@@ -113,22 +113,32 @@ const getAllAmendment = asyncHandler(async (req, res, next) => {
     // let totalCount;
 
     if (user.role === "admin") {
-      amendments = await Amendment.find();
+      amendments = await Amendment.find()
+        .populate({
+          path: "customer_id",
+        })
+        .populate({
+          path: "generated_by",
+          select: "fullName avatar",
+        });
       // .skip(skip).limit(limit);
       // totalCount = await Amendment.countDocuments();
     } else if (user.role === "salesman") {
-      amendments = await Amendment.find({ generated_by: activeUser });
+      amendments = await Amendment.find({ generated_by: activeUser })
+        .populate({
+          path: "customer_id",
+        })
+        .populate({
+          path: "generated_by",
+          select: "fullName avatar",
+        });
       // .skip(skip)
       // .limit(limit);
       // totalCount = await Amendment.countDocuments({ generated_by: activeUser });
     }
 
     return res.json(
-      new ApiResponse(
-        200,
-         amendments ,
-        "Amendment fetched successfully"
-      )
+      new ApiResponse(200, amendments, "Amendment fetched successfully")
     );
   } catch (error) {
     next(error);
@@ -176,7 +186,7 @@ const updateAmendment = asyncHandler(async (req, res) => {
   if (!isValidObjectId(amendmentId)) {
     throw new ApiError(400, "Invalid AmendmentId");
   }
-  const { customer_status, date_complete, priority, status } = req.body;
+  const { customer_status, date_complete, priority, status,generated_by } = req.body;
 
   if (
     ![customer_status, date_complete, priority, status].some((field) => {
@@ -199,6 +209,7 @@ const updateAmendment = asyncHandler(async (req, res) => {
     date_complete,
     priority,
     status,
+    generated_by,
     updated_by: req.user._id,
   };
 
@@ -217,35 +228,67 @@ const updateAmendment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, amendment, "Amendment updated successfully"));
 });
 
-const getAmendmentsByStatus = asyncHandler(async (req, res,next) => {
+const getAmendmentsByStatus = asyncHandler(async (req, res, next) => {
   const { status } = req.query;
   const activeUser = req.user?._id;
   const user = await User.findById(activeUser);
- 
-  try {
-    let amendment
-    if (user.role === "admin") {
-      amendment = await Amendment.find({ status:status })
-      .populate("customer")
-      .populate("generated_by")
-    res.status(200).json(new ApiResponse(200, amendment, "Amendment updated successfully"));
-    } else if (user.role === "salesman") {
-       amendment = await Amendment.find({ status:status,generated_by:activeUser})
-      .populate("customer")
-      .populate("generated_by")
-    res.status(200).json(new ApiResponse(200, amendment, "Amendment updated successfully"));
-    }
 
+  try {
+    let amendment;
+    if (user.role === "admin") {
+      amendment = await Amendment.find({ status: status })
+        .populate("customer")
+        .populate("generated_by");
+      res
+        .status(200)
+        .json(
+          new ApiResponse(200, amendment, "Amendment updated successfully")
+        );
+    } else if (user.role === "salesman") {
+      amendment = await Amendment.find({
+        status: status,
+        generated_by: activeUser,
+      })
+        .populate("customer")
+        .populate("generated_by");
+      res
+        .status(200)
+        .json(
+          new ApiResponse(200, amendment, "Amendment updated successfully")
+        );
+    }
   } catch (error) {
-    next(error)
+    next(error);
   }
 });
 
-export { addAmendment, getAllAmendment, getAmendmentById, updateAmendment,getAmendmentsByStatus };
+const deleteAmendment = asyncHandler(async (req, res, next) => {
+  const { amendmentId } = req.params;
 
+  try {
+    const amendment = await Amendment.findById(amendmentId);
+    if (!amendment) {
+      throw new ApiError(404, "Amendment not found");
+    }
+    if (amendment.generated_by.toString() !== req.user._id.toString()) {
+      throw new ApiError(403, "Unauthorized to delete this amendment");
+    }
+    await Amendment.findByIdAndDelete(amendmentId);
+    // await amendment.remove();
+    res.json(new ApiResponse(200, null, "Amendment deleted successfully"));
+  } catch (error) {
+    next(error);
+  }
+});
 
-
-
+export {
+  addAmendment,
+  getAllAmendment,
+  getAmendmentById,
+  updateAmendment,
+  getAmendmentsByStatus,
+  deleteAmendment,
+};
 
 // let amendment;
 // if (user.role === "admin") {
