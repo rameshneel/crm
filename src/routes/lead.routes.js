@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(verifyJWT); 
 //for params
 router.post("/:customer_id",addLead);
-router.delete("/:customer_id",deleteLead);
+router.delete("/:lead_id",deleteLead);
 //for req.body
 router.post("/", addLead);
 //all route
@@ -18,6 +18,7 @@ router.get("/",getAllLeads);
 //for Appointement Routes
 
 router.post("/appointments/:lead_id", addAppointment);
+router.patch("/appointments/:lead_id", deleteAppointment);
 router.delete("/appointments/:appointment_id", deleteAppointment);
 router.patch("/appointments/update/:appointment_id", updateAppointment);
 router.get("/lead/appointments/:lead_id", getAppointmentsByDate);

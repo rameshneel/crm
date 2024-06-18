@@ -413,9 +413,9 @@ export const updateLead = asyncHandler(async (req, res, next) => {
 export const deleteLead = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
   const userId = req.user?._id;
-  // if (!isValidObjectId(lead_id)) {
-  //   return next(new ApiError(400, "Invalid lead_id"));
-  // }
+  if (!isValidObjectId(lead_id)) {
+    return next(new ApiError(400, "Invalid lead_id"));
+  }
 
   try {
     const user = await User.findById(userId);
