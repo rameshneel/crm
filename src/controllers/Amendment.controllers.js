@@ -85,7 +85,7 @@ const addAmendment = asyncHandler(async (req, res, next) => {
         customer_status,
         priority,
         status,
-        date_complete,
+        date_complete:"",
         customer: customerId,
         generated_by:generated_by|| userId,
       });
