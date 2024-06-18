@@ -115,7 +115,7 @@ const getAllAmendment = asyncHandler(async (req, res, next) => {
     if (user.role === "admin") {
       amendments = await Amendment.find()
         .populate({
-          path: "customer_id",
+          path: "customer",
         })
         .populate({
           path: "generated_by",
