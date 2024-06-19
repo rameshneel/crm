@@ -90,7 +90,7 @@ const orderSchema = new Schema(
     googleEmailRenewCampaign: {
       type: String,
       enum:{values:["N/A","Needs to be set up", ""],message:'{VALUE} is not supported'} ,
-     default:""
+       default:""
     },
     customerSignature: {
       type: String,
@@ -136,44 +136,11 @@ const orderSchema = new Schema(
     buildingAddress: {
       type: String,
     },
-    // for customer database
-
-    // contactName: {
-    //     type: String,
-    //     // required: true , just for testing
-    //   },
-    //   mobileNo: {
-    //     type: String,
-    //   },
-    //   landlineNo: {
-    //     type: String,
-    //   },
-    //   customerEmail: {
-    //     type: String,
-    //     required: true,
-    //     // // unique: true,
-    //     lowercase: true,
-    //     trim: true,
-    //   },
-    // buildingAddress:{
-
-    //   type: String,
-    // },
-    //   streetNoName: {
-    //     type: String,
-    //     // required: true,
-    //   },
-    //   town: {
-    //     type: String,
-    //   },
-    //   county :{
-
-    //     type: String,
-    //   },
-    //   postcode :{
-
-    //     type: String,
-    //   },
+    updates: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Update',
+    }],
+    
   },
   { timestamps: true }
 );
@@ -181,13 +148,12 @@ const orderSchema = new Schema(
 orderSchema.pre("save", async function (next) {
   const order = this;
   if (order.isNew && !order.orderNo) {
-    // Ensure customerNo is not already set
     try {
       const lastorder = await mongoose
         .model("Order")
         .findOne()
         .sort({ orderNo: -1 });
-        console.log("gtttttttttttttttttttttttttttttttttttt",lastorder);
+        console.log("order",lastorder);
       let newOrderNo = "HOM101";
       if (lastorder && lastorder.orderNo) {
         const lastOrderNo = lastorder.orderNo;
@@ -221,6 +187,7 @@ orderSchema.pre("save", async function (next) {
     next();
   }
 });
+
 
 
 

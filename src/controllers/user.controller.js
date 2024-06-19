@@ -561,7 +561,7 @@ const deleteUsers = asyncHandler(async (req, res, next) => {
 const updateUser = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user._id; 
-  const { fullName, mobileNo, address, jobtitle,role,email} = req.body;
+  const { fullName, mobileNo, address, jobtitle,role,email,timeZone} = req.body;
   let avatarUrl = "";
   console.log("full",req.body);
 
@@ -620,6 +620,7 @@ const updateUser = asyncHandler(async (req, res, next) => {
         jobtitle,
         email,
         role,
+        timeZone,
         avatar: avatarUrl,
       },
       { new: true } 
