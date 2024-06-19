@@ -585,6 +585,28 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
             { 
               path: 'replies', 
               model: 'Update', 
+              populate: [
+                { 
+                  path: 'mentions', 
+                  model: 'User', 
+                  select: 'fullname avatar' 
+                },
+                { 
+                  path: 'createdBy', 
+                  model: 'User', 
+                  select: 'fullname avatar' 
+                },
+                { 
+                  path: 'replies', 
+                  model: 'Update', 
+      
+                },
+                { 
+                  path: 'likes', 
+                  model: 'User', 
+                  select: 'fullname avatar' 
+                },
+              ],
             },
             { 
               path: 'likes', 
