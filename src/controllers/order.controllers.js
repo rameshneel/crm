@@ -566,8 +566,6 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
   
   const getAllOrderUpdates = asyncHandler(async (req, res, next) => {
     const { orderId } = req.params;
-    console.log(orderId);
-    const upd = await Order.findById(orderId)
     try {
       const updates = await Order.findById(orderId)
       .select("companyName")
@@ -587,11 +585,15 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
             { 
               path: 'replies', 
               model: 'Update', 
-            }
+            },
+            { 
+              path: 'likes', 
+              model: 'User', 
+              select: 'fullname avatar' 
+            },
           ]
         });
-        console.log(updates);
-  
+     
       if (!updates) {
         throw new ApiError(404, 'No updates found');
       }
@@ -600,6 +602,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
     } catch (error) {
       next(error);
     }
+    
   });
   const replyToUpdateforOrder = asyncHandler(async (req, res, next) => {
     const userId = req.user?._id;
