@@ -601,54 +601,44 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       next(error);
     }
   });
-
   const replyToUpdateforOrder = asyncHandler(async (req, res, next) => {
     const userId = req.user?._id;
-    const { updateId } = req.params;
+    const {updateId } = req.params;
     try {
       const { content, files, mentions } = req.body;
   
-      // Find the original update to which we want to add a reply
       const originalUpdate = await Update.findById(updateId);
       if (!originalUpdate) {
         throw new ApiError(404, 'Original update not found');
       }
   
-      // Create the reply as a new update document
       const reply = new Update({
         content,
         createdBy: userId,
         files: files || [],
         mentions: mentions || [],
-        replies: [], // Replies to a reply can be handled if needed
+        replies: [], 
       });
   
-      // Save the reply document to the database
       await reply.save();
-  
-      // Add the reply's ID to the original update's replies array and save
       originalUpdate.replies.push(reply._id);
       await originalUpdate.save();
-  
-      // Respond with the created reply
+
       return res.json(new ApiResponse(201, { reply }, 'Reply created successfully'));
     } catch (error) {
-      next(error); // Pass any error to the next middleware
+      next(error); 
     }
   });
-  const toggleLike = asyncHandler(async (req, res, next) => {
+  const toggleLikeforOrder = asyncHandler(async (req, res, next) => {
     const userId = req.user?._id; 
     const { updateId } = req.params;
-  
     try {
      
       const update = await Update.findById(updateId);
       if (!update) {
         throw new ApiError(404, 'Update not found');
       }
-  
       const userLiked = update.likes.includes(userId);
-  
       if (userLiked) {
         update.likes = update.likes.filter(id => id.toString() !== userId.toString());
         await update.save();
@@ -662,7 +652,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       next(error); 
     }
   });
-  const updateUpdate = asyncHandler(async (req, res, next) => {
+  const updateUpdateforOrder = asyncHandler(async (req, res, next) => {
     const { updateId } = req.params; 
     const userId = req.user._id; 
     const { content, files, mentions } = req.body; 
@@ -690,7 +680,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       next(error); 
     }
   });
-  const deleteUpdate = asyncHandler(async (req, res, next) => {
+  const deleteUpdateforOrder = asyncHandler(async (req, res, next) => {
     const { updateId } = req.params; 
     const userId = req.user._id; 
   
@@ -716,7 +706,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
 
 
 
-export{addOrder,getAllOrders,updateOrder,getOrderById,deleteOrder,createOrderUpdate,getAllOrderUpdates,}
+export{addOrder,getAllOrders,updateOrder,getOrderById,deleteOrder,createOrderUpdate,getAllOrderUpdates,replyToUpdateforOrder,toggleLikeforOrder,updateUpdateforOrder,deleteUpdateforOrder}
 
 
 

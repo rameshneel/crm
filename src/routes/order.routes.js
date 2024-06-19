@@ -1,5 +1,5 @@
 import express from 'express';
-import { addOrder, createOrderUpdate, deleteOrder, getAllOrderUpdates, getAllOrders, getOrderById, updateOrder } from '../controllers/order.controllers.js';
+import { addOrder, createOrderUpdate, deleteOrder, deleteUpdateforOrder, getAllOrderUpdates, getAllOrders, getOrderById, replyToUpdateforOrder, toggleLikeforOrder, updateOrder, updateUpdateforOrder } from '../controllers/order.controllers.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 
 
@@ -17,11 +17,9 @@ router.delete('/:order_id',deleteOrder);
 
 router.get('/updates/all/:orderId', getAllOrderUpdates);
 router.post('/:orderId/updates', createOrderUpdate);
-// router.post('/updates/:updateId/reply', replyToUpdate)
-// router.post('/updates/:updateId/like', toggleLike)
-// router.patch('/:updateId',updateUpdate)
-// router.delete('/:updateId',deleteUpdate)
-//    .patch(updateUpdate) 
-//   .delete(deleteUpdate)
+router.post('/updates/:updateId/reply', replyToUpdateforOrder)
+router.post('/updates/:updateId/like', toggleLikeforOrder)
+router.patch('/:updateId',updateUpdateforOrder)
+router.delete('/:updateId',deleteUpdateforOrder)
 
 export default router;
