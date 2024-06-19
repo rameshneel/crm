@@ -558,6 +558,87 @@ const deleteUsers = asyncHandler(async (req, res, next) => {
   }
 });
 
+const updateUser = asyncHandler(async (req, res, next) => {
+  const { userId } = req.params;
+  const activeUserId = req.user._id; 
+  const { fullName, mobileNo, address, jobtitle,role,email} = req.body;
+  let avatarUrl = "";
+  console.log("full",req.body);
+
+  try {
+    // Check if the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Check if active user is admin
+    const activeUser = await User.findById(activeUserId);
+    if (!activeUser || activeUser.role !== "admin") {
+      console.log("role",activeUser);
+      throw new ApiError(403, "Unauthorized access");
+    }
+
+    // Handle avatar upload
+    if (req.file && req.file.path) {
+      const avatarLocalPath = req.file.path;
+
+      try {
+        const formData = new FormData();
+        formData.append("file", fs.createReadStream(avatarLocalPath));
+        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+        const apiResponse = await axios.post(apiURL, formData, {
+          headers: formData.getHeaders(),
+        });
+
+        avatarUrl = apiResponse.data?.img_upload_path;
+        if (!avatarUrl) {
+          throw new Error("img_upload_path not found in API response");
+        }
+
+        // Clean up local avatar file
+        fs.unlink(avatarLocalPath, (err) => {
+          if (err) {
+            console.error("Error removing avatar file:", err.message);
+          } else {
+            console.log("Avatar file removed successfully");
+          }
+        });
+      } catch (error) {
+        console.error("Error uploading avatar:", error.message);
+        throw new ApiError(500, "Failed to upload avatar");
+      }
+    }
+
+    // Update user document
+    const updatedUserdata = await User.findByIdAndUpdate(
+      userId,
+      {
+        fullName,
+        mobileNo,
+        address,
+        jobtitle,
+        email,
+        role,
+        avatar: avatarUrl,
+      },
+      { new: true } 
+    );
+
+    if (!updatedUserdata) {
+      throw new ApiError(404, "User not found after update");
+    }
+   
+    return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUserdata, "User updated successfully"));
+   
+  } catch (error) {
+    next(error); 
+  }
+});
+
+
 export {
   registerUser,
   loginUser,
@@ -571,6 +652,7 @@ export {
   deleteUser,
   getAllUsers,
   userDetails,
-  deleteUsers
+  deleteUsers,
+  updateUser
 };
  
