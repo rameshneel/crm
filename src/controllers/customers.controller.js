@@ -129,6 +129,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
+
 const customerList = asyncHandler(async (req, res, next) => {
   try {
     const activeUser = req.user?._id;
@@ -140,7 +141,9 @@ const customerList = asyncHandler(async (req, res, next) => {
         path: "createdBy",
       });
     } else if (user.role === "salesman") {
-      customers = await Customer.find({ createdBy: activeUser });
+      customers = await Customer.find({ createdBy: activeUser }).populate({
+        path: "createdBy",
+      });
     }
 
     return res.json(
@@ -150,6 +153,42 @@ const customerList = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
+
+//for pagination 
+
+// const customerList = asyncHandler(async (req, res, next) => {
+//   try {
+//     const activeUser = req.user?._id;
+//     const user = await User.findById(activeUser);
+//     let customers;
+//     let page = parseInt(req.query.page) || 3; // Current page number, default is 1
+//     let limit = parseInt(req.query.limit) || 2; // Number of items per page, default is 10
+
+//     // Calculate the number of documents to skip
+//     let skip = (page - 1) * limit;
+
+//     if (user.role === "admin") {
+//       customers = await Customer.find()
+//         .populate({
+//           path: "createdBy",
+//         })
+//         .skip(skip)
+//         .limit(limit);
+//     } else if (user.role === "salesman") {
+//       customers = await Customer.find({ createdBy: activeUser })
+//         .skip(skip)
+//         .limit(limit);
+//     }
+
+//     return res.json(
+//       new ApiResponse(200, { customers }, "Customers fetched successfully")
+//     );
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
+
 const updateCustomer = asyncHandler(async (req, res, next) => {
   console.log(req.file);
   const { customer_id } = req.params;
@@ -476,6 +515,7 @@ const getAllUpdates = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+
 const replyToUpdate = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { updateId } = req.params;
