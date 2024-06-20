@@ -163,7 +163,7 @@ const customerList = asyncHandler(async (req, res, next) => {
     const user = await User.findById(activeUser);
 
     let page = parseInt(req.query.page, 10);
-    let limit = parseInt(req.query.limit, 10);
+    let limit = parseInt(req.query.limit, 50);
 
     page = isNaN(page) || page < 1 ? 1 : page;
     limit = isNaN(limit) || limit < 1 ? 10 : limit;
