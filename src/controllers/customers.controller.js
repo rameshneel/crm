@@ -8,7 +8,8 @@ import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
 import Update from "../models/update.model.js";
-
+import File from "../models/files.model.js";
+import { url } from "inspector";
 
 const createCustomer = asyncHandler(async (req, res, next) => {
   try {
@@ -33,7 +34,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       createdBy,
       ordersRenewals,
     } = req.body;
-   const newlivedate= new Date(liveDate)
+    const newlivedate = new Date(liveDate);
     // const existedUser = await Customer.findOne({
     //   $or: [{ customerEmail }],
     // });
@@ -100,7 +101,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       postcode,
       url,
       status,
-      liveDate:newlivedate,
+      liveDate: newlivedate,
       ssl,
       sitemap,
       htAccess,
@@ -130,54 +131,20 @@ const createCustomer = asyncHandler(async (req, res, next) => {
   }
 });
 
-const customerList = asyncHandler(async (req, res, next) => {
-  try {
-    const activeUser = req.user?._id;
-    const user = await User.findById(activeUser);
-    let customers;
-
-    if (user.role === "admin") {
-      customers = await Customer.find().populate({
-        path: "createdBy",
-      });
-    } else if (user.role === "salesman") {
-      customers = await Customer.find({ createdBy: activeUser }).populate({
-        path: "createdBy",
-      });
-    }
-
-    return res.json(
-      new ApiResponse(200, { customers }, "Customers fetched successfully")
-    );
-  } catch (error) {
-    return next(error);
-  }
-});
-
-//for pagination 
-
 // const customerList = asyncHandler(async (req, res, next) => {
 //   try {
 //     const activeUser = req.user?._id;
 //     const user = await User.findById(activeUser);
 //     let customers;
-//     let page = parseInt(req.query.page) || 3; // Current page number, default is 1
-//     let limit = parseInt(req.query.limit) || 2; // Number of items per page, default is 10
-
-//     // Calculate the number of documents to skip
-//     let skip = (page - 1) * limit;
 
 //     if (user.role === "admin") {
-//       customers = await Customer.find()
-//         .populate({
-//           path: "createdBy",
-//         })
-//         .skip(skip)
-//         .limit(limit);
+//       customers = await Customer.find().populate({
+//         path: "createdBy",
+//       });
 //     } else if (user.role === "salesman") {
-//       customers = await Customer.find({ createdBy: activeUser })
-//         .skip(skip)
-//         .limit(limit);
+//       customers = await Customer.find({ createdBy: activeUser }).populate({
+//         path: "createdBy",
+//       });
 //     }
 
 //     return res.json(
@@ -188,6 +155,61 @@ const customerList = asyncHandler(async (req, res, next) => {
 //   }
 // });
 
+//for pagination
+
+const customerList = asyncHandler(async (req, res, next) => {
+  try {
+    const activeUser = req.user?._id;
+    const user = await User.findById(activeUser);
+
+    let page = parseInt(req.query.page, 10);
+    let limit = parseInt(req.query.limit, 10);
+
+    page = isNaN(page) || page < 1 ? 1 : page;
+    limit = isNaN(limit) || limit < 1 ? 10 : limit;
+
+    let skip = (page - 1) * limit;
+
+    let customers;
+    let totalCount;
+
+    if (user.role === "admin") {
+      totalCount = await Customer.countDocuments();
+      customers = await Customer.find()
+        .populate({
+          path: "createdBy",
+          select: "name email",
+        })
+        .skip(skip)
+        .limit(limit);
+    } else if (user.role === "salesman") {
+      totalCount = await Customer.countDocuments({ createdBy: activeUser });
+      customers = await Customer.find({ createdBy: activeUser })
+        .skip(skip)
+        .limit(limit);
+    } else {
+      return res.status(403).json(new ApiResponse(403, null, "Access denied"));
+    }
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return res.json(
+      new ApiResponse(
+        200,
+        {
+          customers,
+          totalPages,
+          totalCount,
+          currentPage: page,
+          pageSize: limit,
+        },
+        "Customers fetched successfully"
+      )
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
 
 const updateCustomer = asyncHandler(async (req, res, next) => {
   console.log(req.file);
@@ -218,10 +240,10 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
       gaCode,
       newGACode,
       ordersRenewals,
-      createdBy
+      createdBy,
     } = req.body;
 
-    const newlivedate= new Date(liveDate)
+    const newlivedate = new Date(liveDate);
     // if (
     //   ![customerEmail,].some((field) => {
     //     if (field === undefined) return false;
@@ -300,7 +322,7 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
         url,
         address,
         status,
-        liveDate:newlivedate,
+        liveDate: newlivedate,
         ssl,
         sitemap,
         htAccess,
@@ -330,27 +352,27 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
 
 const deleteCustomer = asyncHandler(async (req, res, next) => {
   try {
-   
     const activeUserId = req.user?._id;
     const user = await User.findById(activeUserId);
-    
+
     const { customerId } = req.params;
 
     const customer = await Customer.findById(customerId);
 
     if (!customer) {
-      throw new ApiError(404, 'Customer not found');
+      throw new ApiError(404, "Customer not found");
     }
 
-    if (user.role === 'admin' || (user.role === 'salesman' && customer.createdBy.equals(activeUserId))) {
-      
+    if (
+      user.role === "admin" ||
+      (user.role === "salesman" && customer.createdBy.equals(activeUserId))
+    ) {
       await Customer.findByIdAndDelete(customerId);
       return res
-      .status(200)
-      .json(new ApiResponse(204, {}, "Customer deleted successfully"));
-    
+        .status(200)
+        .json(new ApiResponse(204, {}, "Customer deleted successfully"));
     } else {
-      throw new ApiError(401, 'Unauthorized');
+      throw new ApiError(401, "Unauthorized");
     }
   } catch (error) {
     return next(error);
@@ -381,35 +403,36 @@ const getCustomerById = asyncHandler(async (req, res, next) => {
 
 //update for customers
 
- const createCustomerUpdate = asyncHandler(async (req, res,next) => {
-    const userId = req.user?._id;
-    const { customerId } = req.params;
-  try {
-   
-    const { content,files, mentions } = req.body;
-   
-    const update = new Update({
-      content,
-      createdBy: userId,
-      files: files || [],
-      mentions: mentions || [],
-    });
+//  const createCustomerUpdate = asyncHandler(async (req, res,next) => {
+//     const userId = req.user?._id;
+//     const { customerId } = req.params;
+//   try {
 
-    await update.save();
+//     const { content,files, mentions } = req.body;
 
-    const customer = await Customer.findById(customerId);
-    if (!customer) {
-      throw new ApiError(404, "Customer not found");
-    }
-    customer.updates.push(update._id);
-    await customer.save();
-    return res.json(
-      new ApiResponse(201, { update }, "Update Created successfully")
-    );
-  } catch (error) {
-     next(error)
-  }
-});
+//     const update = new Update({
+//       content,
+//       createdBy: userId,
+//       files: files || [],
+//       mentions: mentions || [],
+//     });
+
+//     await update.save();
+
+//     const customer = await Customer.findById(customerId);
+//     if (!customer) {
+//       throw new ApiError(404, "Customer not found");
+//     }
+//     customer.updates.push(update._id);
+//     await customer.save();
+//     return res.json(
+//       new ApiResponse(201, { update }, "Update Created successfully")
+//     );
+//   } catch (error) {
+//      next(error)
+//   }
+// });
+
 // const getAllUpdates = asyncHandler(async (req, res, next) => {
 //   const { customerId } = req.params;
 //   try {
@@ -471,11 +494,11 @@ const populateRepliesUpToDepth = async (updates, depth) => {
   for (const update of updates) {
     // Populate the replies field of the current update
     await update.populate({
-      path: 'replies',
+      path: "replies",
       populate: [
-        { path: 'createdBy', select: 'fullname avatar' },
-        { path: 'mentions', select: 'fullname avatar' }
-      ]
+        { path: "createdBy", select: "fullname avatar" },
+        { path: "mentions", select: "fullname avatar" },
+      ],
     }); // Populate each reply's createdBy and mentions fields
 
     // If there are replies and we need to go deeper, recursively populate the replies
@@ -492,30 +515,34 @@ const getAllUpdates = asyncHandler(async (req, res, next) => {
   try {
     // Step 1: Find the customer and initially populate the updates
     const customer = await Customer.findById(customerId)
-      .select('contactName')
+      .select("contactName")
       .populate({
-        path: 'updates',
+        path: "updates",
         populate: [
-          { path: 'createdBy', select: 'fullname avatar' },
-          { path: 'mentions', select: 'fullname avatar' }
+          { path: "createdBy", select: "fullname avatar" },
+          { path: "mentions", select: "fullname avatar" },
         ],
-        options: { limit: 10, sort: { createdAt: -1 } }
+        options: { limit: 10, sort: { createdAt: -1 } },
       });
 
     if (!customer) {
-      throw new ApiError(404, 'Customer not found');
+      throw new ApiError(404, "Customer not found");
     }
 
     // Step 2: Populate nested replies up to three levels deep
-    const populatedUpdates = await populateRepliesUpToDepth(customer.updates, 4);
+    const populatedUpdates = await populateRepliesUpToDepth(
+      customer.updates,
+      4
+    );
 
     // Step 3: Return the populated updates
-    return res.json(new ApiResponse(200, populatedUpdates, 'Updates retrieved successfully'));
+    return res.json(
+      new ApiResponse(200, populatedUpdates, "Updates retrieved successfully")
+    );
   } catch (error) {
     next(error);
   }
 });
-
 const replyToUpdate = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { updateId } = req.params;
@@ -525,7 +552,7 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     // Find the original update to which we want to add a reply
     const originalUpdate = await Update.findById(updateId);
     if (!originalUpdate) {
-      throw new ApiError(404, 'Original update not found');
+      throw new ApiError(404, "Original update not found");
     }
 
     // Create the reply as a new update document
@@ -545,52 +572,58 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     await originalUpdate.save();
 
     // Respond with the created reply
-    return res.json(new ApiResponse(201, { reply }, 'Reply created successfully'));
+    return res.json(
+      new ApiResponse(201, { reply }, "Reply created successfully")
+    );
   } catch (error) {
     next(error); // Pass any error to the next middleware
   }
 });
 const toggleLike = asyncHandler(async (req, res, next) => {
-  const userId = req.user?._id; 
+  const userId = req.user?._id;
   const { updateId } = req.params;
 
   try {
-   
     const update = await Update.findById(updateId);
     if (!update) {
-      throw new ApiError(404, 'Update not found');
+      throw new ApiError(404, "Update not found");
     }
 
     const userLiked = update.likes.includes(userId);
 
     if (userLiked) {
-      update.likes = update.likes.filter(id => id.toString() !== userId.toString());
+      update.likes = update.likes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
       await update.save();
-      return res.json(new ApiResponse(200, { liked: false }, 'Update unliked successfully'));
+      return res.json(
+        new ApiResponse(200, { liked: false }, "Update unliked successfully")
+      );
     } else {
       update.likes.push(userId);
       await update.save();
-      return res.json(new ApiResponse(200, { liked: true }, 'Update liked successfully'));
+      return res.json(
+        new ApiResponse(200, { liked: true }, "Update liked successfully")
+      );
     }
   } catch (error) {
-    next(error); 
+    next(error);
   }
 });
 const updateUpdate = asyncHandler(async (req, res, next) => {
-  const { updateId } = req.params; 
-  const userId = req.user._id; 
-  const { content, files, mentions } = req.body; 
+  const { updateId } = req.params;
+  const userId = req.user._id;
+  const { content, files, mentions } = req.body;
 
   try {
-    
     const update = await Update.findById(updateId);
 
     if (!update) {
-      throw new ApiError(404, 'Update not found'); 
+      throw new ApiError(404, "Update not found");
     }
 
     if (!update.createdBy.equals(userId)) {
-      throw new ApiError(403, 'You are not authorized to update this content'); 
+      throw new ApiError(403, "You are not authorized to update this content");
     }
 
     const updatedUpdate = await Update.findByIdAndUpdate(
@@ -599,32 +632,81 @@ const updateUpdate = asyncHandler(async (req, res, next) => {
       { new: true, runValidators: true } // Return the new document after update
     );
 
-    return res.json(new ApiResponse(200, updatedUpdate, 'Update modified successfully'));
+    return res.json(
+      new ApiResponse(200, updatedUpdate, "Update modified successfully")
+    );
   } catch (error) {
-    next(error); 
+    next(error);
   }
 });
 const deleteUpdate = asyncHandler(async (req, res, next) => {
-  const { updateId } = req.params; 
-  const userId = req.user._id; 
+  const { updateId } = req.params;
+  const userId = req.user._id;
 
   try {
-  
     const update = await Update.findById(updateId);
 
     if (!update) {
-      throw new ApiError(404, 'Update not found'); 
+      throw new ApiError(404, "Update not found");
     }
 
     if (!update.createdBy.equals(userId)) {
-      throw new ApiError(403, 'You are not authorized to delete this content'); 
+      throw new ApiError(403, "You are not authorized to delete this content");
     }
-     
+
     await Update.findByIdAndDelete(updateId);
 
-    return res.json(new ApiResponse(200, {}, 'Update deleted successfully'));
+    return res.json(new ApiResponse(200, {}, "Update deleted successfully"));
   } catch (error) {
-    next(error); 
+    next(error);
+  }
+});
+const createCustomerUpdate = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+  const { customerId } = req.params;
+
+  try {
+    const { content, mentions } = req.body;
+    const files = req.files || [];
+    console.log("files", files);
+    const update = new Update({
+      content,
+      createdBy: userId,
+      files: [],
+      mentions: mentions || [],
+    });
+
+    await update.save();
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      console.log("loop file", file);
+
+      const newFile = new File({
+        uploadedBy: userId,
+        url: file.filename,
+        itemType: "Customer",
+        itemId: customerId,
+        source: "UpdateFile",
+      });
+      console.log("newFile", newFile);
+      await newFile.save();
+      console.log("newfilepush", newFile.url);
+      update.file.push(file.filename);
+    }
+    await update.save();
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      throw new ApiError(404, "Customer not found");
+    }
+    customer.updates.push(update._id);
+    await customer.save();
+
+    return res.json(
+      new ApiResponse(201, { update }, "Update created successfully with files")
+    );
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -639,5 +721,5 @@ export {
   replyToUpdate,
   toggleLike,
   updateUpdate,
-  deleteUpdate
+  deleteUpdate,
 };
