@@ -30,7 +30,7 @@ router.route('/:amendmentId')
   // .get(getAllAmendment)
   .get(getAmendmentsByStatus);
 
-  router.route('/list')
+  router.route('/')
   .get(getAllAmendment)
   // .get(getAmendmentsByStatus);
 
