@@ -14,7 +14,6 @@ const amendmentschema = new Schema(
 
     date_current: {
       type: Date,
-      required: true,
     },
 
     customer_status: {
@@ -71,7 +70,7 @@ amendmentschema.pre("save", async function (next) {
         .model("Amendment")
         .findOne()
         .sort({ refNo: -1 });
-      let newAmendmentNo = "A001";
+      let newAmendmentNo = "A1";
       if (lastAmendment && lastAmendment.refNo) {
         const lastAmendmentNo = lastAmendment.refNo;
         const lastNumber = lastAmendmentNo.startsWith("A")
