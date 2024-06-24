@@ -18,7 +18,7 @@ router.use(verifyJWT);
 // router.route("/:amendmentId").patch(updateAmendment);
 // router.get('/', getAmendmentsByStatus);
 
-router.route('/id/:amendmentId')
+router.route('/:amendmentId')
   .get(getAmendmentById)
   .patch(updateAmendment)
   .delete(deleteAmendment)
