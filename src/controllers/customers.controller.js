@@ -3,13 +3,15 @@ import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
 import Update from "../models/update.model.js";
 import File from "../models/files.model.js";
-import { url } from "inspector";
+import Notification from "../models/notification.model.js";
+import sendEmailForMentions from "../utils/sendEmailForMentions.js";
+
 
 const createCustomer = asyncHandler(async (req, res, next) => {
   try {
@@ -135,38 +137,63 @@ const createCustomer = asyncHandler(async (req, res, next) => {
 //   try {
 //     const activeUser = req.user?._id;
 //     const user = await User.findById(activeUser);
+
+//     let page = parseInt(req.query.page, 10);
+//     let limit = parseInt(req.query.limit, 50);
+
+//     page = isNaN(page) || page < 1 ? 1 : page;
+//     limit = isNaN(limit) || limit < 1 ? 10 : limit;
+
+//     let skip = (page - 1) * limit;
+
 //     let customers;
+//     let totalCount;
 
 //     if (user.role === "admin") {
-//       customers = await Customer.find().populate({
-//         path: "createdBy",
-//       });
+//       totalCount = await Customer.countDocuments();
+//       customers = await Customer.find()
+//         .populate({
+//           path: "createdBy",
+//           select: "name email",
+//         })
+//         .skip(skip)
+//         .limit(limit);
 //     } else if (user.role === "salesman") {
-//       customers = await Customer.find({ createdBy: activeUser }).populate({
-//         path: "createdBy",
-//       });
+//       totalCount = await Customer.countDocuments({ createdBy: activeUser });
+//       customers = await Customer.find({ createdBy: activeUser })
+//         .skip(skip)
+//         .limit(limit);
+//     } else {
+//       return res.status(403).json(new ApiResponse(403, null, "Access denied"));
 //     }
 
+//     const totalPages = Math.ceil(totalCount / limit);
+
 //     return res.json(
-//       new ApiResponse(200, { customers }, "Customers fetched successfully")
+//       new ApiResponse(
+//         200,
+//         {
+//           customers,
+//           totalPages,
+//           totalCount,
+//           currentPage: page,
+//           pageSize: limit,
+//         },
+//         "Customers fetched successfully"
+//       )
 //     );
 //   } catch (error) {
 //     return next(error);
 //   }
 // });
 
-//for pagination
-
 const customerList = asyncHandler(async (req, res, next) => {
   try {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
 
-    let page = parseInt(req.query.page, 10);
-    let limit = parseInt(req.query.limit, 50);
-
-    page = isNaN(page) || page < 1 ? 1 : page;
-    limit = isNaN(limit) || limit < 1 ? 10 : limit;
+    let page = parseInt(req.query.page, 10) || 1; // Default page is 1 if not provided or invalid
+    let limit = parseInt(req.query.limit, 10) || 10; // Default limit is 10 if not provided or invalid
 
     let skip = (page - 1) * limit;
 
@@ -403,180 +430,209 @@ const getCustomerById = asyncHandler(async (req, res, next) => {
 
 //update for customers
 
-//  const createCustomerUpdate = asyncHandler(async (req, res,next) => {
-//     const userId = req.user?._id;
-//     const { customerId } = req.params;
-//   try {
-
-//     const { content,files, mentions } = req.body;
-
-//     const update = new Update({
-//       content,
-//       createdBy: userId,
-//       files: files || [],
-//       mentions: mentions || [],
-//     });
-
-//     await update.save();
-
-//     const customer = await Customer.findById(customerId);
-//     if (!customer) {
-//       throw new ApiError(404, "Customer not found");
-//     }
-//     customer.updates.push(update._id);
-//     await customer.save();
-//     return res.json(
-//       new ApiResponse(201, { update }, "Update Created successfully")
-//     );
-//   } catch (error) {
-//      next(error)
-//   }
-// });
-
-// const getAllUpdates = asyncHandler(async (req, res, next) => {
-//   const { customerId } = req.params;
-//   try {
-//     const customerUpdates = await Customer.aggregate([
-//       { $match: { _id: new mongoose.Types.ObjectId(customerId) } },
-//       {
-//         $lookup: {
-//           from: 'updates', // The collection to join
-//           localField: 'updates', // The field from the customer documents
-//           foreignField: '_id', // The field from the updates collection
-//           as: 'updates'
-//         }
-//       },
-//       { $unwind: '$updates' }, // Unwind the updates array
-//       {
-//         $lookup: {
-//           from: 'users',
-//           localField: 'updates.createdBy',
-//           foreignField: '_id',
-//           as: 'updates.createdBy'
-//         }
-//       },
-//       { $unwind: '$updates.createdBy' }, // Unwind the createdBy array
-//       {
-//         $lookup: {
-//           from: 'users',
-//           localField: 'updates.mentions',
-//           foreignField: '_id',
-//           as: 'updates.mentions'
-//         }
-//       },
-//       { $limit: 10 }, // Limit the number of updates
-//       { $sort: { 'updates.createdAt': -1 } }, // Sort updates by creation date
-//       {
-//         $project: {
-//           'updates.content': 1,
-//           'updates.files': 1,
-//           'updates.createdBy.fullname': 1,
-//           'updates.createdBy.avatar': 1,
-//           'updates.mentions.fullname': 1,
-//           'updates.mentions.avatar': 1
-//         }
-//       }
-//     ]);
-
-//     if (!customerUpdates || customerUpdates.length === 0) {
-//       throw new ApiError(404, 'No updates found for this customer');
-//     }
-
-//     return res.json(new ApiResponse(200, customerUpdates, 'Updates retrieved successfully'));
-//   } catch (error) {
-//     next(error);
-//   }
-// });
-
-const populateRepliesUpToDepth = async (updates, depth) => {
-  if (depth === 0) return updates;
-
-  for (const update of updates) {
-    // Populate the replies field of the current update
-    await update.populate({
-      path: "replies",
-      populate: [
-        { path: "createdBy", select: "fullname avatar" },
-        { path: "mentions", select: "fullname avatar" },
-      ],
-    }); // Populate each reply's createdBy and mentions fields
-
-    // If there are replies and we need to go deeper, recursively populate the replies
-    if (update.replies && update.replies.length > 0) {
-      await populateRepliesUpToDepth(update.replies, depth - 1);
-    }
-  }
-
-  return updates;
-};
-const getAllUpdates = asyncHandler(async (req, res, next) => {
+const createCustomerUpdate = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+  const user = await User.findById(userId);
+  const userEmail = user.email;
   const { customerId } = req.params;
 
   try {
-    // Step 1: Find the customer and initially populate the updates
-    const customer = await Customer.findById(customerId)
-      .select("contactName")
-      .populate({
-        path: "updates",
-        populate: [
-          { path: "createdBy", select: "fullname avatar" },
-          { path: "mentions", select: "fullname avatar" },
-        ],
-        options: { limit: 10, sort: { createdAt: -1 } },
+    const { content, mentions: mentionString } = req.body;
+    const files = req.files || [];
+
+    if (!mongoose.Types.ObjectId.isValid(customerId)) {
+      return next(new ApiError(400, "Invalid customerId format"));
+    }
+
+    const mentions = mentionString ? mentionString.split(",").map(id => id.trim()) : [];
+
+    const update = new Update({
+      content,
+      createdBy: userId,
+      files: [],
+      mentions,
+      entityType: "Customer",
+      entityId: customerId,
+    });
+
+    await update.save();
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+
+      const newFile = new File({
+        uploadedBy: userId,
+        fileUrl: file.filename,
+        itemType: "Customer",
+        itemId: customerId,
+        source: "UpdateFile",
       });
 
+      await newFile.save();
+      update.files.push(file.filename);
+    }
+
+    await update.save();
+
+    const customer = await Customer.findById(customerId);
     if (!customer) {
       throw new ApiError(404, "Customer not found");
     }
 
-    // Step 2: Populate nested replies up to three levels deep
-    const populatedUpdates = await populateRepliesUpToDepth(
-      customer.updates,
-      4
-    );
+    customer.updates.push(update._id);
+    await customer.save();
 
-    // Step 3: Return the populated updates
+    if (mentions.length > 0) {
+      const mentionedUsers = await User.find({ _id: { $in: mentions } });
+
+      for (let mentionedUser of mentionedUsers) {
+        const notification = new Notification({
+          title: `Mentioned in Customer Update`,
+          message: `You were mentioned in an update for Customer ${customer.companyName}.`,
+          category: "i_was_mentioned",
+          isRead: false,
+          assignedTo: mentionedUser._id,
+          assignedBy: userId,
+          mentionedUsers: [mentionedUser._id],
+          item: update._id,
+          itemType: "Customer",
+          linkUrl: `https://high-oaks-media-crm.vercel.app/customers/update/${update._id}`,
+        });
+
+        await notification.save();
+      }
+
+      await sendEmailForMentions(userEmail, mentionedUsers, "Customer", customer.companyName, update._id, content);
+    }
+
+    return res.status(201).json(new ApiResponse(201, { update }, "Update created successfully with files and notifications"));
+  } catch (error) {
+    next(error);
+  }
+});
+const getAllCustomerUpdates = asyncHandler(async (req, res, next) => {
+  const { customerId } = req.params;
+  try {
+    const updates = await Customer.findById(customerId)
+      .select("companyName")
+      .populate({
+        path: "updates",
+        populate: [
+          {
+            path: "mentions",
+            model: "User",
+            select: "fullname avatar",
+          },
+          {
+            path: "createdBy",
+            model: "User",
+            select: "fullname avatar",
+          },
+          {
+            path: "replies",
+            model: "Update",
+            populate: [
+              {
+                path: "mentions",
+                model: "User",
+                select: "fullname avatar",
+              },
+              {
+                path: "createdBy",
+                model: "User",
+                select: "fullname avatar",
+              },
+              {
+                path: "replies",
+                model: "Update",
+              },
+              {
+                path: "likes",
+                model: "User",
+                select: "fullname avatar",
+              },
+            ],
+          },
+          {
+            path: "likes",
+            model: "User",
+            select: "fullname avatar",
+          },
+        ],
+      });
+
+    if (!updates) {
+      throw new ApiError(404, "No updates found");
+    }
+
     return res.json(
-      new ApiResponse(200, populatedUpdates, "Updates retrieved successfully")
+      new ApiResponse(200, updates, "Updates retrieved successfully")
     );
   } catch (error) {
     next(error);
   }
 });
 const replyToUpdate = asyncHandler(async (req, res, next) => {
-  const userId = req.user?._id;
-  const { updateId } = req.params;
+  const userId = req.user?._id; 
+  const user = await User.findById(userId); 
+  const userEmail = user.email; 
+  const { updateId } = req.params; 
+  
   try {
-    const { content, files, mentions } = req.body;
+    const { content, files, mentions } = req.body; 
 
-    // Find the original update to which we want to add a reply
+
     const originalUpdate = await Update.findById(updateId);
     if (!originalUpdate) {
       throw new ApiError(404, "Original update not found");
     }
 
-    // Create the reply as a new update document
     const reply = new Update({
       content,
       createdBy: userId,
       files: files || [],
       mentions: mentions || [],
-      replies: [], // Replies to a reply can be handled if needed
+      replies: [],
     });
 
-    // Save the reply document to the database
     await reply.save();
 
-    // Add the reply's ID to the original update's replies array and save
     originalUpdate.replies.push(reply._id);
     await originalUpdate.save();
 
-    // Respond with the created reply
+    if (mentions && mentions.length > 0) {
+      const mentionedUsers = mentions.map(id => new mongoose.Types.ObjectId(id.trim()));
+
+      for (let i = 0; i < mentionedUsers.length; i++) {
+        const mentionedUserId = mentionedUsers[i];
+
+        const mentionedUser = await User.findById(mentionedUserId);
+        
+        // Create a notification for each mentioned user
+        // const notification = new Notification({
+        //   message: `You were mentioned in a reply for the update on ${originalUpdate.customerName}.`,
+        //   category: "i_was_mentioned",
+        //   isRead: false,
+        //   assignedTo: mentionedUserId,
+        //   assignedBy: userId,
+        //   mentionedUsers: [mentionedUserId],
+        //   item: reply._id,
+        //   itemType: "UpdateReply",
+        // });
+
+        // await notification.save();
+      }
+
+      // Send email notifications to mentioned users
+      await sendEmailForMentions(userEmail, mentionedUsers, `a reply to an update for Customer ${originalUpdate.customerName}`, reply._id, content);
+    }
+
+    // Respond to the client with the created reply
     return res.json(
-      new ApiResponse(201, { reply }, "Reply created successfully")
+      new ApiResponse(201, { reply }, "Reply created successfully with notifications and mentions notified")
     );
   } catch (error) {
-    next(error); // Pass any error to the next middleware
+    next(error); 
   }
 });
 const toggleLike = asyncHandler(async (req, res, next) => {
@@ -661,54 +717,76 @@ const deleteUpdate = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-const createCustomerUpdate = asyncHandler(async (req, res, next) => {
-  const userId = req.user?._id;
-  const { customerId } = req.params;
-
+const getallFilesforCustomers = asyncHandler(async (req, res, next) => {
   try {
-    const { content, mentions } = req.body;
-    const files = req.files || [];
-    console.log("files", files);
-    const update = new Update({
-      content,
-      createdBy: userId,
-      files: [],
-      mentions: mentions || [],
+    const {customerId } = req.params;
+   
+    if (!mongoose.Types.ObjectId.isValid(customerId)) {
+      return next(new ApiError(400, "Invalid Id format"));
+    }
+
+    const files = await File.find({ itemId: customerId }).populate({
+      path: "uploadedBy",
+      select: "fullName",
     });
 
-    await update.save();
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      console.log("loop file", file);
-
-      const newFile = new File({
-        uploadedBy: userId,
-        url: file.filename,
-        itemType: "Customer",
-        itemId: customerId,
-        source: "UpdateFile",
-      });
-      console.log("newFile", newFile);
-      await newFile.save();
-      console.log("newfilepush", newFile.url);
-      update.file.push(file.filename);
+    if (files.length === 0) {
+      return next(new ApiError(404, "Files not found"));
     }
-    await update.save();
-    const customer = await Customer.findById(customerId);
-    if (!customer) {
-      throw new ApiError(404, "Customer not found");
-    }
-    customer.updates.push(update._id);
-    await customer.save();
 
-    return res.json(
-      new ApiResponse(201, { update }, "Update created successfully with files")
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, files, "Files retrieved successfully"));
+  } catch (error) {
+    return next(error);
+  }
+});
+const getUpdateById = asyncHandler(async (req, res, next) => {
+  const { updateId } = req.params; 
+  console.log("hh");
+
+  try {
+    const update = await Update.findById(updateId);
+    if (!update) {
+      throw new Error('Update not found');
+    }
+    res.json(update);
   } catch (error) {
     next(error);
   }
 });
+const uploadFilesToGalleryforCustomers = asyncHandler(async (req, res, next) => {
+  try {
+    const userId = req.user?._id;  
+    const { customerId } = req.params;
+    
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json(new ApiResponse(400, {}, "No files uploaded"));
+    }
+
+    const uploadedFiles = [];
+    
+    for (const file of req.files) {
+      const { path, filename } = file;
+      
+      const newFile = new File({
+        uploadedBy: userId,
+        fileUrl: filename,
+        itemType: "Customer",
+        itemId: customerId,
+        source: "FileGallery",
+      });
+
+      await newFile.save();
+      uploadedFiles.push(path);
+    }
+
+    return res.status(201).json(new ApiResponse(201, { uploadedFiles }, "Files uploaded to gallery"));
+  } catch (error) {
+    next(error);
+  }
+}); 
+
 
 export {
   createCustomer,
@@ -717,9 +795,147 @@ export {
   getCustomerById,
   updateCustomer,
   createCustomerUpdate,
-  getAllUpdates,
+  getAllCustomerUpdates,
   replyToUpdate,
   toggleLike,
   updateUpdate,
   deleteUpdate,
+  getallFilesforCustomers,
+  uploadFilesToGalleryforCustomers,
+  getUpdateById
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const getAllUpdate = asyncHandler(async (req, res, next) => {
+//   const { customerId } = req.params;
+//   try {
+//     const customerUpdates = await Customer.aggregate([
+//       { $match: { _id: new mongoose.Types.ObjectId(customerId) } },
+//       {
+//         $lookup: {
+//           from: "updates",
+//           localField: "updates",
+//           foreignField: "_id",
+//           as: "updates",
+//         },
+//       },
+//       { $unwind: "$updates" },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "updates.createdBy",
+//           foreignField: "_id",
+//           as: "updates.createdBy",
+//         },
+//       },
+//       { $unwind: "$updates.createdBy" },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "updates.mentions",
+//           foreignField: "_id",
+//           as: "updates.mentions",
+//         },
+//       },
+//       { $limit: 10 },
+//       { $sort: { "updates.createdAt": -1 } },
+//       {
+//         $project: {
+//           "updates.content": 1,
+//           "updates.files": 1,
+//           "updates.createdBy.fullname": 1,
+//           "updates.createdBy.avatar": 1,
+//           "updates.mentions.fullname": 1,
+//           "updates.mentions.avatar": 1,
+//         },
+//       },
+//     ]);
+
+//     if (!customerUpdates || customerUpdates.length === 0) {
+//       throw new ApiError(404, "No updates found for this customer");
+//     }
+
+//     return res.json(
+//       new ApiResponse(200, customerUpdates, "Updates retrieved successfully")
+//     );
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+
+
+
+
+
+
+
+
+
+// const populateRepliesUpToDepth = async (updates, depth) => {
+//   if (depth === 0) return updates;
+
+//   for (const update of updates) {
+//     // Populate the replies field of the current update
+//     await update.populate({
+//       path: "replies",
+//       populate: [
+//         { path: "createdBy", select: "fullname avatar" },
+//         { path: "mentions", select: "fullname avatar" },
+//       ],
+//     }); // Populate each reply's createdBy and mentions fields
+
+//     // If there are replies and we need to go deeper, recursively populate the replies
+//     if (update.replies && update.replies.length > 0) {
+//       await populateRepliesUpToDepth(update.replies, depth - 1);
+//     }
+//   }
+
+//   return updates;
+// };
+// const getAllUpdates = asyncHandler(async (req, res, next) => {
+//   const { customerId } = req.params;
+
+//   try {
+//     // Step 1: Find the customer and initially populate the updates
+//     const customer = await Customer.findById(customerId)
+//       .select("contactName")
+//       .populate({
+//         path: "updates",
+//         populate: [
+//           { path: "createdBy", select: "fullname avatar" },
+//           { path: "mentions", select: "fullname avatar" },
+//         ],
+//         options: { limit: 10, sort: { createdAt: -1 } },
+//       });
+
+//     if (!customer) {
+//       throw new ApiError(404, "Customer not found");
+//     }
+
+//     // Step 2: Populate nested replies up to three levels deep
+//     const populatedUpdates = await populateRepliesUpToDepth(
+//       customer.updates,
+//       4
+//     );
+
+//     // Step 3: Return the populated updates
+//     return res.json(
+//       new ApiResponse(200, populatedUpdates, "Updates retrieved successfully")
+//     );
+//   } catch (error) {
+//     next(error);
+//   }
+// });
