@@ -1,6 +1,6 @@
 import multer from 'multer';
 import { upload } from '../middlewares/multer.middleware.js';
-
+import { uploadForUpdate } from '../middlewares/multerforpdate.middleware.js';
 
 export const uploadFile = (req, res, next) => {
     console.log(multer.MulterError);
@@ -16,7 +16,6 @@ export const uploadFile = (req, res, next) => {
     });
   };
 
-
   export const uploadFile1 = (req, res, next) => {
     console.log(multer.MulterError);
     upload.single('logo')(req, res, (err) => {
@@ -31,9 +30,8 @@ export const uploadFile = (req, res, next) => {
     });
   };
 
-
   export const uploadFile2 = (req, res, next) => {
-    console.log(multer.MulterError);
+    console.log("multer2",multer.MulterError);
     upload.single('customerSignature')(req, res, (err) => {
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
@@ -45,3 +43,30 @@ export const uploadFile = (req, res, next) => {
       next()
     });
   };
+
+  export const fileUpload = (req, res, next) => {
+    uploadForUpdate.array('url', 5)(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ message: 'File size exceeds limit of 50MB' });
+        }
+      } else if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+      next();
+    });
+  };
+
+  export const fileUploadGallery = (req, res, next) => {
+    uploadForUpdate.array('fileUrl', 5)(req, res, (err) => {
+      if (err instanceof multer.MulterError) {
+        if (err.code === 'LIMIT_FILE_SIZE') {
+          return res.status(400).json({ message: 'File size exceeds limit of 50MB' });
+        }
+      } else if (err) {
+        return res.status(400).json({ message: err.message });
+      }
+      next();
+    });
+  };
+  
