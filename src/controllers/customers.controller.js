@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose, { isValidObjectId } from "mongoose";
-import fs from "fs/promises";
+import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
 import Update from "../models/update.model.js";
@@ -12,8 +12,7 @@ import File from "../models/files.model.js";
 import Notification from "../models/notification.model.js";
 import sendEmailForMentions from "../utils/sendEmailForMentions.js";
 
-
-const createCustomer = asyncHandler(async (req, res, next) => {
+const createCustome = asyncHandler(async (req, res, next) => {
   try {
     const {
       companyName,
@@ -132,6 +131,108 @@ const createCustomer = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
+
+const createCustomer = asyncHandler(async (req, res, next) => {
+  try {
+    const {
+      companyName,
+      contactName,
+      mobileNo,
+      landlineNo,
+      streetNoName,
+      town,
+      county,
+      customerEmail,
+      postcode,
+      url,
+      status,
+      liveDate,
+      ssl,
+      sitemap,
+      htAccess,
+      gaCode,
+      newGACode,
+      createdBy,
+      ordersRenewals,
+    } = req.body;
+
+    if (!companyName) {
+      throw new ApiError(400, "CompanyName is required");
+    }
+
+    let avatarurl = "";
+
+    if (req.file && req.file.path) {
+      const avatarLocalPath = req.file.path;
+      console.log("path",avatarLocalPath);
+      
+      avatarurl = await uploadAvatar(avatarLocalPath);
+      console.log("sdgfg",avatarurl);
+    }
+
+    const newCustomer = new Customer({
+      companyName,
+      contactName,
+      mobileNo,
+      customerEmail,
+      landlineNo,
+      streetNoName,
+      town,
+      county,
+      postcode,
+      url,
+      status,
+      liveDate: new Date(liveDate),
+      ssl,
+      sitemap,
+      htAccess,
+      gaCode,
+      newGACode,
+      logo: avatarurl,
+      ordersRenewals,
+      createdBy,
+      vatInvoice:
+        "https://ocw.mit.edu/courses/6-096-introduction-to-c-january-iap-2011/ccef8a1ec946adb5179925311e276a7b_MIT6_096IAP11_lec02.pdf",
+    });
+
+    const createdCustomer = await newCustomer.save();
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          { createdCustomer },
+          "Customer registered successfully"
+        )
+      );
+  } catch (error) {
+    next(error);
+  }
+});
+
+async function uploadAvatar(avatarLocalPath) {
+  try {
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(avatarLocalPath));
+    const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+    const apiResponse = await axios.post(apiURL, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+    });
+    const avatarurl = apiResponse.data?.img_upload_path;
+    if (!avatarurl) {
+      throw new Error("img_upload_path not found in API response");
+    }
+
+    await fs.promises.unlink(avatarLocalPath);
+    return avatarurl;
+  } catch (error) {
+    console.error("Error uploading avatar:", error.message);
+    return "";
+  }
+}
 
 // const customerList = asyncHandler(async (req, res, next) => {
 //   try {
@@ -290,7 +391,7 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
       // if (existedUser) {
       //   fs.unlinkSync(avatarLocalPath);
       //   throw new ApiError(409, "Email already exists");
-      // } 
+      // }
       try {
         const formData = new FormData();
         formData.append("file", fs.createReadStream(avatarLocalPath));
@@ -444,7 +545,9 @@ const createCustomerUpdate = asyncHandler(async (req, res, next) => {
       return next(new ApiError(400, "Invalid customerId format"));
     }
 
-    const mentions = mentionString ? mentionString.split(",").map(id => id.trim()) : [];
+    const mentions = mentionString
+      ? mentionString.split(",").map((id) => id.trim())
+      : [];
 
     const update = new Update({
       content,
@@ -502,10 +605,25 @@ const createCustomerUpdate = asyncHandler(async (req, res, next) => {
         await notification.save();
       }
 
-      await sendEmailForMentions(userEmail, mentionedUsers, "Customer", customer.companyName, update._id, content);
+      await sendEmailForMentions(
+        userEmail,
+        mentionedUsers,
+        "Customer",
+        customer.companyName,
+        update._id,
+        content
+      );
     }
 
-    return res.status(201).json(new ApiResponse(201, { update }, "Update created successfully with files and notifications"));
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          { update },
+          "Update created successfully with files and notifications"
+        )
+      );
   } catch (error) {
     next(error);
   }
@@ -573,14 +691,13 @@ const getAllCustomerUpdates = asyncHandler(async (req, res, next) => {
   }
 });
 const replyToUpdate = asyncHandler(async (req, res, next) => {
-  const userId = req.user?._id; 
-  const user = await User.findById(userId); 
-  const userEmail = user.email; 
-  const { updateId } = req.params; 
-  
-  try {
-    const { content, files, mentions } = req.body; 
+  const userId = req.user?._id;
+  const user = await User.findById(userId);
+  const userEmail = user.email;
+  const { updateId } = req.params;
 
+  try {
+    const { content, files, mentions } = req.body;
 
     const originalUpdate = await Update.findById(updateId);
     if (!originalUpdate) {
@@ -601,13 +718,15 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     await originalUpdate.save();
 
     if (mentions && mentions.length > 0) {
-      const mentionedUsers = mentions.map(id => new mongoose.Types.ObjectId(id.trim()));
+      const mentionedUsers = mentions.map(
+        (id) => new mongoose.Types.ObjectId(id.trim())
+      );
 
       for (let i = 0; i < mentionedUsers.length; i++) {
         const mentionedUserId = mentionedUsers[i];
 
         const mentionedUser = await User.findById(mentionedUserId);
-        
+
         // Create a notification for each mentioned user
         // const notification = new Notification({
         //   message: `You were mentioned in a reply for the update on ${originalUpdate.customerName}.`,
@@ -624,15 +743,25 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
       }
 
       // Send email notifications to mentioned users
-      await sendEmailForMentions(userEmail, mentionedUsers, `a reply to an update for Customer ${originalUpdate.customerName}`, reply._id, content);
+      await sendEmailForMentions(
+        userEmail,
+        mentionedUsers,
+        `a reply to an update for Customer ${originalUpdate.customerName}`,
+        reply._id,
+        content
+      );
     }
 
     // Respond to the client with the created reply
     return res.json(
-      new ApiResponse(201, { reply }, "Reply created successfully with notifications and mentions notified")
+      new ApiResponse(
+        201,
+        { reply },
+        "Reply created successfully with notifications and mentions notified"
+      )
     );
   } catch (error) {
-    next(error); 
+    next(error);
   }
 });
 const toggleLike = asyncHandler(async (req, res, next) => {
@@ -719,8 +848,8 @@ const deleteUpdate = asyncHandler(async (req, res, next) => {
 });
 const getallFilesforCustomers = asyncHandler(async (req, res, next) => {
   try {
-    const {customerId } = req.params;
-   
+    const { customerId } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(customerId)) {
       return next(new ApiError(400, "Invalid Id format"));
     }
@@ -742,51 +871,58 @@ const getallFilesforCustomers = asyncHandler(async (req, res, next) => {
   }
 });
 const getUpdateById = asyncHandler(async (req, res, next) => {
-  const { updateId } = req.params; 
+  const { updateId } = req.params;
   console.log("hh");
 
   try {
     const update = await Update.findById(updateId);
     if (!update) {
-      throw new Error('Update not found');
+      throw new Error("Update not found");
     }
     res.json(update);
   } catch (error) {
     next(error);
   }
 });
-const uploadFilesToGalleryforCustomers = asyncHandler(async (req, res, next) => {
-  try {
-    const userId = req.user?._id;  
-    const { customerId } = req.params;
-    
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json(new ApiResponse(400, {}, "No files uploaded"));
+const uploadFilesToGalleryforCustomers = asyncHandler(
+  async (req, res, next) => {
+    try {
+      const userId = req.user?._id;
+      const { customerId } = req.params;
+
+      if (!req.files || req.files.length === 0) {
+        return res
+          .status(400)
+          .json(new ApiResponse(400, {}, "No files uploaded"));
+      }
+
+      const uploadedFiles = [];
+
+      for (const file of req.files) {
+        const { path, filename } = file;
+
+        const newFile = new File({
+          uploadedBy: userId,
+          fileUrl: filename,
+          itemType: "Customer",
+          itemId: customerId,
+          source: "FileGallery",
+        });
+
+        await newFile.save();
+        uploadedFiles.push(path);
+      }
+
+      return res
+        .status(201)
+        .json(
+          new ApiResponse(201, { uploadedFiles }, "Files uploaded to gallery")
+        );
+    } catch (error) {
+      next(error);
     }
-
-    const uploadedFiles = [];
-    
-    for (const file of req.files) {
-      const { path, filename } = file;
-      
-      const newFile = new File({
-        uploadedBy: userId,
-        fileUrl: filename,
-        itemType: "Customer",
-        itemId: customerId,
-        source: "FileGallery",
-      });
-
-      await newFile.save();
-      uploadedFiles.push(path);
-    }
-
-    return res.status(201).json(new ApiResponse(201, { uploadedFiles }, "Files uploaded to gallery"));
-  } catch (error) {
-    next(error);
   }
-}); 
-
+);
 
 export {
   createCustomer,
@@ -802,21 +938,8 @@ export {
   deleteUpdate,
   getallFilesforCustomers,
   uploadFilesToGalleryforCustomers,
-  getUpdateById
+  getUpdateById,
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // const getAllUpdate = asyncHandler(async (req, res, next) => {
 //   const { customerId } = req.params;
@@ -874,15 +997,6 @@ export {
 //     next(error);
 //   }
 // });
-
-
-
-
-
-
-
-
-
 
 // const populateRepliesUpToDepth = async (updates, depth) => {
 //   if (depth === 0) return updates;
