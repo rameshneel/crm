@@ -67,6 +67,7 @@ const addAmendment = asyncHandler(async (req, res, next) => {
 
   try {
     const { date_current, customer_status, priority, status,generated_by } = req.body;
+    console.log("date current",date_current);
     const existingAmendment = await Amendment.findOne({ customer: customerId });
 
     if (existingAmendment) {
@@ -187,7 +188,7 @@ const updateAmendment = asyncHandler(async (req, res) => {
   if (!isValidObjectId(amendmentId)) {
     throw new ApiError(400, "Invalid AmendmentId");
   }
-  const { customer_status, date_complete, priority, status,generated_by } = req.body;
+  const { customer_status,date_complete, priority, status,generated_by,date_current } = req.body;
 
   if (
     ![customer_status, date_complete, priority, status].some((field) => {
@@ -207,6 +208,7 @@ const updateAmendment = asyncHandler(async (req, res) => {
 
   const updateObj = {
     customer_status,
+    date_current,
     date_complete,
     priority,
     status,
