@@ -152,7 +152,7 @@ orderSchema.pre("save", async function (next) {
       const lastorder = await mongoose
         .model("Order")
         .findOne()
-        .sort({ orderNo: -1 });
+        .sort({ orderNo: +1 });
         console.log("order",lastorder);
       let newOrderNo = "HOM101";
       if (lastorder && lastorder.orderNo) {
