@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose, { isValidObjectId } from "mongoose";
-import fs from "fs";
+import fs from "fs/promises";
 import axios from "axios";
 import FormData from "form-data";
 import Update from "../models/update.model.js";
