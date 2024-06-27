@@ -290,7 +290,7 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
       // if (existedUser) {
       //   fs.unlinkSync(avatarLocalPath);
       //   throw new ApiError(409, "Email already exists");
-      // }
+      // } 
       try {
         const formData = new FormData();
         formData.append("file", fs.createReadStream(avatarLocalPath));
