@@ -164,10 +164,10 @@ const createCustomer = asyncHandler(async (req, res, next) => {
 
     if (req.file && req.file.path) {
       const avatarLocalPath = req.file.path;
-      console.log("path",avatarLocalPath);
-      
+      console.log("path", avatarLocalPath);
+
       avatarurl = await uploadAvatar(avatarLocalPath);
-      console.log("sdgfg",avatarurl);
+      console.log("sdgfg", avatarurl);
     }
 
     const newCustomer = new Customer({
@@ -309,12 +309,14 @@ const customerList = asyncHandler(async (req, res, next) => {
           select: "name email",
         })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .sort({ createdAt: -1 });
     } else if (user.role === "salesman") {
       totalCount = await Customer.countDocuments({ createdBy: activeUser });
       customers = await Customer.find({ createdBy: activeUser })
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .sort({ createdAt: -1 });
     } else {
       return res.status(403).json(new ApiResponse(403, null, "Access denied"));
     }
