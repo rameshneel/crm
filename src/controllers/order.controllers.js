@@ -330,10 +330,6 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
 
     let page = parseInt(req.query.page, 10);
     let limit = parseInt(req.query.limit, 10);
-
-    page = isNaN(page) || page < 1 ? 1 : page;
-    limit = isNaN(limit) || limit < 1 ? 10 : limit;
-
     let skip = (page - 1) * limit;
 
     let orders;
@@ -345,7 +341,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       orders = await Order.find()
         .populate({
           path: "customer",
-          select: "name contactDetails",
+          select: "companyName",
         })
         .populate({
           path: "createdBy",
