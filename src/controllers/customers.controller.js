@@ -12,6 +12,28 @@ import File from "../models/files.model.js";
 import Notification from "../models/notification.model.js";
 import sendEmailForMentions from "../utils/sendEmailForMentions.js";
 
+async function uploadAvatar(avatarLocalPath) {
+  try {
+    const formData = new FormData();
+    formData.append("file", fs.createReadStream(avatarLocalPath));
+    const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
+    const apiResponse = await axios.post(apiURL, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+    });
+    const avatarurl = apiResponse.data?.img_upload_path;
+    if (!avatarurl) {
+      throw new Error("img_upload_path not found in API response");
+    }
+
+    await fs.promises.unlink(avatarLocalPath);
+    return avatarurl;
+  } catch (error) {
+    console.error("Error uploading avatar:", error.message);
+    return "";
+  }
+}
 const createCustome = asyncHandler(async (req, res, next) => {
   try {
     const {
@@ -131,7 +153,6 @@ const createCustome = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
-
 const createCustomer = asyncHandler(async (req, res, next) => {
   try {
     const {
@@ -211,39 +232,13 @@ const createCustomer = asyncHandler(async (req, res, next) => {
   }
 });
 
-async function uploadAvatar(avatarLocalPath) {
-  try {
-    const formData = new FormData();
-    formData.append("file", fs.createReadStream(avatarLocalPath));
-    const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-    const apiResponse = await axios.post(apiURL, formData, {
-      headers: {
-        ...formData.getHeaders(),
-      },
-    });
-    const avatarurl = apiResponse.data?.img_upload_path;
-    if (!avatarurl) {
-      throw new Error("img_upload_path not found in API response");
-    }
-
-    await fs.promises.unlink(avatarLocalPath);
-    return avatarurl;
-  } catch (error) {
-    console.error("Error uploading avatar:", error.message);
-    return "";
-  }
-}
-
 // const customerList = asyncHandler(async (req, res, next) => {
 //   try {
 //     const activeUser = req.user?._id;
 //     const user = await User.findById(activeUser);
 
-//     let page = parseInt(req.query.page, 10);
-//     let limit = parseInt(req.query.limit, 50);
-
-//     page = isNaN(page) || page < 1 ? 1 : page;
-//     limit = isNaN(limit) || limit < 1 ? 10 : limit;
+//     let page = parseInt(req.query.page, 10) || 1; // Default page is 1 if not provided or invalid
+//     let limit = parseInt(req.query.limit, 10) || 10; // Default limit is 10 if not provided or invalid
 
 //     let skip = (page - 1) * limit;
 
@@ -258,12 +253,76 @@ async function uploadAvatar(avatarLocalPath) {
 //           select: "name email",
 //         })
 //         .skip(skip)
-//         .limit(limit);
+//         .limit(limit)
+//         .sort({ createdAt: -1 });
 //     } else if (user.role === "salesman") {
 //       totalCount = await Customer.countDocuments({ createdBy: activeUser });
 //       customers = await Customer.find({ createdBy: activeUser })
 //         .skip(skip)
-//         .limit(limit);
+//         .limit(limit)
+//         .sort({ createdAt: -1 });
+//     } else {
+//       return res.status(403).json(new ApiResponse(403, null, "Access denied"));
+//     }
+
+//     const totalPages = Math.ceil(totalCount / limit);
+
+//     return res.json(
+//       new ApiResponse(
+//         200,
+//         {
+//           customers,
+//           totalPages,
+//           totalCount,
+//           currentPage: page,
+//           pageSize: limit,
+//         },
+//         "Customers fetched successfully"
+//       )
+//     );
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
+// const customerList = asyncHandler(async (req, res, next) => {
+//   try {
+//     const activeUser = req.user?._id;
+//     const user = await User.findById(activeUser);
+
+//     let page = parseInt(req.query.page, 10) || 1;
+//     let limit = parseInt(req.query.limit, 10) || 10;
+//     let skip = (page - 1) * limit;
+
+//     let filter = {};
+
+//     if (req.query.name) {
+//       filter.companyName = { $regex: req.query.name, $options: 'i' };
+//     }
+//     if (req.query.email) {
+//       filter.email = { $regex: req.query.email, $options: 'i' };
+//     }
+
+//     let customers;
+//     let totalCount;
+
+//     if (user.role === "admin") {
+//       totalCount = await Customer.countDocuments(filter);
+//       customers = await Customer.find(filter)
+//         .populate({
+//           path: "createdBy",
+//           select: "name email",
+//         })
+//         .skip(skip)
+//         .limit(limit)
+//         .sort({ createdAt: -1 });
+//     } else if (user.role === "salesman") {
+//       filter.createdBy = activeUser;
+//       totalCount = await Customer.countDocuments(filter);
+//       customers = await Customer.find(filter)
+//         .skip(skip)
+//         .limit(limit)
+//         .sort({ createdAt: -1 });
 //     } else {
 //       return res.status(403).json(new ApiResponse(403, null, "Access denied"));
 //     }
@@ -292,49 +351,21 @@ const customerList = asyncHandler(async (req, res, next) => {
   try {
     const activeUser = req.user?._id;
     const user = await User.findById(activeUser);
-
-    let page = parseInt(req.query.page, 10) || 1; // Default page is 1 if not provided or invalid
-    let limit = parseInt(req.query.limit, 10) || 10; // Default limit is 10 if not provided or invalid
-
-    let skip = (page - 1) * limit;
-
     let customers;
-    let totalCount;
 
     if (user.role === "admin") {
-      totalCount = await Customer.countDocuments();
-      customers = await Customer.find()
-        .populate({
-          path: "createdBy",
-          select: "name email",
-        })
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 });
+      customers = await Customer.find().populate({
+        path: "createdBy",
+      });
     } else if (user.role === "salesman") {
-      totalCount = await Customer.countDocuments({ createdBy: activeUser });
-      customers = await Customer.find({ createdBy: activeUser })
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 });
-    } else {
-      return res.status(403).json(new ApiResponse(403, null, "Access denied"));
+      customers = await Customer.find({ createdBy: activeUser }).populate({
+        path: "createdBy",
+        select: "name email",
+      });
     }
 
-    const totalPages = Math.ceil(totalCount / limit);
-
     return res.json(
-      new ApiResponse(
-        200,
-        {
-          customers,
-          totalPages,
-          totalCount,
-          currentPage: page,
-          pageSize: limit,
-        },
-        "Customers fetched successfully"
-      )
+      new ApiResponse(200, { customers }, "Customers fetched successfully")
     );
   } catch (error) {
     return next(error);
@@ -1053,5 +1084,72 @@ export {
 //     );
 //   } catch (error) {
 //     next(error);
+//   }
+// });
+
+// const customerList = asyncHandler(async (req, res, next) => {
+//   try {
+//     const activeUser = req.user?._id;
+//     const user = await User.findById(activeUser);
+
+//     let page = parseInt(req.query.page, 10);
+//     let limit = parseInt(req.query.limit, 50);
+//     const searchQuery = req.query.search || '';
+
+//     page = isNaN(page) || page < 1 ? 1 : page;
+//     limit = isNaN(limit) || limit < 1 ? 10 : limit;
+
+//     let skip = (page - 1) * limit;
+
+//     let customers;
+//     let totalCount;
+//     let query = {};
+
+//     if (searchQuery) {
+//       query = {
+//         $or: [
+//           { name: { $regex: searchQuery, $options: 'i' } },
+//           { email: { $regex: searchQuery, $options: 'i' } },
+//           { phone: { $regex: searchQuery, $options: 'i' } }
+//         ]
+//       };
+//     }
+
+//     if (user.role === "admin") {
+//       totalCount = await Customer.countDocuments(query);
+//       customers = await Customer.find(query)
+//         .populate({
+//           path: "createdBy",
+//           select: "name email",
+//         })
+//         .skip(skip)
+//         .limit(limit);
+//     } else if (user.role === "salesman") {
+//       query.createdBy = activeUser;
+//       totalCount = await Customer.countDocuments(query);
+//       customers = await Customer.find(query)
+//         .skip(skip)
+//         .limit(limit);
+//     } else {
+//       return res.status(403).json(new ApiResponse(403, null, "Access denied"));
+//     }
+
+//     const totalPages = Math.ceil(totalCount / limit);
+
+//     return res.json(
+//       new ApiResponse(
+//         200,
+//         {
+//           customers,
+//           totalPages,
+//           totalCount,
+//           currentPage: page,
+//           pageSize: limit,
+//         },
+//         "Customers fetched successfully"
+//       )
+//     );
+//   } catch (error) {
+//     return next(error);
 //   }
 // });
