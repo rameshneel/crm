@@ -34,11 +34,13 @@ app.use(cookieParser());
 import userRouter from "./routes/user.routes.js";
 import customerRoutes from "./routes/customer.route.js";
 import leadRoutes from "./routes/lead.routes.js";
-import newWebsite from "./routes/newWebsite.routes.js";
+import newWebsite from "./routes/newWebsiteContent.js";
 import amendmentRoutes from "./routes/amendment.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import technicalMasterRoutes from "./routes/techincalMaster.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import filesRoutes from "./routes/files.routes.js";
+import updatesRoutes from "./routes/update.routes.js";
 
 //routes declaration
 app.use("/api/users", userRouter);
@@ -48,7 +50,9 @@ app.use("/api/newwebsite", newWebsite);
 app.use("/api/amendments", amendmentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/technicalmasters", technicalMasterRoutes);
-app.use("/api/notification", notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/files", filesRoutes);
+app.use("/api/updates", updatesRoutes);
 
 // app.use((err, req, res, next) => {
 //     console.log(err.stack);

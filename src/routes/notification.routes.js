@@ -1,4 +1,3 @@
-// routes/notifications.js
 
 import express from "express";
 import {
@@ -6,12 +5,14 @@ import {
   getAllUnreadNotifications,
   getNotificationsByCategory,
 } from "../controllers/notification.controllers.js";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
+router.use(verifyJWT);
 
-// GET all notifications for the logged-in user
-router.get("/notifications", getAllNotifications);
-router.get("/notifications/unread", getAllUnreadNotifications);
+
+router.get("/", getAllNotifications);
+router.get("/unread", getAllUnreadNotifications);
 router.get("/notifications", getNotificationsByCategory);
 export default router;
 

@@ -26,9 +26,33 @@ const updateSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   }],
+  views: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    viewedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
+  isPinned: {
+    type: Boolean,
+    default: false,
+  },
+  itemType: {
+    type: String,
+    enum: ["Customer", "Order", "Lead", "Amendment"],
+  },
+  itemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    refPath: "itemType",
+  },
 }, {
   timestamps: true,
 });
 
 const Update = mongoose.model('Update', updateSchema);
 export default Update;
+
+
