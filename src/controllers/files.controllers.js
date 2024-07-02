@@ -9,9 +9,8 @@ import Order from "../models/order.model.js";
 import { User } from "../models/user.model.js";
 import Amendment from "../models/amendment.model.js";
 import Lead from "../models/lead.model.js";
-import fs from "fs/promises"
-import path from "path";
-
+import fs from "fs/promises";
+import path from "path"; 
 
 
 function getCorrectEntityType(entityType) {
@@ -327,7 +326,7 @@ const deleteFileById = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-
+ 
 export {
   uploadFilesToGallery,
   getAllFilesForEntity,

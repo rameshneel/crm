@@ -61,7 +61,11 @@ const userSchema = new Schema(
     // },
     timeZone:{
       type:String,
-    }
+    },
+    updates: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Update',
+    }],
   },
   {
     timestamps: true,
@@ -104,6 +108,12 @@ userSchema.methods.generateRefreshToken = function () {
     }
   );
 };
+
+userSchema.pre('findOneAndDelete', async function(next) {
+  const userId = this.getQuery()['_id'];
+  await Customer.updateMany({ createdBy: userId }, { $set: { createdBy: null } });
+  next();
+});
 
 export const User = mongoose.model("User", userSchema);
 

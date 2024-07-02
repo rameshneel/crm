@@ -31,7 +31,7 @@ const LeadSchema = new Schema(
       },
     lead_type: {
       type:String,
-      enum: ["","Referal","Cold call","Contact Metting","Old Client","Promate Client","Renewal"],
+      enum:{values:["","Referal","Cold call","Contact Metting","Old Client","Promate Client","Renewal"],message:'{VALUE} is not supported'} ,
        default: ""
     },
     // existing_website: {
@@ -39,7 +39,7 @@ const LeadSchema = new Schema(
     // },
     outcome:{
        type :String,
-       enum: ["","Appointement Made","Callback","Not Interseted","SOLD","Arrange an Appointment"],
+       enum:{values:["","Appointement Made","Callback","Not Interseted","SOLD","Arrange an Appointment"],message:'{VALUE} is not supported'} ,
         default: ""
     },
     Appointement:{
@@ -70,6 +70,10 @@ const LeadSchema = new Schema(
       type: String,
      
     },
+    updates: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Update',
+    }],
    
     // status: {
     //   type: String,

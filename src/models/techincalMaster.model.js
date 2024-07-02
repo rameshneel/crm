@@ -67,6 +67,10 @@ const techincalMasterSchema = new Schema({
   notes: { 
     type: String, 
   },
+  updates: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Update',
+  }],
 });
 
 const TechincalMaster = mongoose.model(

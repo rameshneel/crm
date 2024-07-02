@@ -97,7 +97,6 @@ const customerSchema = new Schema(
   }
 );
 
-
 customerSchema.pre('save', async function (next) {
   const customer = this;
   if (customer.isNew && !customer.customerNo) { 

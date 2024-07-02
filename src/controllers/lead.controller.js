@@ -109,36 +109,36 @@ export const addLead = asyncHandler(async (req, res, next) => {
   }
 });
 
-export const getAllLeads = asyncHandler(async (req, res, next) => {
-  try {
-    const user_id = req.user?._id;
-    const user = await User.findById(user_id);
-    if (!user) {
-      return next(new ApiError(404, "User not found"));
-    }
+// export const getAllLeads = asyncHandler(async (req, res, next) => {
+//   try {
+//     const user_id = req.user?._id;
+//     const user = await User.findById(user_id);
+//     if (!user) {
+//       return next(new ApiError(404, "User not found"));
+//     }
 
-    let leads;
-    if (user.role === "admin") {
-      leads = await Lead.find().populate({
-        path: 'customer_id',
-      }).populate({
-        path: 'generated_by',
-        select: 'fullName avatar'
-      });
-    } else if (user.role === "salesman") {
-      leads = await Lead.find({ generated_by: user_id }).populate({
-        path: 'customer_id',
-      }).populate({
-        path: 'generated_by',
-        select: 'fullName avatar'
-      });
-    }
+//     let leads;
+//     if (user.role === "admin") {
+//       leads = await Lead.find().populate({
+//         path: 'customer_id',
+//       }).populate({
+//         path: 'generated_by',
+//         select: 'fullName avatar'
+//       });
+//     } else if (user.role === "salesman") {
+//       leads = await Lead.find({ generated_by: user_id }).populate({
+//         path: 'customer_id',
+//       }).populate({
+//         path: 'generated_by',
+//         select: 'fullName avatar'
+//       });
+//     }
 
-    return res.status(200).json(new ApiResponse(200, leads, "Leads retrieved successfully"));
-  } catch (error) {
-    return next(error);
-  }
-});
+//     return res.status(200).json(new ApiResponse(200, leads, "Leads retrieved successfully"));
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
 
 // export const LeadDetails = asyncHandler(async (req, res, next) => {
 //   const { lead_id } = req.params;
@@ -304,6 +304,86 @@ export const getAllLeads = asyncHandler(async (req, res, next) => {
 //     return next(error);
 //   }
 // });
+
+export const getAllLeads = asyncHandler(async (req, res, next) => {
+  try {
+    const user_id = req.user?._id;
+    const user = await User.findById(user_id);
+
+    // Check if the user exists
+    if (!user) {
+      return next(new ApiError(404, "User not found"));
+    }
+
+    // Validate and sanitize pagination query parameters
+    let page = parseInt(req.query.page, 10);
+    let limit = parseInt(req.query.limit, 10);
+
+    // Use default values if the parsed values are not valid numbers
+    page = isNaN(page) || page < 1 ? 1 : page;
+    limit = isNaN(limit) || limit < 1 ? 10 : limit;
+
+    // Calculate the number of documents to skip
+    let skip = (page - 1) * limit;
+
+    let leads;
+    let totalCount;
+
+    // Determine the query and count based on user role
+    if (user.role === "admin") {
+      totalCount = await Lead.countDocuments(); // Get total count for admin
+      leads = await Lead.find()
+        .populate({
+          path: 'customer_id',
+          select: 'name contactDetails' // Select specific fields to optimize population
+        })
+        .populate({
+          path: 'generated_by',
+          select: 'fullName avatar' // Select only necessary fields for optimization
+        })
+        .skip(skip)
+        .limit(limit);
+    } else if (user.role === "salesman") {
+      totalCount = await Lead.countDocuments({ generated_by: user_id }); // Get total count for salesman
+      leads = await Lead.find({ generated_by: user_id })
+        .populate({
+          path: 'customer_id',
+          select: 'name contactDetails' // Select specific fields to optimize population
+        })
+        .populate({
+          path: 'generated_by',
+          select: 'fullName avatar' // Select only necessary fields for optimization
+        })
+        .skip(skip)
+        .limit(limit);
+    } else {
+      // Handle invalid role case
+      return res.status(403).json(new ApiResponse(403, null, "Access denied"));
+    }
+
+    // If no leads found, return a message indicating that
+    if (leads.length === 0) {
+      return res.status(200).json(new ApiResponse(200, [], "No leads found"));
+    }
+
+    // Calculate total pages
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Prepare the response with pagination details
+    return res.status(200).json(
+      new ApiResponse(200, {
+        leads,
+        totalPages,
+        totalCount,
+        currentPage: page,
+        pageSize: limit,
+      }, "Leads retrieved successfully")
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
 
 export const updateLead = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;

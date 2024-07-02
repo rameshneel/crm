@@ -194,7 +194,7 @@ const updateAmendment = asyncHandler(async (req, res) => {
     ![customer_status, date_complete, priority, status].some((field) => {
       if (field === undefined) return false;
       if (typeof field === "string") return field.trim() !== "";
-    })
+    }) 
   ) {
     throw new ApiError(400, "At least one field is required for update");
   }
