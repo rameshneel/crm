@@ -265,6 +265,24 @@ const getAmendmentsByStatus = asyncHandler(async (req, res, next) => {
   }
 });
 
+// const deleteAmendment = asyncHandler(async (req, res, next) => {
+//   const { amendmentId } = req.params;
+//   try {
+//     const amendment = await Amendment.findById(amendmentId);
+//     if (!amendment) {
+//       throw new ApiError(404, "Amendment not found");
+//     }
+//     if (amendment.generated_by.toString() !== req.user._id.toString()) {
+//       throw new ApiError(403, "Unauthorized to delete this amendment");
+//     }
+//     await Amendment.findByIdAndDelete(amendmentId);
+//     // await amendment.remove();
+//     res.json(new ApiResponse(200, null, "Amendment deleted successfully"));
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
 const deleteAmendment = asyncHandler(async (req, res, next) => {
   const { amendmentId } = req.params;
   try {
@@ -272,7 +290,7 @@ const deleteAmendment = asyncHandler(async (req, res, next) => {
     if (!amendment) {
       throw new ApiError(404, "Amendment not found");
     }
-    if (amendment.generated_by.toString() !== req.user._id.toString()) {
+    if (req.user.role !== "admin" && amendment.generated_by.toString() !== req.user._id.toString()) {
       throw new ApiError(403, "Unauthorized to delete this amendment");
     }
     await Amendment.findByIdAndDelete(amendmentId);
@@ -282,7 +300,6 @@ const deleteAmendment = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-
 export {
   addAmendment,
   getAllAmendment,

@@ -22,9 +22,17 @@ import { uploadFile } from "../helper/multererror.js";
 
 
 const router = Router()
-router.route("/").post(uploadFile,
-    registerUser
-    )
+// router.route("/")
+//     .post(
+//         upload.single('avatar'),
+//         handleMulterError,
+//         registerUser
+//     );
+router.route("/")
+    .post(
+        uploadFile,
+        registerUser
+    );
 router.route("/login").post(loginUser)
 
 //secured routes

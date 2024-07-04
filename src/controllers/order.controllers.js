@@ -6,9 +6,9 @@ import { isValidObjectId } from "mongoose";
 import { User } from "../models/user.model.js";
 import Invoice from "../models/vatInvoice.model.js";
 import PDFDocument from "pdfkit";
-import fs from "fs";
+import   fs  from 'fs';
 import path from "path";
-
+import sendInvoiceEmail from "../utils/sendInvoiceEmail.js";
 
 const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
@@ -111,13 +111,9 @@ const addOrder = asyncHandler(async (req, res, next) => {
 
 const getOrderById = asyncHandler(async (req, res, next) => {
   const { order_id } = req.params;
-  const gn = await createInvoicePDF(order_id);
-  console.log("gnnn", gn);
-
   if (!isValidObjectId(order_id)) {
     return next(new ApiError(400, "Invalid order ID"));
   }
-
   try {
     const order = await Order.findById(order_id)
       .populate({
@@ -438,15 +434,20 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
 
 // generateInvoicePDF.js
 
-async function createInvoicePDF(orderId) {
+const createInvoicePDF = asyncHandler(async (req,res,next) => {
+  const { orderId } = req.params;
   try {
-    // Fetch order and populate customer details
     const order = await Order.findById(orderId).populate("customer");
     if (!order) {
-      throw new Error("Order not found");
+      return next(new ApiError(404, "Order not found"));
     }
 
     const customer = order.customer;
+    const streetNoName = customer.streetNoName || "";
+    const town = customer.town || "N/A";
+    const county = customer.county || "N/A";
+    const postcode = customer.postcode || "N/A";
+    console.log("streetno", streetNoName);
     const invoiceDate = order.dateOfOrder || new Date();
     const ddStartDate =
       order.dateOfFirstDd ||
@@ -463,72 +464,101 @@ async function createInvoicePDF(orderId) {
     let totalInstallment = 0;
 
     if (numberOfInstallments > 0) {
-      installmentAmount = (totalWithVat - totalDepositDue) / numberOfInstallments;
-      installmentVat = installmentAmount * (1 / 6);
-      totalInstallment = installmentAmount;
+      installmentAmount =
+        (orderValue - deposit) / numberOfInstallments;
+      installmentVat = installmentAmount * (1 / 5);
+      totalInstallment = installmentAmount + installmentVat;
     }
 
     const doc = new PDFDocument({ margin: 50 });
-
-    // File stream
-    const filePath = `invoice/invoice_${order._id}.pdf`;
+    const filePath = `public/invoices/invoice_${order._id}.pdf`;
+    console.log("filepath invoice", filePath);
     doc.pipe(fs.createWriteStream(filePath));
 
-    // Define styles
     const styles = {
-      header: { fontSize: 10, font: 'Helvetica-Bold' },
-      normal: { fontSize: 10, font: 'Helvetica' },
-      title: { fontSize: 20, font: 'Helvetica-Bold' },
-      subtitle: { fontSize: 12, font: 'Helvetica-Bold' },
-      tableHeader: { fontSize: 10, font: 'Helvetica-Bold' },
-      tableRow: { fontSize: 10, font: 'Helvetica' },
+      header: { fontSize: 10, font: "Helvetica-Bold" },
+      normal: { fontSize: 10, font: "Helvetica" },
+      title: { fontSize: 20, font: "Helvetica-Bold" },
+      subtitle: { fontSize: 12, font: "Helvetica-Bold" },
+      tableHeader: { fontSize: 10, font: "Helvetica-Bold" },
+      tableRow: { fontSize: 10, font: "Helvetica" },
     };
 
-    // Header Section
-    doc.image("public/logo.jpg", 50, 45, { width: 100 })
-       .font(styles.header.font).fontSize(styles.header.fontSize)
-       .text("High Oaks Media Ltd", 200, 50, { align: "right" })
-       .font(styles.normal.font).fontSize(styles.normal.fontSize)
-       .text("High Oaks Close", { align: "right" })
-       .text("Coulsdon, Surrey", { align: "right" })
-       .text("CR5 3EZ", { align: "right" })
-       .moveDown()
-       .text("01737 202105", { align: "right" })
-       .text("info@highoaksmedia.co.uk", {
-         align: "right",
-         link: "mailto:info@highoaksmedia.co.uk",
-       })
-       .text("www.highoaksmedia.co.uk", {
-         align: "right",
-         link: "https://www.highoaksmedia.co.uk",
-       });
+    doc
+      .font(styles.normal.font)
+      .fontSize(styles.normal.fontSize)
+      .text(streetNoName, 50, doc.y + 35)
+      .text(town, 50, doc.y + 5)
+      .text(county, 50, doc.y + 5)
+      .text(postcode, 50, doc.y + 5);
+
+    doc.moveDown();
+    // // Header Section
+    doc
+      .image("public/images/logo1.png", 250, 40, { width: 160, align: "center" })
+      .font(styles.header.font)
+      .fontSize(styles.header.fontSize);
+    doc
+      .fillColor("black")
+      .text("High Oaks Media Ltd", 300, 85, { align: "right" })
+      .font(styles.normal.font)
+      .fontSize(styles.normal.fontSize)
+      .text("High Oaks Close", { align: "right" })
+      .text("Coulsdon, Surrey", { align: "right" })
+      .text("CR5 3EZ", { align: "right" })
+      .text("01737 202105", { align: "right" })
+      .moveDown()
+      .fillColor("darkblue")
+      .text("info@highoaksmedia.co.uk", {
+        align: "right",
+        link: "mailto:info@highoaksmedia.co.uk",
+        underline: true,
+      })
+      .text("www.highoaksmedia.co.uk", {
+        align: "right",
+        link: "https://www.highoaksmedia.co.uk",
+        underline: true,
+      })
+      .fillColor("black");
+
+    // ***********  Invoice Title ****/////
+    doc.moveDown().lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    doc.moveDown();
+    doc
+      .font(styles.header.font)
+      .fontSize(styles.normal.fontSize)
+      .text(`Invoice / Order Number: ${order.orderNo || "N/A"}`, 100, 200, {
+        align: "center",
+      });
+    doc
+      .font(styles.header.font)
+      .fontSize(styles.normal.fontSize)
+      .text(`Date: ${invoiceDate.toLocaleDateString("en-GB")}`, 100, 220, {
+        align: "center",
+      })
+      .moveDown();
+    doc.moveDown();
+    // Invoice for Section
+
+    doc.fontSize(14).text("Invoice for:", 50, doc.y);
+    doc
+      .fontSize(10)
+      .text("High Oaks Media Business Services", 50, doc.y + 5)
+      .text(`${numberOfInstallments} Months`, 50, doc.y + 5);
 
     doc.moveDown(2);
-
-    // Invoice Title
-    doc.font(styles.title.font).fontSize(styles.title.fontSize)
-       .text("VAT Invoice", { align: "center", underline: true });
-    doc.moveDown();
-    doc.font(styles.normal.font).fontSize(styles.normal.fontSize)
-       .text(`Invoice / Order Number: ${order.orderNo || "N/A"}`, { align: "center" })
-       .text(`Date: ${invoiceDate.toLocaleDateString("en-GB")}`, { align: "center" })
-       .moveDown();
-
-    // Customer Address
-    doc.font(styles.normal.font).fontSize(styles.normal.fontSize)
-       .text("Bill To:", 50, doc.y)
-       .text(customer.streetNoName || "", 50, doc.y + 15)
-       .text(customer.town || "", 50, doc.y + 15)
-       .text(customer.county || "", 50, doc.y + 15)
-       .text(customer.postcode || "", 50, doc.y + 15);
-
     // Separator Line
     doc.moveDown().lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
 
     // Invoice Details
-    doc.moveDown()
-       .font(styles.subtitle.font).fontSize(styles.subtitle.fontSize)
-       .text("Order Details", { underline: true });
+    doc.moveDown();
+    // Invoice Details
+    doc
+      .moveDown()
+      .font(styles.subtitle.font)
+      .fontSize(styles.subtitle.fontSize)
+      .text("Order Details", { underline: true });
 
     // Create a simple table for order details
     const createTable = (doc, headers, rows) => {
@@ -546,68 +576,107 @@ async function createInvoicePDF(orderId) {
       doc.font(styles.tableRow.font).fontSize(styles.tableRow.fontSize);
       rows.forEach((row, rowIndex) => {
         row.forEach((cell, columnIndex) => {
-          doc.text(cell, tableLeft + columnIndex * columnWidth, tableTop + 20 + rowIndex * 20);
+          doc.text(
+            cell,
+            tableLeft + columnIndex * columnWidth,
+            tableTop + 20 + rowIndex * 20
+          );
         });
       });
     };
 
-    // Use the table function for order details
-    createTable(
-      doc,
-      ['Description', 'Amount', 'VAT', 'Total'],
+    // Table rows
+    const tableRows = [
       [
-        ['Order Value', `£${orderValue.toFixed(2)}`, `£${vat.toFixed(2)}`, `£${totalWithVat.toFixed(2)}`],
-        ['Deposit', `£${deposit.toFixed(2)}`, `£${depositVat.toFixed(2)}`, `£${totalDepositDue.toFixed(2)}`],
-      ]
-    );
+        "Order Value",
+        `£${orderValue.toFixed(2)}`,
+        `£${vat.toFixed(2)}`,
+        `£${totalWithVat.toFixed(2)}`,
+      ],
+      [
+        "Deposit",
+        `£${deposit.toFixed(2)}`,
+        `£${depositVat.toFixed(2)}`,
+        `£${totalDepositDue.toFixed(2)}`,
+      ],
+    ];
 
-    doc.moveDown(2);
-
-    // Installment Details
+    // If there are installments, add them to the table
     if (numberOfInstallments > 0) {
-      doc.font(styles.subtitle.font).fontSize(styles.subtitle.fontSize)
-         .text("Direct Debit Instalments");
-
-      doc.font(styles.normal.font).fontSize(styles.normal.fontSize)
-         .text(`Each Instalment: £${(installmentAmount - installmentVat).toFixed(2)}`)
-         .text(`VAT @ 20%: £${installmentVat.toFixed(2)}`)
-         .text(`Total of ${numberOfInstallments} Instalment(s) at £${totalInstallment.toFixed(2)}`)
-         .text(`Direct Debit Start Date: ${ddStartDate.toLocaleDateString("en-GB")}`);
+      tableRows.push([
+        "Direct Debit Instalments",
+        `£${installmentAmount.toFixed(2)}`,
+        `£${installmentVat.toFixed(2)}`,
+        `£${totalInstallment.toFixed(2)}`,
+      ]);
     }
 
+    createTable(doc, ["Description", "Amount", "VAT 20%", "Total"], tableRows);
     // Footer Section
-    doc.moveDown(2)
-       .lineWidth(1)
-       .moveTo(50, doc.y)
-       .lineTo(550, doc.y)
-       .stroke();
+    doc.moveDown(2).lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
 
-    doc.font(styles.subtitle.font).fontSize(styles.subtitle.fontSize)
-       .text("Account Details for clients needing to pay directly via electronic transfer:", 50, doc.y + 10, { align: "center" })
-       .moveDown()
-       .font(styles.normal.font).fontSize(styles.normal.fontSize)
-       .text("Bank: Lloyds Bank Plc", { align: "center" })
-       .text("Account Name: High Oaks Media Ltd", { align: "center" })
-       .text("Sort Code: 309009", { align: "center" })
-       .text("Account Number: 51290568", { align: "center" })
-       .moveDown()
-       .font(styles.subtitle.font).fontSize(styles.subtitle.fontSize)
-       .text("Company Registration Number: 12041124", { align: "center" })
-       .text("VAT Registered Number: 337 5631 89", { align: "center" })
-       .text("Registered Business Address: High Oaks Close, Coulsdon, Surrey, CR5 3EZ", { align: "center" });
-
-    // Finalize PDF file
+    doc
+      .font(styles.subtitle.font)
+      .fontSize(styles.subtitle.fontSize)
+      .text(
+        "Account Details for clients needing to pay directly via electronic transfer:",
+        50,
+        doc.y + 15,
+        { align: "center" }
+      )
+      .moveDown()
+      .font(styles.normal.font)
+      .fontSize(styles.normal.fontSize)
+      .text("Bank: Lloyds Bank Plc", 50, doc.y + 15, { align: "center" })
+      .text("Account Name: High Oaks Media Ltd", 50, doc.y + 5, {
+        align: "center",
+      })
+      .text("Sort Code: 309009", 50, doc.y + 5, { align: "center" })
+      .text("Account Number: 51290568", 50, doc.y + 5, { align: "center" })
+      .moveDown()
+      .font(styles.header.font)
+      .fontSize(styles.header.fontSize)
+      .text("Company Registration Number: 12041124", 50, doc.y + 15, {
+        align: "center",
+      })
+      .text("VAT Registered Number: 337 5631 89", 50, doc.y + 5, {
+        align: "center",
+      })
+      .text(
+        "Registered Business Address: High Oaks Close, Coulsdon, Surrey, CR5 3EZ",
+        50,
+        doc.y + 5,
+        { align: "center" }
+      );
     doc.end();
-
-    return filePath;
+    await new Promise((resolve) => doc.on('end', resolve));
+    const url = `${req.protocol}://${req.get('host')}/invoices/${path.basename(filePath)}`;
+    order.vatInvoice = url;
+    await order.save();
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+        url
+        },
+         "VAT Invoice and sent successfully"
+      )
+    );
   } catch (error) {
     console.error("Error generating invoice PDF:", error.message);
     throw error;
   }
-}
+});
 
 
-export { addOrder, getAllOrders, updateOrder, getOrderById, deleteOrder };
+export {
+  addOrder,
+  getAllOrders,
+  updateOrder,
+  getOrderById,
+  deleteOrder,
+  createInvoicePDF
+};
 
 //  const getAllOrders = asyncHandler(async (req, res, next) => {
 //     try {

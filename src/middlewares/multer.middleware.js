@@ -7,7 +7,7 @@ const allowedFileTypes = ['.jpg', '.jpeg', '.png',];
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, "./Public");
+        cb(null, "./Public/images");
     },
     filename: function (req, file, cb) {
               const uniqueSuffix = Math.round(Math.random()*1E9); 
@@ -16,10 +16,7 @@ const storage = multer.diskStorage({
             }
             
 });
-
 const limits = { fileSize: 1024*1000};
-
-
 const fileFilter = (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     if (allowedFileTypes.includes(ext)) {

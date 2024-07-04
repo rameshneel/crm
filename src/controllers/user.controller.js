@@ -40,47 +40,18 @@ const registerUser = asyncHandler(async (req, res, next) => {
       $or: [{ email }],
     });
 
-    let avatarurl = "";
-
-    if (req.file && req.file.path) {
-      const avatarLocalPath = req.file.path;
-
     if (existedUser) {
-      fs.unlinkSync(avatarLocalPath)
       throw new ApiError(409, "Email already exists");
     }
-
-   
-      try {
-        const formData = new FormData();
-        formData.append("file", fs.createReadStream(avatarLocalPath));
-        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-        const apiResponse = await axios.post(apiURL, formData, {
-          headers: {
-            ...formData.getHeaders(),
-          },
-        });
-        console.log(apiResponse.data);
-        avatarurl = apiResponse.data?.img_upload_path;
-        if (!avatarurl) {
-          throw new Error("img_upload_path not found in API response");
-        }
-
-        fs.unlink(avatarLocalPath, (err) => {
-          if (err) {
-            console.error("Error removing avatar file:", err.message);
-          } else {
-            console.log("Avatar file removed successfully");
-          }
-        });
-
-      } catch (error) {
-        console.error("Error uploading avatar:", error.message);
-      }
+    let avatarUrl = "";
+    if (req.file && req.file.path) {
+      const avatarLocalPath = req.file.path;
+      avatarUrl = avatarLocalPath; 
     }
+
     const user = await User.create({
       fullName,
-      avatar: avatarurl || "",
+      avatar: avatarUrl || "",
       email,
       role,
       password,
@@ -111,90 +82,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
-
-//  const registerUser = asyncHandler(async (req, res, next) => {
-//   const { fullName, email, password, role, mobileNo, address } = req.body;
-
-//   try {
-//     if ([fullName, email, password, role, mobileNo].some((field) => field?.trim() === "")) {
-//       throw new ApiError(400, "All fields are required");
-//     }
-
-//     const existedUser = await User.findOne({ email });
-
-//     if (existedUser) {
-
-//       throw new ApiError(409, "Email already exists");
-//       fs.unlinkSync(up)
-//     }
-
-//     upload(req, res, async function (err) {
-//       if (err instanceof multer.MulterError) {
-//         if (err.code === 'LIMIT_FILE_SIZE') {
-//           return res.status(400).json(new ApiError(400, "Image size exceeds limit of 1MB"));
-//         }
-//         return res.status(400).json(new ApiError(400, err.message));
-//       } else if (err) {
-//         return res.status(400).json(new ApiError(400, err.message));
-//       }
-
-//       let avatarurl = "";
-
-//       if (req.file && req.file.path) {
-//         const avatarLocalPath = req.file.path;
-//         try {
-//           const formData = new FormData();
-//           formData.append("file", fs.createReadStream(avatarLocalPath));
-//           const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-//           const apiResponse = await axios.post(apiURL, formData, {
-//             headers: {
-//               ...formData.getHeaders(),
-//             },
-//           });
-//           console.log(apiResponse.data);
-//           avatarurl = apiResponse.data?.img_upload_path;
-//           if (!avatarurl) {
-//             throw new Error("img_upload_path not found in API response");
-//           }
-
-//           fs.unlink(avatarLocalPath, (err) => {
-//             if (err) {
-//               console.error("Error removing avatar file:", err.message);
-//             } else {
-//               console.log("Avatar file removed successfully");
-//             }
-//           });
-
-//         } catch (error) {
-//           console.error("Error uploading avatar:", error.message);
-//         }
-//       }
-
-//       const user = await User.create({
-//         fullName,
-//         avatar: avatarurl || "",
-//         email,
-//         role,
-//         password,
-//         mobileNo,
-//         address,
-//       });
-
-//       const createdUser = await User.findById(user._id).select(
-//         "-password -refreshToken -resettoken"
-//       );
-
-//       if (!createdUser) {
-//         throw new ApiError(500, "Something went wrong while registering the user");
-//       }
-
-//       return res.status(201).json(new ApiResponse(200, createdUser, "User registered Successfully"));
-//     });
-//   } catch (error) {
-//     return next(error);
-//   }
-// });
-
 
 const loginUser = asyncHandler(async (req, res,next) => {
   const { email, password } = req.body;
