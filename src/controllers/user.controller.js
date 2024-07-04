@@ -9,6 +9,8 @@ import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
 import { isValidObjectId } from "mongoose";
+import config from "../config/index.js";
+
 
 const generateAccessAndRefereshTokens = async (userId) => {
   try {
@@ -46,7 +48,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
     let avatarUrl = "";
     if (req.file && req.file.path) {
       // avatarUrl = `/public/images/${req.file.filename}`;
-      avatarUrl = `${req.baseUrl}/public/images/${req.file.filename}`;
+      // avatarUrl = `${req.baseUrl}/public/images/${req.file.filename}`;
+      avatarUrl = `${config.baseUrl}/images/${req.file.filename}`;
     }
 
     const user = await User.create({
@@ -205,8 +208,8 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
 
     let avatarurl = "";
     if (req.file && req.file.path) {
-      avatarurl = `${req.protocol}://${req.get('host')}/public/images/${req.file.filename}`;
-      console.log("avatr",avatarurl);
+      // avatarurl = `${req.protocol}:${req.get('host')}///public/images/${req.file.filename}`;
+      avatarurl=`${req.get('host')}/images/${req.file.filename}`
     }
     const user = await User.findByIdAndUpdate(
       req.user?._id,
