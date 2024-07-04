@@ -2,11 +2,13 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ApiError } from "./utils/ApiError.js";
-import path from "path"
-// import { fileURLToPath } from 'url';
+import path from "path";
+import { fileURLToPath } from 'url';
+import config from './config/index.js';
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+console.log("path",__filename);
 const app = express();
 app.use(
   cors({
@@ -29,11 +31,16 @@ app.use(
     ],
   })
 );
+app.use((req, res, next) => {
+  req.baseUrl = `${config.baseUrl}`;
+  next();
+});
 
 // fornted ke liye
 // app.use(express.static(path.join(__dirname, 'client/build')));
 // app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static( 'public'));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+// app.use(express.static( 'public'));
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cookieParser());

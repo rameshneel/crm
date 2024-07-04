@@ -45,8 +45,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
     }
     let avatarUrl = "";
     if (req.file && req.file.path) {
-      const avatarLocalPath = req.file.path;
-      avatarUrl = avatarLocalPath; 
+      // avatarUrl = `/public/images/${req.file.filename}`;
+      avatarUrl = `${req.baseUrl}/public/images/${req.file.filename}`;
     }
 
     const user = await User.create({
@@ -205,33 +205,8 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
 
     let avatarurl = "";
     if (req.file && req.file.path) {
-      const avatarLocalPath = req.file.path;
-      try {
-        const formData = new FormData();
-        formData.append("file", fs.createReadStream(avatarLocalPath));
-        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-        const apiResponse = await axios.post(apiURL, formData, {
-          headers: {
-            ...formData.getHeaders(),
-          },
-        });
-        console.log(apiResponse.data);
-        avatarurl = apiResponse.data?.img_upload_path;
-        if (!avatarurl) {
-          throw new Error("img_upload_path not found in API response");
-        }
-        fs.unlink(avatarLocalPath, (err) => {
-          if (err) {
-            console.error("Error removing avatar file:", err.message);
-          } else {
-            console.log("Avatar file removed successfully");
-          }
-        });
-      } catch (error) {
-        throw new ApiError(401, error?.message || "Invalid avatar");
-      }
+      avatarurl = `${req.protocol}://${req.get('host')}/public/images/${req.file.filename}`;
     }
-
     const user = await User.findByIdAndUpdate(
       req.user?._id,
       {

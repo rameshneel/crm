@@ -495,7 +495,7 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     doc.moveDown();
     // // Header Section
     doc
-      .image("public/images/logo1.png", 250, 40, { width: 160, align: "center" })
+      .image("logo1.png", 250, 40, { width: 160, align: "center" })
       .font(styles.header.font)
       .fontSize(styles.header.fontSize);
     doc
@@ -668,12 +668,12 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
   }
 });
 
-
+ 
 export {
   addOrder,
   getAllOrders,
   updateOrder,
-  getOrderById,
+  getOrderById, 
   deleteOrder,
   createInvoicePDF
 };
