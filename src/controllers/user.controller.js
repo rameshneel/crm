@@ -206,6 +206,7 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
     let avatarurl = "";
     if (req.file && req.file.path) {
       avatarurl = `${req.protocol}://${req.get('host')}/public/images/${req.file.filename}`;
+      console.log("avatr",avatarurl);
     }
     const user = await User.findByIdAndUpdate(
       req.user?._id,
