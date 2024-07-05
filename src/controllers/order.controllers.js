@@ -679,7 +679,7 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
         {
         url
         },
-         "VAT Invoice and sent successfully"
+         "Invoice Generate successfully"
       )
     );
   } catch (error) {
