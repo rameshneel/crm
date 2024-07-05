@@ -448,6 +448,7 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     }
 
     const customer = order.customer;
+    const companyName = customer.companyName || "N/A";
     const streetNoName = customer.streetNoName || "";
     const town = customer.town || "N/A";
     const county = customer.county || "N/A";
@@ -494,9 +495,12 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     };
 
     doc
+      .font(styles.header.font)
+      .fontSize(styles.header.fontSize)
+      .text(companyName, 50, doc.y + 35)
       .font(styles.normal.font)
       .fontSize(styles.normal.fontSize)
-      .text(streetNoName, 50, doc.y + 35)
+      .text(streetNoName, 50, doc.y + 5)
       .text(town, 50, doc.y + 5)
       .text(county, 50, doc.y + 5)
       .text(postcode, 50, doc.y + 5);
