@@ -13,6 +13,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import sendInvoiceEmail from "../utils/sendInvoiceEmail.js";
+import Customer from "../models/customer.model.js";
 
 const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
@@ -661,6 +662,13 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     await new Promise((resolve) => doc.on('end', resolve));
     const url = `${req.protocol}://${req.get('host')}/invoices/${path.basename(filePath)}`;
     order.vatInvoice = url;
+    if(order.customer._id){
+      await Customer.findByIdAndUpdate(
+        order.customer._id,
+        {vatInvoice: url},
+        {new: true}
+      )
+    }
     await order.save();
     res.status(200).json(
       new ApiResponse(
@@ -677,7 +685,6 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
   }
 });
 
- 
 export {
   addOrder,
   getAllOrders,

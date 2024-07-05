@@ -16,7 +16,7 @@ export const uploadFile = (req, res, next) => {
     });
   };
 
-  export const uploadFile1 = (req, res, next) => {
+  export const uploadLogoForCustomers = (req, res, next) => {
     console.log(multer.MulterError);
     upload.single('logo')(req, res, (err) => {
       if (err instanceof multer.MulterError) {

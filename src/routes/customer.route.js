@@ -16,17 +16,17 @@ import {
   uploadFilesToGalleryforCustomers,
 } from "../controllers/customers.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { fileUpload, fileUploadGallery, uploadFile1 } from "../helper/multererror.js";
+import { fileUpload, fileUploadGallery, uploadLogoForCustomers } from "../helper/multererror.js";
 
 
 const router = express.Router();
 router.use(verifyJWT);
 
-router.post("/", uploadFile1, createCustomer);
+router.post("/", uploadLogoForCustomers, createCustomer);
 router.get("/:customerId", getCustomerById);
 router.delete("/:customerId", deleteCustomer);
 router.get("/", customerList);
-router.patch("/update/:customer_id", uploadFile1, updateCustomer);
+router.patch("/update/:customer_id", uploadLogoForCustomers, updateCustomer);
 
 //update routes
 

@@ -11,6 +11,7 @@ import Update from "../models/update.model.js";
 import File from "../models/files.model.js";
 import Notification from "../models/notification.model.js";
 import sendEmailForMentions from "../utils/sendEmailForMentions.js";
+import { logoutUser } from "./user.controller.js";
 
 async function uploadAvatar(avatarLocalPath) {
   try {
@@ -181,16 +182,10 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "CompanyName is required");
     }
 
-    let avatarurl = "";
-
     if (req.file && req.file.path) {
-      const avatarLocalPath = req.file.path;
-      console.log("path", avatarLocalPath);
-
-      avatarurl = await uploadAvatar(avatarLocalPath);
-      console.log("sdgfg", avatarurl);
+      logoUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+      newCustomer.logo=logoutUser
     }
-
     const newCustomer = new Customer({
       companyName,
       contactName,
@@ -209,11 +204,10 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       htAccess,
       gaCode,
       newGACode,
-      logo: avatarurl,
+      logo: log,
       ordersRenewals,
       createdBy,
-      vatInvoice:
-        "https://ocw.mit.edu/courses/6-096-introduction-to-c-january-iap-2011/ccef8a1ec946adb5179925311e276a7b_MIT6_096IAP11_lec02.pdf",
+      vatInvoice
     });
 
     const createdCustomer = await newCustomer.save();
@@ -413,46 +407,17 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
     // ) {
     //   throw new ApiError(400, "At least one field is required for update");
     // }
-
-    let avatarurl = "";
-    console.log(avatarurl);
-
+       let logoUrl
     if (req.file && req.file.path) {
-      const avatarLocalPath = req.file.path;
-      console.log(avatarLocalPath);
+      
+        logoUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+      }
 
       // if (existedUser) {
       //   fs.unlinkSync(avatarLocalPath);
       //   throw new ApiError(409, "Email already exists");
       // }
-      try {
-        const formData = new FormData();
-        formData.append("file", fs.createReadStream(avatarLocalPath));
-        const apiURL =
-          "https://crm.neelnetworks.org/public/file_upload/api.php";
-        const apiResponse = await axios.post(apiURL, formData, {
-          headers: {
-            ...formData.getHeaders(),
-          },
-        });
-        console.log(apiResponse.data);
-        avatarurl = apiResponse.data?.img_upload_path;
-        if (!avatarurl) {
-          throw new Error("img_upload_path not found in API response");
-        }
-
-        fs.unlink(avatarLocalPath, (err) => {
-          if (err) {
-            console.error("Error removing avatar file:", err.message);
-          } else {
-            console.log("Avatar file removed successfully");
-          }
-        });
-      } catch (error) {
-        console.error("Error uploading avatar:", error.message);
-      }
-    }
-
+    
     // const atemail = await Customer.findOne(email)
     const user = await User.findById(userId);
     if (!user) {
@@ -490,7 +455,7 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
         gaCode,
         newGACode,
         ordersRenewals,
-        logo: avatarurl,
+        logo: logoUrl,
         createdBy,
         updatedBy: userId,
       },

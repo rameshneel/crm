@@ -207,7 +207,7 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "At least one field is required for update");
     }
 
-    let avatarUrl = "";
+    let avatarUrl ;
     if (req.file && req.file.path) {
       // avatarurl = `${req.protocol}:${req.get('host')}///public/images/${req.file.filename}`;
       avatarUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
@@ -217,7 +217,7 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
       {
         $set: {
           fullName,
-          avatar: avatarurl,
+          avatar: avatarUrl,
           mobileNo,
           address,
           jobtitle,
@@ -429,8 +429,6 @@ const updateUser = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user._id; 
   const { fullName, mobileNo, address, jobtitle,role,email,timeZone} = req.body;
-  console.log("full",req.body);
-
   try {
     // Check if the user exists
     const user = await User.findById(userId);
@@ -441,17 +439,14 @@ const updateUser = asyncHandler(async (req, res, next) => {
     // Check if active user is admin
     const activeUser = await User.findById(activeUserId);
     if (!activeUser || activeUser.role !== "admin") {
-      console.log("role",activeUser);
       throw new ApiError(403, "Unauthorized access");
     }
 
-    let avatarUrl = "";
+    let avatarUrl
     if (req.file && req.file.path) {
       // const avatarLocalPath = req.file.path;
       avatarUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     }
-
-    // Update user document
     const updatedUserdata = await User.findByIdAndUpdate(
       userId,
       {
