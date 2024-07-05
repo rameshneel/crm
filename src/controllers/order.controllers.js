@@ -8,6 +8,10 @@ import Invoice from "../models/vatInvoice.model.js";
 import PDFDocument from "pdfkit";
 import   fs  from 'fs';
 import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import sendInvoiceEmail from "../utils/sendInvoiceEmail.js";
 
 const addOrder = asyncHandler(async (req, res, next) => {
@@ -471,7 +475,11 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     }
 
     const doc = new PDFDocument({ margin: 50 });
-    const filePath = `public/invoices/invoice_${order._id}.pdf`;
+    // const filePath = `public/invoices/invoice_${order._id}.pdf`;
+    const invoiceFileName = `invoice_${order._id}.pdf`;
+    const invoicesFolderPath = path.join(__dirname, '..', '..', 'public', 'invoices');
+    const filePath = path.join(invoicesFolderPath, invoiceFileName);
+
     console.log("filepath invoice", filePath);
     doc.pipe(fs.createWriteStream(filePath));
 
@@ -495,7 +503,8 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     doc.moveDown();
     // // Header Section
     doc
-      .image( `${req.baseUrl}/logo1.png`, 250, 40, { width: 160, align: "center" })
+      .image( path.join(__dirname, '..', '..', 'public',"images", 'logo1.png'), 250, 40, { width: 160, align: "center" })
+      // .image('/src/logo1.png', 250, 40, { width: 160, align: "center" })
       .font(styles.header.font)
       .fontSize(styles.header.fontSize);
     doc

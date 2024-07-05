@@ -49,7 +49,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
     if (req.file && req.file.path) {
       // avatarUrl = `/public/images/${req.file.filename}`;
       // avatarUrl = `${req.baseUrl}/public/images/${req.file.filename}`;
-      avatarUrl = `${config.baseUrl}/images/${req.file.filename}`;
+      avatarUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+      // avatarUrl = `${config.baseUrl}/images/${req.file.filename}`;
     }
 
     const user = await User.create({
@@ -206,10 +207,10 @@ const updateAccountDetails = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "At least one field is required for update");
     }
 
-    let avatarurl = "";
+    let avatarUrl = "";
     if (req.file && req.file.path) {
       // avatarurl = `${req.protocol}:${req.get('host')}///public/images/${req.file.filename}`;
-      avatarurl=`${req.get('host')}/images/${req.file.filename}`
+      avatarUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     }
     const user = await User.findByIdAndUpdate(
       req.user?._id,
@@ -428,7 +429,6 @@ const updateUser = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
   const activeUserId = req.user._id; 
   const { fullName, mobileNo, address, jobtitle,role,email,timeZone} = req.body;
-  let avatarUrl = "";
   console.log("full",req.body);
 
   try {
@@ -445,35 +445,10 @@ const updateUser = asyncHandler(async (req, res, next) => {
       throw new ApiError(403, "Unauthorized access");
     }
 
-    // Handle avatar upload
+    let avatarUrl = "";
     if (req.file && req.file.path) {
-      const avatarLocalPath = req.file.path;
-
-      try {
-        const formData = new FormData();
-        formData.append("file", fs.createReadStream(avatarLocalPath));
-        const apiURL = "https://crm.neelnetworks.org/public/file_upload/api.php";
-        const apiResponse = await axios.post(apiURL, formData, {
-          headers: formData.getHeaders(),
-        });
-
-        avatarUrl = apiResponse.data?.img_upload_path;
-        if (!avatarUrl) {
-          throw new Error("img_upload_path not found in API response");
-        }
-
-        // Clean up local avatar file
-        fs.unlink(avatarLocalPath, (err) => {
-          if (err) {
-            console.error("Error removing avatar file:", err.message);
-          } else {
-            console.log("Avatar file removed successfully");
-          }
-        });
-      } catch (error) {
-        console.error("Error uploading avatar:", error.message);
-        throw new ApiError(500, "Failed to upload avatar");
-      }
+      // const avatarLocalPath = req.file.path;
+      avatarUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
     }
 
     // Update user document

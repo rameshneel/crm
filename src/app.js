@@ -39,7 +39,7 @@ app.use((req, res, next) => {
 // fornted ke liye
 // app.use(express.static(path.join(__dirname, 'client/build')));
 // app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/public', express.static(path.join(__dirname,"..",'public')));
 // app.use(express.static( 'public'));
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
