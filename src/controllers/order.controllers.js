@@ -684,7 +684,7 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     );
   } catch (error) {
     console.error("Error generating invoice PDF:", error.message);
-    throw error;
+   next(error)
   }
 });
 
