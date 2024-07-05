@@ -81,9 +81,9 @@ const customerSchema = new Schema(
     logo :{
       type: String,
     },
-    vatInvoice :{
+    vatInvoice :[{
       type: String,
-    },
+    }],
     ordersRenewals:{
       type: String,
     },
