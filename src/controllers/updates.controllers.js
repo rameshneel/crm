@@ -456,7 +456,11 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
       .populate({
         path: "mentions",
         model: "User",
-        select: "name email",
+        select: "fullName email avatar",
+      }).populate({
+        path: "createdBy",
+        model: "User",
+        select: "fullName email avatar",
       })
       .populate({
         path: "likes",
@@ -475,7 +479,7 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
           {
             path: "createdBy",
             model: "User",
-            select: "fullname avatar",
+            select: "fullName avatar",
           },
           {
             path: "replies",
