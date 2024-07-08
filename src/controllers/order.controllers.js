@@ -710,10 +710,10 @@ const createInvoicePDF = asyncHandler(async (req, res, next) => {
 const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
   const {
-    email: customEmail,
+    to: customEmail,
     subject: customSubject,
     from: customFrom,
-    html: customHtml,
+    message: customHtml,
   } = req.body;
 
   if (!isValidObjectId(orderId)) {
@@ -722,7 +722,7 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
 
   try {
     const order = await Order.findById(orderId).populate("customer");
-    console.log(order);
+    // console.log(order);
     if (!order) {
       throw new ApiError(404, "Order not found");
     }
@@ -734,16 +734,18 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
     if (!order.vatInvoice) {
       throw new ApiError(404, "Please Create Invoice");
     }
-
+    // console.log("cuastomer email",order.customer);
     const { orderNo, orderValue, dateOfOrder } = order;
     const customerName = order.customer.companyName || "Valued Customer";
     // const url="https://in.prelaunchserver.com/invoices/invoice_6662d4d74cf8c566d466df0f.pdf"
 
     // Default values
-    const to = customEmail || order.customer.email;
+    const toemail = customEmail || order.customer?.customerEmail;
+    console.log("toemail",toemail);
     const from = customFrom || `"High Oaks Media" <${process.env.EMAIL_FROM}>`;
     const subject = customSubject || `Invoice for Order #${orderNo}`;
     const text = `Please find attached the invoice for your order #${orderNo}.`;
+    const invoicePdfUrl=order.vatInvoice
     // const url= `${req.protocol}://${req.get("host")}/invoices/${path.basename(
     //   filePath
     // )}`;
@@ -852,15 +854,16 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
     // ];
 
     const sendInvoiceResult = await sendInvoiceEmail(
-      to,
+      toemail,
       subject,
       text,
       html,
       from,
       // attachments
-      order.vatInvoice
+      invoicePdfUrl
       // url
     );
+    // console.log("sendInvoiceResult",sendInvoiceResult);
 
     res
       .status(200)
