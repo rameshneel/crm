@@ -716,8 +716,13 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
     html: customHtml,
   } = req.body;
 
+  if (!isValidObjectId(orderId)) {
+    return next(new ApiError(400, "Invalid order ID"));
+  }
+
   try {
     const order = await Order.findById(orderId).populate("customer");
+    console.log(order);
     if (!order) {
       throw new ApiError(404, "Order not found");
     }
@@ -732,6 +737,7 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
 
     const { orderNo, orderValue, dateOfOrder } = order;
     const customerName = order.customer.companyName || "Valued Customer";
+    // const url="https://in.prelaunchserver.com/invoices/invoice_6662d4d74cf8c566d466df0f.pdf"
 
     // Default values
     const to = customEmail || order.customer.email;
@@ -853,6 +859,7 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
       from,
       // attachments
       order.vatInvoice
+      // url
     );
 
     res
