@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
     }
 });
 
-const limits = { fileSize: 1024*1000};
+const limits = { fileSize: 1024*2000};
 
 const fileFilter = (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();

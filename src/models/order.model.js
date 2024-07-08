@@ -131,7 +131,7 @@ const orderSchema = new Schema(
     //     type: String,
     // },
     vatInvoice: {
-      type: [String],
+      type: String,
     },
     buildingAddress: {
       type: String,

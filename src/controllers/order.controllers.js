@@ -6,14 +6,14 @@ import { isValidObjectId } from "mongoose";
 import { User } from "../models/user.model.js";
 import Invoice from "../models/vatInvoice.model.js";
 import PDFDocument from "pdfkit";
-import   fs  from 'fs';
+import fs from "fs";
 import path from "path";
-import { fileURLToPath } from 'url';
-
+import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import sendInvoiceEmail from "../utils/sendInvoiceEmail.js";
 import Customer from "../models/customer.model.js";
+
 
 const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
@@ -348,7 +348,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       orders = await Order.find()
         .populate({
           path: "customer",
-          select: "companyName",
+          // select: "companyName customerEmail",
         })
         .populate({
           path: "createdBy",
@@ -376,7 +376,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       orders = await Order.find({ createdBy: user_id })
         .populate({
           path: "customer",
-          select: "name contactDetails",
+          // select: "companyName customerEmail",
         })
         .populate({
           path: "createdBy",
@@ -439,21 +439,26 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
 
 // generateInvoicePDF.js
 
-const createInvoicePDF = asyncHandler(async (req,res,next) => {
+const createInvoicePDF = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
+  // const {email,binary}=req.body
+  // console.log(req);
+  // // console.log("email",binary);
   try {
     const order = await Order.findById(orderId).populate("customer");
     if (!order) {
       return next(new ApiError(404, "Order not found"));
     }
+    if (!order.customer) {
+      throw new ApiError(400, "No customer assigned to this order");
+    }
 
     const customer = order.customer;
-    const companyName = customer.companyName || "N/A";
+    const companyName = customer.companyName || "";
     const streetNoName = customer.streetNoName || "";
-    const town = customer.town || "N/A";
-    const county = customer.county || "N/A";
+    const town = customer.town || "";
+    const county = customer.county || "";
     const postcode = customer.postcode || "N/A";
-    console.log("streetno", streetNoName);
     const invoiceDate = order.dateOfOrder || new Date();
     const ddStartDate =
       order.dateOfFirstDd ||
@@ -470,8 +475,7 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     let totalInstallment = 0;
 
     if (numberOfInstallments > 0) {
-      installmentAmount =
-        (orderValue - deposit) / numberOfInstallments;
+      installmentAmount = (orderValue - deposit) / numberOfInstallments;
       installmentVat = installmentAmount * (1 / 5);
       totalInstallment = installmentAmount + installmentVat;
     }
@@ -479,7 +483,13 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     const doc = new PDFDocument({ margin: 50 });
     // const filePath = `public/invoices/invoice_${order._id}.pdf`;
     const invoiceFileName = `invoice_${order._id}.pdf`;
-    const invoicesFolderPath = path.join(__dirname, '..', '..', 'public', 'invoices');
+    const invoicesFolderPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "public",
+      "invoices"
+    );
     const filePath = path.join(invoicesFolderPath, invoiceFileName);
 
     console.log("filepath invoice", filePath);
@@ -508,7 +518,12 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
     doc.moveDown();
     // // Header Section
     doc
-      .image( path.join(__dirname, '..', '..', 'public',"images", 'logo1.png'), 250, 40, { width: 160, align: "center" })
+      .image(
+        path.join(__dirname, "..", "..", "public", "images", "logo1.png"),
+        220,
+        40,
+        { width: 160, align: "center" }
+      )
       .font(styles.header.font)
       .fontSize(styles.header.fontSize);
     doc
@@ -662,29 +677,191 @@ const createInvoicePDF = asyncHandler(async (req,res,next) => {
         { align: "center" }
       );
     doc.end();
-    await new Promise((resolve) => doc.on('end', resolve));
-    const url = `${req.protocol}://${req.get('host')}/invoices/${path.basename(filePath)}`;
+    await new Promise((resolve) => doc.on("end", resolve));
+    const url = `${req.protocol}://${req.get("host")}/invoices/${path.basename(
+      filePath
+    )}`;
+    // console.log("req",req);
+    console.log("path", path);
     order.vatInvoice = url;
-    if(order.customer._id){
+    if (order.customer._id) {
       await Customer.findByIdAndUpdate(
         order.customer._id,
-        {vatInvoice: url},
-        {new: true}
-      )
+        { vatInvoice: url },
+        { new: true }
+      );
     }
     await order.save();
     res.status(200).json(
       new ApiResponse(
         200,
         {
-        url
+          url,
         },
-         "Invoice Generate successfully"
+        "Invoice Generate successfully"
       )
     );
   } catch (error) {
     console.error("Error generating invoice PDF:", error.message);
-   next(error)
+    next(error);
+  }
+});
+
+const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
+  const { orderId } = req.params;
+  const {
+    email: customEmail,
+    subject: customSubject,
+    from: customFrom,
+    html: customHtml,
+  } = req.body;
+
+  try {
+    const order = await Order.findById(orderId).populate("customer");
+    if (!order) {
+      throw new ApiError(404, "Order not found");
+    }
+
+    if (!order.customer) {
+      throw new ApiError(400, "No customer assigned to this order");
+    }
+
+    if (!order.vatInvoice) {
+      throw new ApiError(404, "Please Create Invoice");
+    }
+
+    const { orderNo, orderValue, dateOfOrder } = order;
+    const customerName = order.customer.companyName || "Valued Customer";
+
+    // Default values
+    const to = customEmail || order.customer.email;
+    const from = customFrom || `"High Oaks Media" <${process.env.EMAIL_FROM}>`;
+    const subject = customSubject || `Invoice for Order #${orderNo}`;
+    const text = `Please find attached the invoice for your order #${orderNo}.`;
+    // const url= `${req.protocol}://${req.get("host")}/invoices/${path.basename(
+    //   filePath
+    // )}`;
+
+    const defaultHtml = `
+      <ul style="list-style-type: none; padding-left: 0;">
+        <li><strong>Order Number:</strong> ${orderNo}</li>
+        <li><strong>Order Date:</strong> ${new Date(
+          dateOfOrder
+        ).toLocaleDateString("en-GB")}</li>
+        <li><strong>Order Value:</strong> £${orderValue.toFixed(2)}</li>
+      </ul>
+    `;
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${subject}</title>
+      <!--[if mso]>
+      <noscript>
+        <xml>
+          <o:OfficeDocumentSettings>
+            <o:PixelsPerInch>96</o:PixelsPerInch>
+          </o:OfficeDocumentSettings>
+        </xml>
+      </noscript>
+      <![endif]-->
+      <style>
+        @media screen and (max-width: 600px) {
+          .container {
+            width: 100% !important;
+          }
+          .content {
+            padding: 10px !important;
+          }
+          .button {
+            width: 100% !important;
+          }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%; background-color: #f4f4f4;">
+        <tr>
+          <td align="center" valign="top">
+            <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff;">
+              <tr>
+                <td align="center" valign="top" style="background-color: #003366; padding: 20px;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">High Oaks Media</h1>
+                </td>
+              </tr>
+              <tr>
+                <td class="content" align="left" valign="top" style="padding: 20px;">
+                  <p>Dear ${customerName},</p>
+                  <p>${text}</p>
+                  <p>Order Details:</p>
+                  ${customHtml || defaultHtml}
+                  <p>You can also view your invoice online by clicking the button below:</p>
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
+                    <tr>
+                      <td align="center">
+                        <table border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="center" bgcolor="#003366" style="border-radius: 5px;">
+                              <a href="${
+                                order.vatInvoice
+                              }" class="button" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #ffffff; text-decoration: none;">View Invoice Online</a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                  <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" valign="top" style="background-color: #f4f4f4; padding: 20px; font-size: 14px;">
+                  <p style="margin: 0;">Best regards,<br>The High Oaks Media Team</p>
+                  <p style="margin: 10px 0 0 0;">High Oaks Media Ltd | High Oaks Close, Coulsdon, Surrey, CR5 3EZ | 01737 202105</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+    // Fetch the VAT invoice file
+    // const vatInvoiceResponse = await fetch(order.vatInvoice);
+    // console.log("vatinvoice",vatInvoiceResponse);
+    // const vatInvoiceBuffer = await vatInvoiceResponse.arrayBuffer();
+    // console.log(vatInvoiceBuffer);
+
+    // const attachments = [
+    //   {
+    //     filename: `Invoice_${orderNo}.pdf`,
+    //     content: Buffer.from(vatInvoiceBuffer),
+    //     contentType: "application/pdf",
+    //   },
+    // ];
+
+    const sendInvoiceResult = await sendInvoiceEmail(
+      to,
+      subject,
+      text,
+      html,
+      from,
+      // attachments
+      order.vatInvoice
+    );
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, { sendInvoiceResult }, "Email sent successfully")
+      );
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -692,9 +869,10 @@ export {
   addOrder,
   getAllOrders,
   updateOrder,
-  getOrderById, 
+  getOrderById,
   deleteOrder,
-  createInvoicePDF
+  createInvoicePDF,
+  sendInvoiceForEmail,
 };
 
 //  const getAllOrders = asyncHandler(async (req, res, next) => {
