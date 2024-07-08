@@ -852,16 +852,14 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
     //     contentType: "application/pdf",
     //   },
     // ];
-
+    
     const sendInvoiceResult = await sendInvoiceEmail(
-      toemail,
+      toemail, 
       subject,
       text,
       html,
       from,
-      // attachments
       invoicePdfUrl
-      // url
     );
     // console.log("sendInvoiceResult",sendInvoiceResult);
 
