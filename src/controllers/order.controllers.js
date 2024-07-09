@@ -707,6 +707,68 @@ const createInvoicePDF = asyncHandler(async (req, res, next) => {
   }
 });
 
+const createInvoice = async (orderId) => {
+  try {
+    const order = await Order.findById(orderId).populate("customer");
+    if (!order) {
+      throw new Error("Order not found");
+    }
+    if (!order.customer) {
+      throw new Error("No customer assigned to this order");
+    }
+
+    const customer = order.customer;
+    const companyName = customer.companyName || "";
+    const streetNoName = customer.streetNoName || "";
+    const town = customer.town || "";
+    const county = customer.county || "";
+    const postcode = customer.postcode || "N/A";
+    const invoiceDate = order.dateOfOrder || new Date();
+    const ddStartDate =
+      order.dateOfFirstDd ||
+      new Date(invoiceDate.getFullYear(), invoiceDate.getMonth() + 1, 1);
+    const orderValue = order.orderValue || 0;
+    const vat = orderValue * 0.2;
+    const totalWithVat = orderValue + vat;
+    const deposit = order.deposit || 0;
+    const depositVat = deposit * 0.2;
+    const totalDepositDue = deposit + depositVat;
+    const numberOfInstallments = order.numberOfInstallments || 0;
+    let installmentAmount = 0;
+    let installmentVat = 0;
+    let totalInstallment = 0;
+
+    if (numberOfInstallments > 0) {
+      installmentAmount = (orderValue - deposit) / numberOfInstallments;
+      installmentVat = installmentAmount * (1 / 5);
+      totalInstallment = installmentAmount + installmentVat;
+    }
+
+    const doc = new PDFDocument({ margin: 50 });
+    const invoiceFileName = `invoice_${order._id}.pdf`;
+    const invoicesFolderPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "public",
+      "invoices"
+    );
+    const filePath = path.join(invoicesFolderPath, invoiceFileName);
+
+    doc.pipe(fs.createWriteStream(filePath));
+
+    // ... (rest of the PDF generation code remains the same)
+
+    doc.end();
+    await new Promise((resolve) => doc.on("end", resolve));
+
+    return filePath;
+  } catch (error) {
+    console.error("Error generating invoice PDF:", error.message);
+    throw error;
+  }
+};
+
 const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
   const {
@@ -861,8 +923,6 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
       from,
       invoicePdfUrl
     );
-    // console.log("sendInvoiceResult",sendInvoiceResult);
-
     res
       .status(200)
       .json(
