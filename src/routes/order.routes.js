@@ -19,7 +19,7 @@ router.get("/:order_id", getOrderById);
 router.patch("/update/:order_id", updateOrder);
 router.delete("/:order_id", deleteOrder);
 router.post('/:orderId/invoice', createInvoicePDF);
- router.post("/send-invoice/:orderId",sendInvoiceForEmail)
+router.post("/send-invoice/:orderId",sendInvoiceForEmail)
 
 
 export default router;

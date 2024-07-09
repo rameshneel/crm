@@ -781,10 +781,8 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
   if (!isValidObjectId(orderId)) {
     return next(new ApiError(400, "Invalid order ID"));
   }
-
   try {
     const order = await Order.findById(orderId).populate("customer");
-    // console.log(order);
     if (!order) {
       throw new ApiError(404, "Order not found");
     }
@@ -796,22 +794,14 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
     if (!order.vatInvoice) {
       throw new ApiError(404, "Please Create Invoice");
     }
-    // console.log("cuastomer email",order.customer);
     const { orderNo, orderValue, dateOfOrder } = order;
     const customerName = order.customer.companyName || "Valued Customer";
-    // const url="https://in.prelaunchserver.com/invoices/invoice_6662d4d74cf8c566d466df0f.pdf"
-
     // Default values
     const toemail = customEmail || order.customer?.customerEmail;
-    console.log("toemail",toemail);
     const from = customFrom || `"High Oaks Media" <${process.env.EMAIL_FROM}>`;
     const subject = customSubject || `Invoice for Order #${orderNo}`;
     const text = `Please find attached the invoice for your order #${orderNo}.`;
     const invoicePdfUrl=order.vatInvoice
-    // const url= `${req.protocol}://${req.get("host")}/invoices/${path.basename(
-    //   filePath
-    // )}`;
-
     const defaultHtml = `
       <ul style="list-style-type: none; padding-left: 0;">
         <li><strong>Order Number:</strong> ${orderNo}</li>
@@ -821,86 +811,84 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
         <li><strong>Order Value:</strong> £${orderValue.toFixed(2)}</li>
       </ul>
     `;
-
-    const html = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${subject}</title>
-      <!--[if mso]>
-      <noscript>
-        <xml>
-          <o:OfficeDocumentSettings>
-            <o:PixelsPerInch>96</o:PixelsPerInch>
-          </o:OfficeDocumentSettings>
-        </xml>
-      </noscript>
-      <![endif]-->
-      <style>
-        @media screen and (max-width: 600px) {
-          .container {
-            width: 100% !important;
-          }
-          .content {
-            padding: 10px !important;
-          }
-          .button {
-            width: 100% !important;
-          }
-        }
-      </style>
-    </head>
-    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%; background-color: #f4f4f4;">
-        <tr>
-          <td align="center" valign="top">
-            <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff;">
-              <tr>
-                <td align="center" valign="top" style="background-color: #003366; padding: 20px;">
-                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">High Oaks Media</h1>
-                </td>
-              </tr>
-              <tr>
-                <td class="content" align="left" valign="top" style="padding: 20px;">
-                  <p>Dear ${customerName},</p>
-                  <p>${text}</p>
-                  <p>Order Details:</p>
-                  ${customHtml || defaultHtml}
-                  <p>You can also view your invoice online by clicking the button below:</p>
-                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
-                    <tr>
-                      <td align="center">
-                        <table border="0" cellpadding="0" cellspacing="0">
-                          <tr>
-                            <td align="center" bgcolor="#003366" style="border-radius: 5px;">
-                              <a href="${
-                                order.vatInvoice
-                              }" class="button" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #ffffff; text-decoration: none;">View Invoice Online</a>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-                  </table>
-                  <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
-                </td>
-              </tr>
-              <tr>
-                <td align="center" valign="top" style="background-color: #f4f4f4; padding: 20px; font-size: 14px;">
-                  <p style="margin: 0;">Best regards,<br>The High Oaks Media Team</p>
-                  <p style="margin: 10px 0 0 0;">High Oaks Media Ltd | High Oaks Close, Coulsdon, Surrey, CR5 3EZ | 01737 202105</p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-  `;
-
+  //   const html = `
+  //   <!DOCTYPE html>
+  //   <html lang="en">
+  //   <head>
+  //     <meta charset="UTF-8">
+  //     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  //     <title>${subject}</title>
+  //     <!--[if mso]>
+  //     <noscript>
+  //       <xml>
+  //         <o:OfficeDocumentSettings>
+  //           <o:PixelsPerInch>96</o:PixelsPerInch>
+  //         </o:OfficeDocumentSettings>
+  //       </xml>
+  //     </noscript>
+  //     <![endif]-->
+  //     <style>
+  //       @media screen and (max-width: 600px) {
+  //         .container {
+  //           width: 100% !important;
+  //         }
+  //         .content {
+  //           padding: 10px !important;
+  //         }
+  //         .button {
+  //           width: 100% !important;
+  //         }
+  //       }
+  //     </style>
+  //   </head>
+  //   <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+  //     <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%; background-color: #f4f4f4;">
+  //       <tr>
+  //         <td align="center" valign="top">
+  //           <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff;">
+  //             <tr>
+  //               <td align="center" valign="top" style="background-color: #003366; padding: 20px;">
+  //                 <h1 style="color: #ffffff; margin: 0; font-size: 24px;">High Oaks Media</h1>
+  //               </td>
+  //             </tr>
+  //             <tr>
+  //               <td class="content" align="left" valign="top" style="padding: 20px;">
+  //                 <p>Dear ${customerName},</p>
+  //                 <p>${text}</p>
+  //                 <p>Order Details:</p>
+  //                 ${customHtml || defaultHtml}
+  //                 <p>You can also view your invoice online by clicking the button below:</p>
+  //                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
+  //                   <tr>
+  //                     <td align="center">
+  //                       <table border="0" cellpadding="0" cellspacing="0">
+  //                         <tr>
+  //                           <td align="center" bgcolor="#003366" style="border-radius: 5px;">
+  //                             <a href="${
+  //                               order.vatInvoice
+  //                             }" class="button" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #ffffff; text-decoration: none;">View Invoice Online</a>
+  //                           </td>
+  //                         </tr>
+  //                       </table>
+  //                     </td>
+  //                   </tr>
+  //                 </table>
+  //                 <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+  //               </td>
+  //             </tr>
+  //             <tr>
+  //               <td align="center" valign="top" style="background-color: #f4f4f4; padding: 20px; font-size: 14px;">
+  //                 <p style="margin: 0;">Best regards,<br>The High Oaks Media Team</p>
+  //                 <p style="margin: 10px 0 0 0;">High Oaks Media Ltd | High Oaks Close, Coulsdon, Surrey, CR5 3EZ | 01737 202105</p>
+  //               </td>
+  //             </tr>
+  //           </table>
+  //         </td>
+  //       </tr>
+  //     </table>
+  //   </body>
+  //   </html>
+  // `;
     // Fetch the VAT invoice file
     // const vatInvoiceResponse = await fetch(order.vatInvoice);
     // console.log("vatinvoice",vatInvoiceResponse);
@@ -915,6 +903,90 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
     //   },
     // ];
     
+   
+    const html=`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>${subject}</title>
+          <!--[if mso]>
+          <noscript>
+            <xml>
+              <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+              </o:OfficeDocumentSettings>
+            </xml>
+          </noscript>
+          <![endif]-->
+          <style>
+            @media screen and (max-width: 600px) {
+              .container {
+                width: 100% !important;
+                max-width: 100% !important;
+              }
+              .content {
+                padding: 20px !important;
+              }
+              .button {
+                display: block !important;
+                width: 100% !important;
+                padding: 10px 0 !important;
+              }
+            }
+          </style>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%; background-color: #f4f4f4;">
+            <tr>
+              <td align="center" valign="top">
+                <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff;">
+                  <tr>
+                    <td align="center" valign="top" style="background-color: #003366; padding: 20px;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">High Oaks Media</h1>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="content" align="left" valign="top" style="padding: 40px 40px 20px 40px;">
+                      <p>Dear ${customerName},</p>
+                      <p>${text}</p>
+                      <p>Order Details:</p>
+                      ${customHtml || defaultHtml}
+                      <p>You can also view your invoice online by clicking the button below:</p>
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
+                        <tr>
+                          <td align="center">
+                            <table border="0" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td align="center" bgcolor="#003366" style="border-radius: 5px;">
+                                  <a href="${order.vatInvoice}" class="button" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #ffffff; text-decoration: none;">View Invoice</a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td align="center" valign="top" style="background-color: #f4f4f4; padding: 20px; font-size: 14px;">
+                      <p style="margin: 0;">Best regards,<br>The High Oaks Media Team</p>
+                      <p style="margin: 10px 0 0 0;">High Oaks Media Ltd | High Oaks Close, Coulsdon, Surrey, CR5 3EZ | 01737 202105</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+    
+    
+     
+
     const sendInvoiceResult = await sendInvoiceEmail(
       toemail, 
       subject,
