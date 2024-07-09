@@ -8,12 +8,14 @@ import Invoice from "../models/vatInvoice.model.js";
 import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
+import { promisify } from 'util';
 import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import sendInvoiceEmail from "../utils/sendInvoiceEmail.js";
 import Customer from "../models/customer.model.js";
 
+const readFileAsync = promisify(fs.readFile);
 
 const addOrder = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
@@ -441,9 +443,6 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
 
 const createInvoicePDF = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
-  // const {email,binary}=req.body
-  // console.log(req);
-  // // console.log("email",binary);
   try {
     const order = await Order.findById(orderId).populate("customer");
     if (!order) {
@@ -707,6 +706,154 @@ const createInvoicePDF = asyncHandler(async (req, res, next) => {
   }
 });
 
+// axios method
+
+// const sendInvoiceForEmai = asyncHandler(async (req, res, next) => {
+//   const { orderId } = req.params;
+//   const {
+//     to: customEmail,
+//     subject: customSubject,
+//     from: customFrom,
+//     message: customHtml,
+//   } = req.body;
+
+//   if (!isValidObjectId(orderId)) {
+//     return next(new ApiError(400, "Invalid order ID"));
+//   }
+//   try {
+//     const order = await Order.findById(orderId).populate("customer");
+//     if (!order) {
+//       throw new ApiError(404, "Order not found");
+//     }
+
+//     if (!order.customer) {
+//       throw new ApiError(400, "No customer assigned to this order");
+//     }
+
+//     if (!order.vatInvoice) {
+//       throw new ApiError(404, "Please Create Invoice");
+//     }
+//     const { orderNo, orderValue, dateOfOrder } = order;
+//     const customerName = order.customer.companyName || "Valued Customer";
+//     // Default values
+//     const toemail = customEmail || order.customer?.customerEmail;
+//     const from = customFrom || `"High Oaks Media" <${process.env.EMAIL_FROM}>`;
+//     const subject = customSubject || `Invoice for Order #${orderNo}`;
+//     const text = `Please find attached the invoice for your order #${orderNo}.`;
+//     const invoicePdfUrl=order.vatInvoice
+//     const defaultHtml = `
+//       <ul style="list-style-type: none; padding-left: 0;">
+//         <li><strong>Order Number:</strong> ${orderNo}</li>
+//         <li><strong>Order Date:</strong> ${new Date(
+//           dateOfOrder
+//         ).toLocaleDateString("en-GB")}</li>
+//         <li><strong>Order Value:</strong> £${orderValue.toFixed(2)}</li>
+//       </ul>
+//     `;
+ 
+//     const html=`
+//         <!DOCTYPE html>
+//         <html lang="en">
+//         <head>
+//           <meta charset="UTF-8">
+//           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//           <title>${subject}</title>
+//           <!--[if mso]>
+//           <noscript>
+//             <xml>
+//               <o:OfficeDocumentSettings>
+//                 <o:PixelsPerInch>96</o:PixelsPerInch>
+//               </o:OfficeDocumentSettings>
+//             </xml>
+//           </noscript>
+//           <![endif]-->
+//           <style>
+//             @media screen and (max-width: 600px) {
+//               .container {
+//                 width: 100% !important;
+//                 max-width: 100% !important;
+//               }
+//               .content {
+//                 padding: 20px !important;
+//               }
+//               .button {
+//                 display: block !important;
+//                 width: 100% !important;
+//                 padding: 10px 0 !important;
+//               }
+//             }
+//           </style>
+//         </head>
+//         <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+//           <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%; background-color: #f4f4f4;">
+//             <tr>
+//               <td align="center" valign="top">
+//                 <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff;">
+//                   <tr>
+//                     <td align="center" valign="top" style="background-color: #003366; padding: 20px;">
+//                       <h1 style="color: #ffffff; margin: 0; font-size: 24px;">High Oaks Media</h1>
+//                     </td>
+//                   </tr>
+//                   <tr>
+//                     <td class="content" align="left" valign="top" style="padding: 40px 40px 20px 40px;">
+//                       <p>Dear ${customerName},</p>
+//                       <p>${text}</p>
+//                       <p>Order Details:</p>
+//                       ${customHtml || defaultHtml}
+//                       <p>You can also view your invoice online by clicking the button below:</p>
+//                       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
+//                         <tr>
+//                           <td align="center">
+//                             <table border="0" cellpadding="0" cellspacing="0">
+//                               <tr>
+//                                 <td align="center" bgcolor="#003366" style="border-radius: 5px;">
+//                                   <a href="${order.vatInvoice}" class="button" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #ffffff; text-decoration: none;">View Invoice</a>
+//                                 </td>
+//                               </tr>
+//                             </table>
+//                           </td>
+//                         </tr>
+//                       </table>
+//                       <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+//                     </td>
+//                   </tr>
+//                   <tr>
+//                     <td align="center" valign="top" style="background-color: #f4f4f4; padding: 20px; font-size: 14px;">
+//                       <p style="margin: 0;">Best regards,<br>The High Oaks Media Team</p>
+//                       <p style="margin: 10px 0 0 0;">High Oaks Media Ltd | High Oaks Close, Coulsdon, Surrey, CR5 3EZ | 01737 202105</p>
+//                     </td>
+//                   </tr>
+//                 </table>
+//               </td>
+//             </tr>
+//           </table>
+//         </body>
+//         </html>
+//       `;
+    
+    
+     
+
+//     const sendInvoiceResult = await sendInvoiceEmail(
+//       toemail, 
+//       subject,
+//       text,
+//       html,
+//       from,
+//       invoicePdfUrl
+//     );
+//     res
+//       .status(200)
+//       .json(
+//         new ApiResponse(200, { sendInvoiceResult }, "Email sent successfully")
+//       );
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+//optimize way
+
 const createInvoice = async (orderId) => {
   try {
     const order = await Order.findById(orderId).populate("customer");
@@ -757,11 +904,190 @@ const createInvoice = async (orderId) => {
 
     doc.pipe(fs.createWriteStream(filePath));
 
-    // ... (rest of the PDF generation code remains the same)
+    const styles = {
+      header: { fontSize: 10, font: "Helvetica-Bold" },
+      normal: { fontSize: 10, font: "Helvetica" },
+      title: { fontSize: 20, font: "Helvetica-Bold" },
+      subtitle: { fontSize: 12, font: "Helvetica-Bold" },
+      tableHeader: { fontSize: 10, font: "Helvetica-Bold" },
+      tableRow: { fontSize: 10, font: "Helvetica" },
+    };
 
+    doc
+      .font(styles.header.font)
+      .fontSize(styles.header.fontSize)
+      .text(companyName, 50, doc.y + 35)
+      .font(styles.normal.font)
+      .fontSize(styles.normal.fontSize)
+      .text(streetNoName, 50, doc.y + 5)
+      .text(town, 50, doc.y + 5)
+      .text(county, 50, doc.y + 5)
+      .text(postcode, 50, doc.y + 5);
+
+    doc.moveDown();
+    // // Header Section
+    doc
+      .image(
+        path.join(__dirname, "..", "..", "public", "images", "logo1.png"),
+        220,
+        40,
+        { width: 160, align: "center" }
+      )
+      .font(styles.header.font)
+      .fontSize(styles.header.fontSize);
+    doc
+      .fillColor("black")
+      .text("High Oaks Media Ltd", 300, 85, { align: "right" })
+      .font(styles.normal.font)
+      .fontSize(styles.normal.fontSize)
+      .text("High Oaks Close", { align: "right" })
+      .text("Coulsdon, Surrey", { align: "right" })
+      .text("CR5 3EZ", { align: "right" })
+      .text("01737 202105", { align: "right" })
+      .moveDown()
+      .fillColor("darkblue")
+      .text("info@highoaksmedia.co.uk", {
+        align: "right",
+        link: "mailto:info@highoaksmedia.co.uk",
+        underline: true,
+      })
+      .text("www.highoaksmedia.co.uk", {
+        align: "right",
+        link: "https://www.highoaksmedia.co.uk",
+        underline: true,
+      })
+      .fillColor("black");
+
+    // ***********  Invoice Title ****/////
+    doc.moveDown().lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    doc.moveDown();
+    doc
+      .font(styles.header.font)
+      .fontSize(styles.normal.fontSize)
+      .text(`Invoice / Order Number: ${order.orderNo || "N/A"}`, 100, 200, {
+        align: "center",
+      });
+    doc
+      .font(styles.header.font)
+      .fontSize(styles.normal.fontSize)
+      .text(`Date: ${invoiceDate.toLocaleDateString("en-GB")}`, 100, 220, {
+        align: "center",
+      })
+      .moveDown();
+    doc.moveDown();
+    // Invoice for Section
+
+    doc.fontSize(14).text("Invoice for:", 50, doc.y);
+    doc
+      .fontSize(10)
+      .text("High Oaks Media Business Services", 50, doc.y + 5)
+      .text(`${numberOfInstallments} Months`, 50, doc.y + 5);
+
+    doc.moveDown(2);
+    // Separator Line
+    doc.moveDown().lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    // Invoice Details
+    doc.moveDown();
+    // Invoice Details
+    doc
+      .moveDown()
+      .font(styles.subtitle.font)
+      .fontSize(styles.subtitle.fontSize)
+      .text("Order Details", { underline: true });
+
+    // Create a simple table for order details
+    const createTable = (doc, headers, rows) => {
+      const tableTop = doc.y + 10;
+      const tableLeft = 50;
+      const columnWidth = 125;
+
+      // Draw headers
+      doc.font(styles.tableHeader.font).fontSize(styles.tableHeader.fontSize);
+      headers.forEach((header, i) => {
+        doc.text(header, tableLeft + i * columnWidth, tableTop);
+      });
+
+      // Draw rows
+      doc.font(styles.tableRow.font).fontSize(styles.tableRow.fontSize);
+      rows.forEach((row, rowIndex) => {
+        row.forEach((cell, columnIndex) => {
+          doc.text(
+            cell,
+            tableLeft + columnIndex * columnWidth,
+            tableTop + 20 + rowIndex * 20
+          );
+        });
+      });
+    };
+
+    // Table rows
+    const tableRows = [
+      [
+        "Order Value",
+        `£${orderValue.toFixed(2)}`,
+        `£${vat.toFixed(2)}`,
+        `£${totalWithVat.toFixed(2)}`,
+      ],
+      [
+        "Deposit",
+        `£${deposit.toFixed(2)}`,
+        `£${depositVat.toFixed(2)}`,
+        `£${totalDepositDue.toFixed(2)}`,
+      ],
+    ];
+
+    // If there are installments, add them to the table
+    if (numberOfInstallments > 0) {
+      tableRows.push([
+        "Direct Debit Instalments",
+        `£${installmentAmount.toFixed(2)}`,
+        `£${installmentVat.toFixed(2)}`,
+        `£${totalInstallment.toFixed(2)}`,
+      ]);
+    }
+
+    createTable(doc, ["Description", "Amount", "VAT 20%", "Total"], tableRows);
+    // Footer Section
+    doc.moveDown(2).lineWidth(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+
+    doc
+      .font(styles.subtitle.font)
+      .fontSize(styles.subtitle.fontSize)
+      .text(
+        "Account Details for clients needing to pay directly via electronic transfer:",
+        50,
+        doc.y + 15,
+        { align: "center" }
+      )
+      .moveDown()
+      .font(styles.normal.font)
+      .fontSize(styles.normal.fontSize)
+      .text("Bank: Lloyds Bank Plc", 50, doc.y + 15, { align: "center" })
+      .text("Account Name: High Oaks Media Ltd", 50, doc.y + 5, {
+        align: "center",
+      })
+      .text("Sort Code: 309009", 50, doc.y + 5, { align: "center" })
+      .text("Account Number: 51290568", 50, doc.y + 5, { align: "center" })
+      .moveDown()
+      .font(styles.header.font)
+      .fontSize(styles.header.fontSize)
+      .text("Company Registration Number: 12041124", 50, doc.y + 15, {
+        align: "center",
+      })
+      .text("VAT Registered Number: 337 5631 89", 50, doc.y + 5, {
+        align: "center",
+      })
+      .text(
+        "Registered Business Address: High Oaks Close, Coulsdon, Surrey, CR5 3EZ",
+        50,
+        doc.y + 5,
+        { align: "center" }
+      );
     doc.end();
     await new Promise((resolve) => doc.on("end", resolve));
-
+  console.log("fileinvoicename",invoiceFileName);
     return filePath;
   } catch (error) {
     console.error("Error generating invoice PDF:", error.message);
@@ -769,18 +1095,14 @@ const createInvoice = async (orderId) => {
   }
 };
 
-const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
+const sendInvoiceForEmail = async (req, res, next) => {
   const { orderId } = req.params;
-  const {
-    to: customEmail,
-    subject: customSubject,
-    from: customFrom,
-    message: customHtml,
-  } = req.body;
+  const { to, subject, from, message } = req.body;
 
   if (!isValidObjectId(orderId)) {
     return next(new ApiError(400, "Invalid order ID"));
   }
+
   try {
     const order = await Order.findById(orderId).populate("customer");
     if (!order) {
@@ -791,27 +1113,138 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, "No customer assigned to this order");
     }
 
+    // Generate the invoice PDF if it doesn't exist
+    let invoicePath;
     if (!order.vatInvoice) {
-      throw new ApiError(404, "Please Create Invoice");
+      invoicePath = await createInvoicePDF(orderId);
+      order.vatInvoice = invoicePath;
+      await order.save();
+    } else {
+      invoicePath = order.vatInvoice;
     }
+
     const { orderNo, orderValue, dateOfOrder } = order;
     const customerName = order.customer.companyName || "Valued Customer";
-    // Default values
-    const toemail = customEmail || order.customer?.customerEmail;
-    const from = customFrom || `"High Oaks Media" <${process.env.EMAIL_FROM}>`;
-    const subject = customSubject || `Invoice for Order #${orderNo}`;
-    const text = `Please find attached the invoice for your order #${orderNo}.`;
-    const invoicePdfUrl=order.vatInvoice
-    const defaultHtml = `
-      <ul style="list-style-type: none; padding-left: 0;">
-        <li><strong>Order Number:</strong> ${orderNo}</li>
-        <li><strong>Order Date:</strong> ${new Date(
-          dateOfOrder
-        ).toLocaleDateString("en-GB")}</li>
-        <li><strong>Order Value:</strong> £${orderValue.toFixed(2)}</li>
-      </ul>
-    `;
-  //   const html = `
+    const toEmail = to || order.customer?.customerEmail;
+    const fromEmail = from || `"High Oaks Media" <${process.env.EMAIL_FROM}>`;
+    const emailSubject = subject || `Invoice for Order #${orderNo}`;
+    const invoicePdfUrl=`${req.protocol}://${req.get("host")}/invoices/${path.basename(invoicePath)}`;
+    console.log("invoice cbjhscbhsdbj",invoicePdfUrl);
+    const emailContent = generateEmailContent(customerName, orderNo, orderValue, dateOfOrder, invoicePdfUrl, message);
+
+    // Read the PDF file
+    const pdfFilename = path.basename(invoicePath);
+    console.log("PDF Filename:", pdfFilename);
+
+    // Construct the full path to the PDF file
+    // const fullPdfPath = path.join("..", "..", "public", "invoices", pdfFilename);
+    const fullPdfPath = path.resolve(__dirname, '..', '..', 'public', 'invoices', pdfFilename);
+    console.log("Full PDF Path:", fullPdfPath);
+
+    // Read the PDF file
+    const pdfBuffer = await readFileAsync(fullPdfPath);
+
+    const sendInvoiceResult = await sendInvoiceEmail({
+      to: toEmail,
+      subject: emailSubject,
+      html: emailContent,
+      from: fromEmail,
+      pdfBuffer,
+      pdfFilename: `invoice_${orderNo}.pdf`
+    });
+
+    res.status(200).json(
+      new ApiResponse(200, { sendInvoiceResult }, "Email sent successfully")
+    );
+  } catch (error) {
+    console.error('Error in sendInvoiceForEmail:', error);
+    next(error);
+  }
+};
+
+const generateEmailContent = (customerName, orderNo, orderValue, dateOfOrder, invoicePdfUrl, customHtml) => {
+  const defaultHtml = `
+    <ul style="list-style-type: none; padding-left: 0;">
+      <li><strong>Order Number:</strong> ${orderNo}</li>
+      <li><strong>Order Date:</strong> ${new Date(dateOfOrder).toLocaleDateString("en-GB")}</li>
+      <li><strong>Order Value:</strong> £${orderValue.toFixed(2)}</li>
+    </ul>
+  `;
+
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Invoice for Order #${orderNo}</title>
+      <style>
+        @media screen and (max-width: 600px) {
+          .container { width: 100% !important; }
+          .content { padding: 20px !important; }
+          .button { display: block !important; width: 100% !important; padding: 10px 0 !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
+        <tr>
+          <td align="center" valign="top">
+            <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff;">
+              <tr>
+                <td align="center" valign="top" style="background-color: #003366; padding: 20px;">
+                  <h1 style="color: #ffffff; margin: 0; font-size: 24px;">High Oaks Media</h1>
+                </td>
+              </tr>
+              <tr>
+                <td class="content" align="left" valign="top" style="padding: 40px;">
+                  <p>Dear ${customerName},</p>
+                  <p>Please find attached the invoice for your order #${orderNo}.</p>
+                  <p>Order Details:</p>
+                  ${customHtml || defaultHtml}
+                  <p>You can also view your invoice online by clicking the button below:</p>
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                    <tr>
+                      <td align="center">
+                        <a href="${invoicePdfUrl}" class="button" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #ffffff; text-decoration: none; background-color: #003366; border-radius: 5px;">View Invoice</a>
+                      </td>
+                    </tr>
+                  </table>
+                  <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" valign="top" style="background-color: #f4f4f4; padding: 20px; font-size: 14px;">
+                  <p style="margin: 0;">Best regards,<br>The High Oaks Media Team</p>
+                  <p style="margin: 10px 0 0 0;">High Oaks Media Ltd | High Oaks Close, Coulsdon, Surrey, CR5 3EZ | 01737 202105</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+};
+
+
+
+export {
+  addOrder,
+  getAllOrders,
+  updateOrder,
+  getOrderById,
+  deleteOrder,
+  createInvoicePDF,
+  sendInvoiceForEmail,
+};
+
+
+
+
+
+ //   const html = `
   //   <!DOCTYPE html>
   //   <html lang="en">
   //   <head>
@@ -904,116 +1337,9 @@ const sendInvoiceForEmail = asyncHandler(async (req, res, next) => {
     // ];
     
    
-    const html=`
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>${subject}</title>
-          <!--[if mso]>
-          <noscript>
-            <xml>
-              <o:OfficeDocumentSettings>
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-              </o:OfficeDocumentSettings>
-            </xml>
-          </noscript>
-          <![endif]-->
-          <style>
-            @media screen and (max-width: 600px) {
-              .container {
-                width: 100% !important;
-                max-width: 100% !important;
-              }
-              .content {
-                padding: 20px !important;
-              }
-              .button {
-                display: block !important;
-                width: 100% !important;
-                padding: 10px 0 !important;
-              }
-            }
-          </style>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
-          <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%; background-color: #f4f4f4;">
-            <tr>
-              <td align="center" valign="top">
-                <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #ffffff;">
-                  <tr>
-                    <td align="center" valign="top" style="background-color: #003366; padding: 20px;">
-                      <h1 style="color: #ffffff; margin: 0; font-size: 24px;">High Oaks Media</h1>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td class="content" align="left" valign="top" style="padding: 40px 40px 20px 40px;">
-                      <p>Dear ${customerName},</p>
-                      <p>${text}</p>
-                      <p>Order Details:</p>
-                      ${customHtml || defaultHtml}
-                      <p>You can also view your invoice online by clicking the button below:</p>
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="min-width: 100%;">
-                        <tr>
-                          <td align="center">
-                            <table border="0" cellpadding="0" cellspacing="0">
-                              <tr>
-                                <td align="center" bgcolor="#003366" style="border-radius: 5px;">
-                                  <a href="${order.vatInvoice}" class="button" target="_blank" style="display: inline-block; padding: 12px 24px; font-size: 16px; color: #ffffff; text-decoration: none;">View Invoice</a>
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                      <p>If you have any questions or concerns, please don't hesitate to contact our support team.</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td align="center" valign="top" style="background-color: #f4f4f4; padding: 20px; font-size: 14px;">
-                      <p style="margin: 0;">Best regards,<br>The High Oaks Media Team</p>
-                      <p style="margin: 10px 0 0 0;">High Oaks Media Ltd | High Oaks Close, Coulsdon, Surrey, CR5 3EZ | 01737 202105</p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-        </html>
-      `;
-    
-    
-     
 
-    const sendInvoiceResult = await sendInvoiceEmail(
-      toemail, 
-      subject,
-      text,
-      html,
-      from,
-      invoicePdfUrl
-    );
-    res
-      .status(200)
-      .json(
-        new ApiResponse(200, { sendInvoiceResult }, "Email sent successfully")
-      );
-  } catch (error) {
-    next(error);
-  }
-});
 
-export {
-  addOrder,
-  getAllOrders,
-  updateOrder,
-  getOrderById,
-  deleteOrder,
-  createInvoicePDF,
-  sendInvoiceForEmail,
-};
+
 
 //  const getAllOrders = asyncHandler(async (req, res, next) => {
 //     try {
