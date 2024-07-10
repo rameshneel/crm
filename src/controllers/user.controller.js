@@ -2,9 +2,8 @@
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { sendWelcomeEmail } from "../utils/email.js";
 import jwt from "jsonwebtoken";
-import { sendPasswordResetEmail } from "../utils/sendPasswordResetEmail.js";
+import { sendPasswordResetEmail,sendWelcomeEmail } from "../utils/userforEmail.js";
 import fs from "fs";
 import axios from "axios";
 import FormData from "form-data";
@@ -73,10 +72,10 @@ const registerUser = asyncHandler(async (req, res, next) => {
       throw new ApiError(500, "Something went wrong while registering the user");
     }
 
-    // const sentemail = await sendWelcomeEmail(email, password);
-    // if(!sentemail){
-    //   throw new ApiError(500, "sending email error");
-    // }
+    const sentemail = await sendWelcomeEmail(email, password);
+    if(!sentemail){
+      throw new ApiError(500, "sending email error");
+    }
 
     return res
       .status(201)

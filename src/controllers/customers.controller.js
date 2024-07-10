@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import mongoose, { isValidObjectId } from "mongoose";
 import Notification from "../models/notification.model.js";
 import sendEmailForMentions from "../utils/sendEmailForMentions.js";
+import Update from "../models/update.model.js";
 
 const createCustomer = asyncHandler(async (req, res, next) => {
   try {
@@ -348,6 +349,7 @@ const deleteCustomer = asyncHandler(async (req, res, next) => {
       user.role === "admin" ||
       (user.role === "salesman" && customer.createdBy.equals(activeUserId))
     ) {
+      await Update.deleteMany({ _id: { $in: customer.updates } });
       await Customer.findByIdAndDelete(customerId);
       return res
         .status(200)

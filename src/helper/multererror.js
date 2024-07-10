@@ -44,8 +44,8 @@ export const uploadFile = (req, res, next) => {
     });
   };
 
-  export const fileUpload = (req, res, next) => {
-    uploadForUpdate.array('url', 5)(req, res, (err) => {
+  export const fileUploadforupdate = (req, res, next) => {
+    uploadForUpdate.array('files', 20)(req, res, (err) => {
       if (err instanceof multer.MulterError) {
         if (err.code === 'LIMIT_FILE_SIZE') {
           return res.status(400).json({ message: 'File size exceeds limit of 50MB' });

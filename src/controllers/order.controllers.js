@@ -14,6 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 import sendInvoiceEmail from "../utils/sendInvoiceEmail.js";
 import Customer from "../models/customer.model.js";
+import Update from "../models/update.model.js";
 
 const readFileAsync = promisify(fs.readFile);
 
@@ -318,6 +319,7 @@ const deleteOrder = asyncHandler(async (req, res, next) => {
     ) {
       return next(new ApiError(401, "Unauthorized request"));
     }
+    await Update.deleteMany({ _id: { $in: order.updates } });
     await Order.findByIdAndDelete(order_id);
 
     return res
@@ -1179,6 +1181,20 @@ const generateEmailContent = (customerName, orderNo, orderValue, dateOfOrder, in
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Invoice for Order #${orderNo}</title>
       <style>
+        body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f0f0f0;
+                margin: 0;
+                padding: 0;
+              }
+                .bigcontainer {
+                max-width: 600px;
+                margin: 20px auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: rgba(0, 0, 0, 0.56) 0px 22px 70px 4px;
+              }
         @media screen and (max-width: 600px) {
           .container { width: 100% !important; }
           .content { padding: 20px !important; }
@@ -1186,7 +1202,8 @@ const generateEmailContent = (customerName, orderNo, orderValue, dateOfOrder, in
         }
       </style>
     </head>
-    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; background-color: #f4f4f4;">
+    <body>
+     <div class="bigcontainer">
       <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f4f4;">
         <tr>
           <td align="center" valign="top">
@@ -1223,6 +1240,7 @@ const generateEmailContent = (customerName, orderNo, orderValue, dateOfOrder, in
           </td>
         </tr>
       </table>
+       </div>
     </body>
     </html>
   `;

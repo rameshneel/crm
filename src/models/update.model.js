@@ -42,7 +42,7 @@ const updateSchema = new Schema({
   },
   itemType: {
     type: String,
-    enum: ["Customer", "Order", "Lead", "Amendment"],
+    enum: ["Customer", "Order", "Lead", "Amendment","Reply"],
   },
   itemId: {
     type: mongoose.Schema.Types.ObjectId,

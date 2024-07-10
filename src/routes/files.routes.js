@@ -5,13 +5,13 @@ import {
   getFileById,
   deleteFileById,
 } from "../controllers/files.controllers.js";
-import { fileUpload } from "../helper/multererror.js";
+import { fileUploadforupdate } from "../helper/multererror.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 router.use(verifyJWT);
 
-router.post("/:entityType/:entityId/gallery", fileUpload, uploadFilesToGallery);
+router.post("/:entityType/:entityId/gallery", fileUploadforupdate, uploadFilesToGallery);
 router.get("/:entityType/:entityId", getAllFilesForEntity);
 router.get('/:fileId', getFileById);
 router.delete('/:fileId', deleteFileById);

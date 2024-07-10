@@ -30,21 +30,6 @@ const sendEmailForMentions = async (userEmail, mentionedUsers, entityType, entit
     const entityUrl = entityUrls[entityType];
 
     for (let user of mentionedUsers) {
-      // const mailOptions = {
-      //   from: userEmail,
-      //   to: user.email,
-      //   subject: `You were mentioned in an update for ${entityType} ${entityName}`,
-      //   text: `You were mentioned in an update. Here is the content: "${content}". View it here: ${entityUrl}`,
-      //   html: `
-      //     <p>Hi,</p>
-      //     <p>You were mentioned in an update for <strong>${entityType} ${entityName}</strong>.</p>
-      //     <p>Here is the content:</p>
-      //     <blockquote>${content}</blockquote>
-      //     <p><a href="${entityUrl}">Click here to view the update</a></p>
-      //     <p>Regards,<br />Your CRM Team</p>
-      //   `,
-      // };
- 
       const mailOptions = {
         from: userEmail,
         to: user.email,
