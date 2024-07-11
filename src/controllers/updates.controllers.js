@@ -12,6 +12,11 @@ import Lead from "../models/lead.model.js";
 import Amendment from "../models/amendment.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import fs from "fs/promises"; 
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 function getCorrectEntityType(entityType) {
   console.log("entity function", entityType);
@@ -510,28 +515,153 @@ const logUpdateView = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-const deleteUpdate = asyncHandler(async (req, res) => {
+//delete from files and update
+ const deleteUpdate = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const update = await Update.findById(id);
 
   if (!update) {
     throw new ApiError(404, "Update not found");
   }
+
   if (update.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
     return res.status(403).json(new ApiResponse(403, null, "You don't have permission to delete this update"));
   }
+
   const itemType = await getEntityModel(update.itemType);
-  console.log("iteam rtype",itemType);
+  console.log("item type", itemType);
+
   if (!itemType) {
     return res.status(400).json(new ApiResponse(400, null, "Invalid item type"));
   }
+
+  // Remove the update reference from the associated item
   await itemType.findByIdAndUpdate(
     update.itemId,
     { $pull: { updates: id } },
     { new: true }
   );
+
+  // Delete associated files and File documents
+  if (update.files && update.files.length > 0) {
+    for (const fileUrl of update.files) {
+      try {
+        // Delete File document
+        const file = await File.findOneAndDelete({ fileUrl: fileUrl });
+        if (file) {
+          console.log(`File document deleted: ${file._id}`);
+        }
+
+        // Delete physical file
+        const fileName = path.basename(fileUrl);
+        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        await fs.unlink(filePath);
+        console.log(`Physical file deleted: ${filePath}`);
+      } catch (error) {
+        console.error(`Error deleting file: ${fileUrl}`, error);
+      }
+    }
+  }
+
+  // Delete the update
   await Update.findByIdAndDelete(id);
-  res.status(200).json(new ApiResponse(200, null, "Update deleted successfully"));
+
+  res.status(200).json(new ApiResponse(200, null, "Update, associated files, and file records deleted successfully"));
+});
+
+//delte for server
+const deleteUpd = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const update = await Update.findById(id);
+
+  if (!update) {
+    throw new ApiError(404, "Update not found");
+  }
+
+  if (update.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    return res.status(403).json(new ApiResponse(403, null, "You don't have permission to delete this update"));
+  }
+
+  const itemType = await getEntityModel(update.itemType);
+  console.log("item type", itemType);
+
+  if (!itemType) {
+    return res.status(400).json(new ApiResponse(400, null, "Invalid item type"));
+  }
+
+  // Remove the update reference from the associated item
+  await itemType.findByIdAndUpdate(
+    update.itemId,
+    { $pull: { updates: id } },
+    { new: true }
+  );
+
+  // Delete associated files from the server
+  if (update.files && update.files.length > 0) {
+    for (const fileUrl of update.files) {
+      try {
+        const fileName = path.basename(fileUrl);
+        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        await fs.unlink(filePath);
+        console.log(`File deleted: ${filePath}`);
+      } catch (error) {
+        console.error(`Error deleting file: ${fileUrl}`, error);
+      }
+    }
+  }
+
+  // Delete the update
+  await Update.findByIdAndDelete(id);
+
+  res.status(200).json(new ApiResponse(200, null, "Update and associated files deleted successfully"));
+});
+
+//form only delete
+ const deleteUpdate1 = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const update = await Update.findById(id);
+
+  if (!update) {
+    throw new ApiError(404, "Update not found");
+  }
+
+  if (update.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+    return res.status(403).json(new ApiResponse(403, null, "You don't have permission to delete this update"));
+  }
+
+  const itemType = await getEntityModel(update.itemType);
+  console.log("item type", itemType);
+
+  if (!itemType) {
+    return res.status(400).json(new ApiResponse(400, null, "Invalid item type"));
+  }
+
+  // Remove the update reference from the associated item
+  await itemType.findByIdAndUpdate(
+    update.itemId,
+    { $pull: { updates: id } },
+    { new: true }
+  );
+
+  // Delete associated files from the server
+  if (update.files && update.files.length > 0) {
+    for (const fileUrl of update.files) {
+      try {
+        const fileName = path.basename(fileUrl);
+        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        await fs.unlink(filePath);
+        console.log(`File deleted: ${filePath}`);
+      } catch (error) {
+        console.error(`Error deleting file: ${fileUrl}`, error);
+        throw error
+      }
+    }
+  }
+
+  // Delete the update
+  await Update.findByIdAndDelete(id);
+
+  res.status(200).json(new ApiResponse(200, null, "Update and associated files deleted successfully"));
 });
 
 //reply for all entiety
