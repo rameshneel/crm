@@ -87,7 +87,7 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
     const files = await File.find({
       itemType: correctEntityType,
       itemId: entityId,
-      source: "FileGallery",
+      // source: "FileGallery",
     }).sort({ createdAt: -1 }); 
 
     // const fileData = files.map((file) => ({
