@@ -75,7 +75,6 @@ function getEntityName(entity, entityType) {
       return "Unknown";
   }
 }
-
 const getUpdateById = asyncHandler(async (req, res, next) => {
   const { updateId } = req.params;
   try {
@@ -83,7 +82,9 @@ const getUpdateById = asyncHandler(async (req, res, next) => {
     if (!update) {
       throw new Error("Update not found");
     }
-    res.json(update);
+    return res.json(
+      new ApiResponse(200, { update }, "Update fetech successfully")
+    );
   } catch (error) {
     next(error);
   }
@@ -119,7 +120,7 @@ const toggleLike = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-const updateUpdate = asyncHandler(async (req, res, next) => {
+const updatedUpdat = asyncHandler(async (req, res, next) => {
   const { updateId } = req.params;
   const userId = req.user._id;
   const { content, mentions } = req.body;
@@ -568,7 +569,6 @@ const logUpdateView = asyncHandler(async (req, res, next) => {
 
   res.status(200).json(new ApiResponse(200, null, "Update, associated files, and file records deleted successfully"));
 });
-
 //delte for server
 const deleteUpd = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -615,7 +615,6 @@ const deleteUpd = asyncHandler(async (req, res) => {
 
   res.status(200).json(new ApiResponse(200, null, "Update and associated files deleted successfully"));
 });
-
 //form only delete
  const deleteUpdate1 = asyncHandler(async (req, res) => {
   const { id } = req.params;
@@ -786,7 +785,7 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
       entity.updates = [];
     }
     entity.updates.push(update._id);
-    await entity.save();
+    await entity.save({ validateBeforeSave: false });
 
     // Handle mentions and notifications
     if (mentions.length > 0) {
@@ -831,7 +830,8 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
         new ApiResponse(
           201,
           { update },
-          "Update created successfully with files and notifications"
+          "Update created successfully "
+          // "with files and notifications"
         )
       );
   } catch (error) {
@@ -839,11 +839,82 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+const updatedUpdate = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { content, mentions: mentionString } = req.body;
+  const userId = req.user._id;
+
+  const update = await Update.findById(id);
+
+  if (!update) {
+    throw new ApiError(404, "Update not found");
+  }
+
+  if (update.createdBy.toString() !== userId.toString() && req.user.role !== 'admin') {
+    return res.status(403).json(new ApiResponse(403, null, "You don't have permission to edit this update"));
+  }
+  // Update content if provided
+  if (content) {
+    update.content = content;
+  }
+
+  // Update mentions if provided
+  if (mentionString) {
+    update.mentions = mentionString.split(",").map(id => id.trim());
+  }
+
+  // Handle removed files
+  if (update.files && update.files.length > 0) {
+    for (const fileUrl of update.files) {
+      try {
+        // Remove file from update.files array
+        update.files = update.files.filter(f => f !== fileUrl);
+
+        // Delete File document
+        const file = await File.findOneAndDelete({ fileUrl: fileUrl });
+        if (file) {
+          console.log(`File document deleted: ${file._id}`);
+        }
+
+        // Delete physical file
+        const fileName = path.basename(fileUrl);
+        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        await fs.unlink(filePath);
+        console.log(`Physical file deleted: ${filePath}`);
+      } catch (error) {
+        console.error(`Error deleting file: ${fileUrl}`, error);
+      }
+    }
+  }
+
+  // Handle new files
+  if (req.files && req.files.length > 0) {
+    for (let file of req.files) {
+      const fileUrl = `${req.protocol}://${req.get('host')}/files/${file.filename}`;
+      update.files.push(fileUrl);
+
+      const newFile = new File({
+        uploadedBy: userId,
+        fileUrl: fileUrl,
+        itemType: update.itemType,
+        itemId: update.itemId,
+        source: "UpdateFile",
+      });
+
+      await newFile.save();
+    }
+  }
+
+  // Save the updated update
+  await update.save();
+
+  res.status(200).json(new ApiResponse(200, { update }, "Update edited successfully"));
+});
  
 
 export {
   getUpdateById,
-  updateUpdate,
+  updatedUpdate,
   deleteUpdate,
   toggleLike,
   createEntityUpdate,
