@@ -29,6 +29,7 @@ const orderSchema = new Schema(
     renewalStatus: {
       type: String,
       enum: {values:["Meeting Booked", "Sold", "Dropped", "Still to Contact", ""],message:'{VALUE} is not supported'},
+      require:false,
       default:""
     },
     renewalNotes: {
@@ -75,8 +76,8 @@ const orderSchema = new Schema(
         "SumUp",
         "Bank Transfer",
       ],message:'{VALUE} is not supported'},
-      default:""
-     
+      default:"",
+      require:false
     },
     customerAccountName: {
       type: String,
