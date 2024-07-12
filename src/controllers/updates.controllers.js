@@ -11,12 +11,11 @@ import File from "../models/files.model.js";
 import Lead from "../models/lead.model.js";
 import Amendment from "../models/amendment.model.js";
 import { ApiError } from "../utils/ApiError.js";
-import fs from "fs/promises"; 
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 
 function getCorrectEntityType(entityType) {
   console.log("entity function", entityType);
@@ -30,7 +29,7 @@ function getCorrectEntityType(entityType) {
     user: "User",
     amendment: "Amendment",
     lead: "Lead",
-    update:"Update"
+    update: "Update",
   };
 
   const lowerCaseType = entityType.toLowerCase();
@@ -65,7 +64,7 @@ function getEntityName(entity, entityType) {
       return entity.orderNo;
     case "Lead":
       return entity.name;
-      case "Update":
+    case "Update":
       return entity.name;
     case "Amendment":
       return entity.amendmentNumber;
@@ -149,24 +148,20 @@ const updatedUpdat = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-const createEntityUpdat = asyncHandler(async (req, res, next) => {
+const createEntityUpdate = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const user = await User.findById(userId);
   let { entityId, entityType } = req.params;
 
-  // Use getCorrectEntityType to handle special cases
   const correctEntityType = getCorrectEntityType(entityType);
 
   try {
     const { content, mentions: mentionString } = req.body;
-    
+
     if (!mongoose.Types.ObjectId.isValid(entityId)) {
       return next(new ApiError(400, "Invalid entityId format"));
     }
-    let fileUrl;
-    if (req.file && req.file.path) {
-      fileUrl = `${req.protocol}://${req.get('host')}/files/${req.file.filename}`;
-    }
+
     const mentions = mentionString
       ? mentionString.split(",").map((id) => id.trim())
       : [];
@@ -180,45 +175,25 @@ const createEntityUpdat = asyncHandler(async (req, res, next) => {
       itemId: entityId,
     });
 
-    await update.save();
+    // Handle file uploads
+    console.log("file", req.files);
+    if (req.files && req.files.length > 0) {
+      for (let file of req.files) {
+        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+          file.filename
+        }`;
+        update.files.push(fileUrl);
 
-    const uploadedFiles = [];
+        const newFile = new File({
+          uploadedBy: userId,
+          fileUrl: fileUrl,
+          itemType: correctEntityType,
+          itemId: entityId,
+          source: "UpdateFile",
+        });
 
-    for (let file of files) {
-      console.log(file);
-      // const cloudinaryResponse = await uploadOnCloudinary(file.path);
-
-      // if (cloudinaryResponse) {
-      //   const newFile = new File({
-      //     uploadedBy: userId,
-      //     // fileUrl: cloudinaryResponse.url,
-      //     fileUrl: file.filename,
-      //     itemType: correctEntityType,
-      //     itemId: entityId,
-      //     source: "UpdateFile",
-      //   });
-
-      //   await newFile.save();
-      //   // update.files.push(cloudinaryResponse.url);
-      //   update.files.push(file.path);
-      //   // uploadedFiles.push({ id: newFile._id, localPath: file.path, cloudinaryUrl: cloudinaryResponse.url });
-      //   uploadedFiles.push({ id: newFile._id, localPath: file.path });
-      // }
-
-      const newFile = new File({
-        uploadedBy: userId,
-        // fileUrl: cloudinaryResponse.url,
-        fileUrl: file.filename,
-        itemType: correctEntityType,
-        itemId: entityId,
-        source: "UpdateFile",
-      });
-
-      await newFile.save();
-      // update.files.push(cloudinaryResponse.url);
-      update.files.push(file.path);
-      // uploadedFiles.push({ id: newFile._id, localPath: file.path, cloudinaryUrl: cloudinaryResponse.url });
-      uploadedFiles.push({ id: newFile._id, localPath: file.path });
+        await newFile.save();
+      }
     }
 
     await update.save();
@@ -228,10 +203,7 @@ const createEntityUpdat = asyncHandler(async (req, res, next) => {
       throw new ApiError(400, `Invalid entity type: ${correctEntityType}`);
     }
 
-    console.log("EntityModel:", EntityModel.modelName);
     const entity = await EntityModel.findById(entityId);
-    console.log("Entity:", entity);
-
     if (!entity) {
       throw new ApiError(
         404,
@@ -243,8 +215,9 @@ const createEntityUpdat = asyncHandler(async (req, res, next) => {
       entity.updates = [];
     }
     entity.updates.push(update._id);
-    await entity.save();
+    await entity.save({ validateBeforeSave: false });
 
+    // Handle mentions and notifications
     if (mentions.length > 0) {
       const mentionedUsers = await User.find({ _id: { $in: mentions } });
 
@@ -269,11 +242,11 @@ const createEntityUpdat = asyncHandler(async (req, res, next) => {
 
         await notification.save();
       }
-
+      console.log("entity");
       const entityName = getEntityName(entity, correctEntityType);
-      console.log("EntityName:", entityName);
+      console.log("entityName", entityName);
       await sendEmailForMentions(
-        userEmail,
+        user.email,
         mentionedUsers,
         correctEntityType,
         entityName,
@@ -282,28 +255,14 @@ const createEntityUpdat = asyncHandler(async (req, res, next) => {
       );
     }
 
-    // // Delete local files after everything is done
-    // for (const file of uploadedFiles) {
-    //   try {
-    //     await fs.unlink(file.localPath);
-    //     console.log(`Successfully deleted local file: ${file.localPath}`);
-    //   } catch (unlinkError) {
-    //     console.error(
-    //       `Error deleting local file ${file.localPath}:`,
-    //       unlinkError
-    //     );
-    //   }
-    // }
-
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          { update },
-          "Update created successfully with files and notifications"
-        )
-      );
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        { update },
+        "Update created successfully "
+        // "with files and notifications"
+      )
+    );
   } catch (error) {
     console.error("Error in createEntityUpdate:", error);
     next(error);
@@ -415,7 +374,8 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
         path: "mentions",
         model: "User",
         select: "fullName email avatar",
-      }).populate({
+      })
+      .populate({
         path: "createdBy",
         model: "User",
         select: "fullName email avatar",
@@ -517,7 +477,7 @@ const logUpdateView = asyncHandler(async (req, res, next) => {
   }
 });
 //delete from files and update
- const deleteUpdate = asyncHandler(async (req, res) => {
+const deleteUpdate = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const update = await Update.findById(id);
 
@@ -525,15 +485,28 @@ const logUpdateView = asyncHandler(async (req, res, next) => {
     throw new ApiError(404, "Update not found");
   }
 
-  if (update.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-    return res.status(403).json(new ApiResponse(403, null, "You don't have permission to delete this update"));
+  if (
+    update.createdBy.toString() !== req.user._id.toString() &&
+    req.user.role !== "admin"
+  ) {
+    return res
+      .status(403)
+      .json(
+        new ApiResponse(
+          403,
+          null,
+          "You don't have permission to delete this update"
+        )
+      );
   }
 
   const itemType = await getEntityModel(update.itemType);
   console.log("item type", itemType);
 
   if (!itemType) {
-    return res.status(400).json(new ApiResponse(400, null, "Invalid item type"));
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Invalid item type"));
   }
 
   // Remove the update reference from the associated item
@@ -555,7 +528,14 @@ const logUpdateView = asyncHandler(async (req, res, next) => {
 
         // Delete physical file
         const fileName = path.basename(fileUrl);
-        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        const filePath = path.join(
+          __dirname,
+          "..",
+          "..",
+          "public",
+          "files",
+          fileName
+        );
         await fs.unlink(filePath);
         console.log(`Physical file deleted: ${filePath}`);
       } catch (error) {
@@ -567,7 +547,15 @@ const logUpdateView = asyncHandler(async (req, res, next) => {
   // Delete the update
   await Update.findByIdAndDelete(id);
 
-  res.status(200).json(new ApiResponse(200, null, "Update, associated files, and file records deleted successfully"));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        null,
+        "Update, associated files, and file records deleted successfully"
+      )
+    );
 });
 //delte for server
 const deleteUpd = asyncHandler(async (req, res) => {
@@ -578,15 +566,28 @@ const deleteUpd = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Update not found");
   }
 
-  if (update.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-    return res.status(403).json(new ApiResponse(403, null, "You don't have permission to delete this update"));
+  if (
+    update.createdBy.toString() !== req.user._id.toString() &&
+    req.user.role !== "admin"
+  ) {
+    return res
+      .status(403)
+      .json(
+        new ApiResponse(
+          403,
+          null,
+          "You don't have permission to delete this update"
+        )
+      );
   }
 
   const itemType = await getEntityModel(update.itemType);
   console.log("item type", itemType);
 
   if (!itemType) {
-    return res.status(400).json(new ApiResponse(400, null, "Invalid item type"));
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Invalid item type"));
   }
 
   // Remove the update reference from the associated item
@@ -601,7 +602,14 @@ const deleteUpd = asyncHandler(async (req, res) => {
     for (const fileUrl of update.files) {
       try {
         const fileName = path.basename(fileUrl);
-        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        const filePath = path.join(
+          __dirname,
+          "..",
+          "..",
+          "public",
+          "files",
+          fileName
+        );
         await fs.unlink(filePath);
         console.log(`File deleted: ${filePath}`);
       } catch (error) {
@@ -613,10 +621,18 @@ const deleteUpd = asyncHandler(async (req, res) => {
   // Delete the update
   await Update.findByIdAndDelete(id);
 
-  res.status(200).json(new ApiResponse(200, null, "Update and associated files deleted successfully"));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        null,
+        "Update and associated files deleted successfully"
+      )
+    );
 });
 //form only delete
- const deleteUpdate1 = asyncHandler(async (req, res) => {
+const deleteUpdate1 = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const update = await Update.findById(id);
 
@@ -624,15 +640,28 @@ const deleteUpd = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Update not found");
   }
 
-  if (update.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-    return res.status(403).json(new ApiResponse(403, null, "You don't have permission to delete this update"));
+  if (
+    update.createdBy.toString() !== req.user._id.toString() &&
+    req.user.role !== "admin"
+  ) {
+    return res
+      .status(403)
+      .json(
+        new ApiResponse(
+          403,
+          null,
+          "You don't have permission to delete this update"
+        )
+      );
   }
 
   const itemType = await getEntityModel(update.itemType);
   console.log("item type", itemType);
 
   if (!itemType) {
-    return res.status(400).json(new ApiResponse(400, null, "Invalid item type"));
+    return res
+      .status(400)
+      .json(new ApiResponse(400, null, "Invalid item type"));
   }
 
   // Remove the update reference from the associated item
@@ -647,12 +676,19 @@ const deleteUpd = asyncHandler(async (req, res) => {
     for (const fileUrl of update.files) {
       try {
         const fileName = path.basename(fileUrl);
-        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        const filePath = path.join(
+          __dirname,
+          "..",
+          "..",
+          "public",
+          "files",
+          fileName
+        );
         await fs.unlink(filePath);
         console.log(`File deleted: ${filePath}`);
       } catch (error) {
         console.error(`Error deleting file: ${fileUrl}`, error);
-        throw error
+        throw error;
       }
     }
   }
@@ -660,35 +696,79 @@ const deleteUpd = asyncHandler(async (req, res) => {
   // Delete the update
   await Update.findByIdAndDelete(id);
 
-  res.status(200).json(new ApiResponse(200, null, "Update and associated files deleted successfully"));
+  res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        null,
+        "Update and associated files deleted successfully"
+      )
+    );
 });
 
 //reply for all entiety
 
 const replyToUpdate = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
+  const user = await User.findById(userId);
   const { updateId } = req.params;
   try {
-    const { content, files, mentions } = req.body;
-    
+    const { content, mentions: mentionString } = req.body;
+
     const originalUpdate = await Update.findById(updateId);
     if (!originalUpdate) {
       throw new ApiError(404, "Original update not found");
     }
+    const mentions = mentionString
+      ? mentionString.split(",").map((id) => id.trim())
+      : [];
 
     const reply = new Update({
       content,
       createdBy: userId,
-      files: files || [],
-      mentions: mentions || [],
-      // replies: [],
-      itemType:"Reply",
-      itemId: updateId
+      files: [],
+      mentions,
+      itemType: "Update",
+      itemId: updateId,
     });
 
+    // Handle file uploads
+   if (req.files && req.files.length > 0) {
+     for (let file of req.files) {
+       const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+         file.filename
+       }`;
+       update.files.push(fileUrl);
+
+       const newFile = new File({
+         uploadedBy: userId,
+         fileUrl: fileUrl,
+         itemType: "Update",
+         itemId: updateId,
+         source: "UpdateFile",
+       });
+
+       await newFile.save();
+     }
+   }
     await reply.save();
     originalUpdate.replies.push(reply._id);
     await originalUpdate.save();
+
+      // Handle mentions and notifications
+      
+      // if (mentions.length > 0) {
+      //   const mentionedUsers = await User.find({ _id: { $in: mentions } });
+      //   await sendEmailForMentions(
+      //     user.email,
+      //     mentionedUsers,
+      //     correctEntityType,
+      //     entityName,
+      //     update._id,
+      //     content
+      //   );
+      // }
 
     return res.json(
       new ApiResponse(201, { reply }, "Reply created successfully")
@@ -705,153 +785,44 @@ const deleteReply = asyncHandler(async (req, res, next) => {
     if (!reply) {
       throw new ApiError(404, "Reply not found");
     }
-    if (!reply.createdBy.equals(userId) && req.user.role !== 'admin') {
+    if (!reply.createdBy.equals(userId) && req.user.role !== "admin") {
       throw new ApiError(403, "You don't have permission to delete this reply");
     }
     await Update.findByIdAndUpdate(reply.itemId, {
-      $pull: { replies: replyId }
+      $pull: { replies: replyId },
     });
     await Update.findByIdAndDelete(replyId);
-    return res.json(
-      new ApiResponse(200, null, "Reply deleted successfully")
-    );
+    return res.json(new ApiResponse(200, null, "Reply deleted successfully"));
   } catch (error) {
     next(error);
   }
 });
-//testing 
-const createEntityUpdate = asyncHandler(async (req, res, next) => {
-  const userId = req.user?._id;
-  const user = await User.findById(userId);
-  let { entityId, entityType } = req.params;
-
-  const correctEntityType = getCorrectEntityType(entityType);
-
-  try {
-    const { content, mentions: mentionString } = req.body;
-    
-    if (!mongoose.Types.ObjectId.isValid(entityId)) {
-      return next(new ApiError(400, "Invalid entityId format"));
-    }
-
-    const mentions = mentionString
-      ? mentionString.split(",").map((id) => id.trim())
-      : [];
-
-    const update = new Update({
-      content,
-      createdBy: userId,
-      files: [],
-      mentions,
-      itemType: correctEntityType,
-      itemId: entityId,
-    });
-
-    // Handle file uploads
-    console.log("file",req.files);
-    if (req.files && req.files.length > 0) {
-      for (let file of req.files) {
-        const fileUrl = `${req.protocol}://${req.get('host')}/files/${file.filename}`;
-        update.files.push(fileUrl);
-
-        const newFile = new File({
-          uploadedBy: userId,
-          fileUrl: fileUrl,
-          itemType: correctEntityType,
-          itemId: entityId,
-          source: "UpdateFile",
-        });
-
-        await newFile.save();
-      }
-    }
-
-    await update.save();
-
-    const EntityModel = getEntityModel(correctEntityType);
-    if (!EntityModel) {
-      throw new ApiError(400, `Invalid entity type: ${correctEntityType}`);
-    }
-
-    const entity = await EntityModel.findById(entityId);
-    if (!entity) {
-      throw new ApiError(
-        404,
-        `${correctEntityType} with id ${entityId} not found`
-      );
-    }
-
-    if (!entity.updates) {
-      entity.updates = [];
-    }
-    entity.updates.push(update._id);
-    await entity.save({ validateBeforeSave: false });
-
-    // Handle mentions and notifications
-    if (mentions.length > 0) {
-      const mentionedUsers = await User.find({ _id: { $in: mentions } });
-
-      for (let mentionedUser of mentionedUsers) {
-        const notification = new Notification({
-          title: `Mentioned in ${correctEntityType} Update`,
-          message: `You were mentioned in an update for ${correctEntityType} ${getEntityName(
-            entity,
-            correctEntityType
-          )}.`,
-          category: "i_was_mentioned",
-          isRead: false,
-          assignedTo: mentionedUser._id,
-          assignedBy: userId,
-          mentionedUsers: [mentionedUser._id],
-          item: update._id,
-          itemType: correctEntityType,
-          linkUrl: `https://high-oaks-media-crm.vercel.app/${correctEntityType.toLowerCase()}s/update/${
-            update._id
-          }`,
-        });
-
-        await notification.save();
-      }
-
-      const entityName = getEntityName(entity, correctEntityType);
-      await sendEmailForMentions(
-        user.email,
-        mentionedUsers,
-        correctEntityType,
-        entityName,
-        update._id,
-        content
-      );
-    }
-
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          { update },
-          "Update created successfully "
-          // "with files and notifications"
-        )
-      );
-  } catch (error) {
-    console.error("Error in createEntityUpdate:", error);
-    next(error);
-  }
-});
+//teting
 const updatedUpdate = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { content, mentions: mentionString } = req.body;
   const userId = req.user._id;
+  const user = await User.findById(userId);
 
   const update = await Update.findById(id);
-
+  console.log("update", update);
   if (!update) {
     throw new ApiError(404, "Update not found");
   }
 
-  if (update.createdBy.toString() !== userId.toString() && req.user.role !== 'admin') {
-    return res.status(403).json(new ApiResponse(403, null, "You don't have permission to edit this update"));
+  if (
+    update.createdBy.toString() !== userId.toString() &&
+    req.user.role !== "admin"
+  ) {
+    return res
+      .status(403)
+      .json(
+        new ApiResponse(
+          403,
+          null,
+          "You don't have permission to edit this update"
+        )
+      );
   }
   // Update content if provided
   if (content) {
@@ -859,16 +830,75 @@ const updatedUpdate = asyncHandler(async (req, res) => {
   }
 
   // Update mentions if provided
-  if (mentionString) {
-    update.mentions = mentionString.split(",").map(id => id.trim());
+  //  if (mentionString) {
+  const mentions = mentionString
+    ? mentionString.split(",").map((id) => id.trim())
+    : [];
+
+  console.log("vbfj", mentions);
+  // }
+
+  // Handle mentions and notifications
+  if (mentions.length > 0) {
+    const mentionedUsers = await User.find({ _id: { $in: mentions } });
+    console.log("mentionedUsers", mentionedUsers);
+
+    // for (let mentionedUser of mentionedUsers) {
+
+    //   // const notification = new Notification({
+    //   //   title: `Mentioned in ${correctEntityType} Update`,
+    //   //   message: `You were mentioned in an update for ${correctEntityType} ${getEntityName(
+    //   //     entity,
+    //   //     correctEntityType
+    //   //   )}.`,
+    //   //   category: "i_was_mentioned",
+    //   //   isRead: false,
+    //   //   assignedTo: mentionedUser._id,
+    //   //   assignedBy: userId,
+    //   //   mentionedUsers: [mentionedUser._id],
+    //   //   item: update._id,
+    //   //   itemType: correctEntityType,
+    //   //   linkUrl: `https://high-oaks-media-crm.vercel.app/${correctEntityType.toLowerCase()}s/update/${
+    //   //     update._id
+    //   //   }`,
+    //   // });
+
+    //   // await notification.save();
+
+    // }
+
+    const entity = await getEntityModel(update.itemType).findById(
+      update.itemId
+    );
+    console.log("entity", entity);
+    if (!entity) {
+      throw new ApiError(
+        404,
+        `${update.itemType} with id ${update.itemId} not found`
+      );
+    }
+    const entityName = getEntityName(entity, update.itemType);
+    await sendEmailForMentions(
+      user.email,
+      mentionedUsers,
+      update.itemType,
+      entityName,
+      update._id,
+      content
+    );
   }
+
+  //
+  //   console.log("mention__",mentionString);
+  //   update.mentions = mentionString.split(",").map(id => id.trim());
+  //
 
   // Handle removed files
   if (update.files && update.files.length > 0) {
     for (const fileUrl of update.files) {
       try {
         // Remove file from update.files array
-        update.files = update.files.filter(f => f !== fileUrl);
+        update.files = update.files.filter((f) => f !== fileUrl);
 
         // Delete File document
         const file = await File.findOneAndDelete({ fileUrl: fileUrl });
@@ -878,7 +908,14 @@ const updatedUpdate = asyncHandler(async (req, res) => {
 
         // Delete physical file
         const fileName = path.basename(fileUrl);
-        const filePath = path.join(__dirname, '..','..', 'public', 'files', fileName);
+        const filePath = path.join(
+          __dirname,
+          "..",
+          "..",
+          "public",
+          "files",
+          fileName
+        );
         await fs.unlink(filePath);
         console.log(`Physical file deleted: ${filePath}`);
       } catch (error) {
@@ -890,7 +927,9 @@ const updatedUpdate = asyncHandler(async (req, res) => {
   // Handle new files
   if (req.files && req.files.length > 0) {
     for (let file of req.files) {
-      const fileUrl = `${req.protocol}://${req.get('host')}/files/${file.filename}`;
+      const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+        file.filename
+      }`;
       update.files.push(fileUrl);
 
       const newFile = new File({
@@ -906,11 +945,139 @@ const updatedUpdate = asyncHandler(async (req, res) => {
   }
 
   // Save the updated update
-  await update.save();
+  await update.save({ validateBeforeSave: false });
 
-  res.status(200).json(new ApiResponse(200, { update }, "Update edited successfully"));
+  res
+    .status(200)
+    .json(new ApiResponse(200, { update }, "Update edited successfully"));
 });
- 
+const updatedUpda = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { content, mentions: mentionString } = req.body;
+  const userId = req.user._id;
+
+  const update = await Update.findById(id);
+  if (!update) {
+    throw new ApiError(404, "Update not found");
+  }
+
+  if (
+    update.createdBy.toString() !== userId.toString() &&
+    req.user.role !== "admin"
+  ) {
+    return res
+      .status(403)
+      .json(
+        new ApiResponse(
+          403,
+          null,
+          "You don't have permission to edit this update"
+        )
+      );
+  }
+
+  // Update content if provided
+  if (content) {
+    update.content = content;
+  }
+
+  // Handle mentions and notifications
+  if (mentionString) {
+    await handleMentions(mentionString, userId, update, content, req);
+  }
+
+  // Handle removed files
+  if (update.files && update.files.length > 0) {
+    await handleRemovedFiles(update.files);
+  }
+
+  // Handle new files
+  if (req.files && req.files.length > 0) {
+    await handleNewFiles(req.files, userId, update);
+  }
+
+  // Save the updated update
+  await update.save({ validateBeforeSave: false });
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, { update }, "Update edited successfully"));
+});
+const handleMentions = async (mentionString, userId, update, content, req) => {
+  const mentions = mentionString.split(",").map((id) => id.trim());
+  const mentionedUsers = await User.find({ _id: { $in: mentions } });
+
+  const Model = getEntityModel(update.itemType);
+  console.log("model", Model);
+  if (!Model) {
+    throw new ApiError(400, `Invalid item type: ${update.itemType}`);
+  }
+
+  const entity = await Model.findById(update.itemId);
+  if (!entity) {
+    throw new ApiError(
+      404,
+      `${update.itemType} with id ${update.itemId} not found`
+    );
+  }
+
+  const entityName = getEntityName(entity, update.itemType);
+  await sendEmailForMentions(
+    req.user.email,
+    mentionedUsers,
+    update.itemType,
+    entityName,
+    update._id,
+    content
+  );
+};
+const handleRemovedFiles = async (files) => {
+  for (const fileUrl of files) {
+    try {
+      // Remove file from update.files array
+      files = files.filter((f) => f !== fileUrl);
+
+      // Delete File document
+      const file = await File.findOneAndDelete({ fileUrl: fileUrl });
+      if (file) {
+        console.log(`File document deleted: ${file._id}`);
+      }
+
+      // Delete physical file
+      const fileName = path.basename(fileUrl);
+      const filePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "public",
+        "files",
+        fileName
+      );
+      await fs.unlink(filePath);
+      console.log(`Physical file deleted: ${filePath}`);
+    } catch (error) {
+      console.error(`Error deleting file: ${fileUrl}`, error);
+    }
+  }
+};
+const handleNewFiles = async (files, userId, update) => {
+  for (let file of files) {
+    const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+      file.filename
+    }`;
+    update.files.push(fileUrl);
+
+    const newFile = new File({
+      uploadedBy: userId,
+      fileUrl: fileUrl,
+      itemType: update.itemType,
+      itemId: update.itemId,
+      source: "UpdateFile",
+    });
+
+    await newFile.save();
+  }
+};
 
 export {
   getUpdateById,
@@ -922,11 +1089,5 @@ export {
   replyToUpdate,
   updatePinnedStatus,
   logUpdateView,
-  deleteReply
+  deleteReply,
 };
-
-
-
-
-
-

@@ -19,7 +19,7 @@ const fileSchema = new Schema({
   itemType: {
     type: String,
     required: true,
-    enum: ["Customer", "Order", "Lead", "Amendment"],
+    enum: ["Customer", "Order", "Lead", "Amendment", "Update"],
   },
   itemId: {
     type: mongoose.Schema.Types.ObjectId,
