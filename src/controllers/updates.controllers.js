@@ -757,18 +757,19 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     await originalUpdate.save();
 
       // Handle mentions and notifications
-      
-      // if (mentions.length > 0) {
-      //   const mentionedUsers = await User.find({ _id: { $in: mentions } });
-      //   await sendEmailForMentions(
-      //     user.email,
-      //     mentionedUsers,
-      //     correctEntityType,
-      //     entityName,
-      //     update._id,
-      //     content
-      //   );
-      // }
+      const  correctEntityType="Reply"
+      const entityName=originalUpdate.itemType
+      if (mentions.length > 0) {
+        const mentionedUsers = await User.find({ _id: { $in: mentions } });
+        await sendEmailForMentions(
+          user.email,
+          mentionedUsers,
+          correctEntityType,
+          entityName,
+          reply._id,
+          content
+        );
+      }
 
     return res.json(
       new ApiResponse(201, { reply }, "Reply created successfully")
