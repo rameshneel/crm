@@ -709,7 +709,7 @@ const deleteUpdate1 = asyncHandler(async (req, res) => {
 
 //reply for all entiety
 
-const replyToUpdate = asyncHandler(async (req, res, next) => {
+const replyToUpdat = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const user = await User.findById(userId);
   const { updateId } = req.params;
@@ -778,6 +778,80 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+
+const replyToUpdate = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+  const user = await User.findById(userId);
+  const { updateId } = req.params;
+
+  try {
+    const { content, mentions: mentionString } = req.body;
+
+    const originalUpdate = await Update.findById(updateId);
+    if (!originalUpdate) {
+      throw new ApiError(404, "Original update not found");
+    }
+
+    const mentions = mentionString
+      ? mentionString.split(",").map((id) => id.trim())
+      : [];
+
+    const reply = new Update({
+      content,
+      createdBy: userId,
+      files: [],
+      mentions,
+      itemType: originalUpdate.itemType,
+      itemId: originalUpdate.itemId,
+      parentUpdate: updateId,
+      isReply: true
+    });
+
+    // Handle file uploads
+    if (req.files && req.files.length > 0) {
+      for (let file of req.files) {
+        const fileUrl = `${req.protocol}://${req.get("host")}/files/${file.filename}`;
+        reply.files.push(fileUrl);
+
+        const newFile = new File({
+          uploadedBy: userId,
+          fileUrl: fileUrl,
+          itemType: originalUpdate.itemType,
+          itemId: originalUpdate.itemId,
+          source: "ReplyFile",
+        });
+
+        await newFile.save();
+      }
+    }
+
+    await reply.save();
+    originalUpdate.replies.push(reply._id);
+    await originalUpdate.save();
+
+    // Handle mentions and notifications
+    const correctEntityType = "Reply";
+    const entityName = originalUpdate.itemType;
+    if (mentions.length > 0) {
+      const mentionedUsers = await User.find({ _id: { $in: mentions } });
+      await sendEmailForMentions(
+        user.email,
+        mentionedUsers,
+        correctEntityType,
+        entityName,
+        reply._id,
+        content
+      );
+    }
+
+    return res.json(
+      new ApiResponse(201, { reply }, "Reply created successfully")
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
 const deleteReply = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { replyId } = req.params;

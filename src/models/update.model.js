@@ -48,6 +48,14 @@ const updateSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     refPath: "itemType",
   },
+  parentUpdate: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Update'
+  },
+  isReply: {
+    type: Boolean,
+    default: false
+  },
 }, {
   timestamps: true,
 });

@@ -29,7 +29,7 @@ const fileSchema = new Schema({
   source: {
     type: String,
     required: true,
-    enum: ["UpdateFile", "FileGallery"],
+    enum: ["UpdateFile", "FileGallery","ReplyFile"],
   },
   
 },{ timestamps: true },);
