@@ -192,9 +192,10 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
     const correctEntityType = getCorrectEntityType(entityType);
 
     if (!req.files || req.files.length === 0) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "No files uploaded"));
+      throw new ApiError(400,"Please Select files")
+      // return res
+      //   .status(400)
+      //   .json(new ApiResponse(400, {}, "No files uploaded"));
     }
 
     const validEntityTypes = [
@@ -209,15 +210,17 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
       "TechnicalTracker",
     ];
     if (!validEntityTypes.includes(correctEntityType)) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Invalid entity type"));
+      throw new ApiError(400,"Invalid entity type")
+      // return res
+      //   .status(400)
+      //   .json(new ApiResponse(400, {}, "Invalid entity type"));
     }
     
     if (!mongoose.Types.ObjectId.isValid(entityId)) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "Invalid entity ID"));
+      throw new ApiError(400,"Invalid entity ID")
+      // return res
+      //   .status(400)
+      //   .json(new ApiResponse(400, {}, "Invalid entity ID"));
     }
 
     const EntityModel = getEntityModel(correctEntityType);
@@ -230,20 +233,35 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
 
     const uploadedFiles = [];
     
+    // for (const file of req.files) {
+    //   const { path: localPath, filename } = file;
 
-    for (const file of req.files) {
-      const { path: localPath, filename } = file;
+    //   const newFile = new File({
+    //     uploadedBy: userId,
+    //     fileUrl: filename,
+    //     itemType: correctEntityType,
+    //     itemId: entityId,
+    //     source: "FileGallery",
+    //   });
 
-      const newFile = new File({
-        uploadedBy: userId,
-        fileUrl: filename,
-        itemType: correctEntityType,
-        itemId: entityId,
-        source: "FileGallery",
-      });
+    //   await newFile.save();
+      
+    // }
 
-      await newFile.save();
-      uploadedFiles.push({ id: newFile._id, localPath, filename });
+    if (req.files && req.files.length > 0) {
+      for (let file of req.files) {
+        const fileUrl = `${req.protocol}://${req.get('host')}/files/${file.filename}`;
+  
+        const newFile = new File({
+          uploadedBy: userId,
+          fileUrl: fileUrl,
+          itemType: correctEntityType,
+          itemId: entityId,
+          source: "FileGallery",
+        });
+        await newFile.save();
+        uploadedFiles.push({ id: newFile.fileUrl, });
+      }
     }
 
     // Send response
@@ -251,14 +269,14 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
       new ApiResponse(201, { uploadedFiles }, "Files uploaded to gallery")
     );
 
-    for (const file of uploadedFiles) {
-      try {
-        await fs.unlink(file.localPath);
-        console.log(`Successfully deleted local file: ${file.localPath}`);
-      } catch (unlinkError) {
-        console.error(`Error deleting local file ${file.localPath}:`, unlinkError);
-      }
-    }
+    // for (const file of uploadedFiles) {
+    //   try {
+    //     await fs.unlink(file.localPath);
+    //     console.log(`Successfully deleted local file: ${file.localPath}`);
+    //   } catch (unlinkError) {
+    //     console.error(`Error deleting local file ${file.localPath}:`, unlinkError);
+    //   }
+    // }
 
   } catch (error) {
     console.error("Error in uploadFilesToGallery:", error);
