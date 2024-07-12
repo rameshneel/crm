@@ -18,7 +18,7 @@ const router = express.Router();
 router.use(verifyJWT);
 
 router.post("/:entityType/:entityId", fileUploadforupdate, createEntityUpdate);
-router.get("/", getUpdateById);
+router.get("/:updateId", getUpdateById);
 router.get("/:entityType/:entityId", getAllUpdatesForEntity);
 router.post("/toggle/:updateId/like", toggleLike);
 router.post("/update/reply/:updateId", replyToUpdate);
