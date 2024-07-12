@@ -13,8 +13,8 @@ const storage = multer.diskStorage({
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Math.round(Math.random()*1E9); 
-        const randomFilename = uniqueSuffix + '-' + file.originalname; 
-        cb(null, randomFilename); 
+        // const randomFilename = uniqueSuffix + '-' + file.originalname; 
+        cb(null, uniqueSuffix); 
     }
 });
 
