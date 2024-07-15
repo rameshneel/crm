@@ -1,16 +1,21 @@
 import express from "express";
 import {
-  createNewCustomer,
-  getAllCustomers,
-  getCustomerById,
+  createNewWebsiteContent,
+  deleteWebsiteContent,
+  getAllNewWebsiteContent,
+  getNewWebsiteContentById,
+  updateNewWebsiteContent,
 } from "../controllers/newWebsiteContent.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 router.use(verifyJWT);
-
-router.route("/").post(createNewCustomer).get(getAllCustomers);
-
-router.route("/:id").get(getCustomerById);
+router.route("/:customerId").post(createNewWebsiteContent)
+router.route("/").get(getAllNewWebsiteContent);
+router
+  .route("/:id")
+  .get(getNewWebsiteContentById)
+  .patch(updateNewWebsiteContent)
+  .delete(deleteWebsiteContent);
 
 export default router;

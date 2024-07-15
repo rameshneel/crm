@@ -4,19 +4,14 @@ const newWebsiteContentSchema = new mongoose.Schema(
   {
     customer: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "Customer",
       required: true,
     },
     typeOfCustomer: {
       type: String,
-      enum: ["Renewal", "New Customer", "Existing HOM Customer",""],
+      enum: ["Renewal", "New Customer", "Existing HOM Customer", ""],
+      default: "",
       required: true,
-    },
-    customerPostcode: {
-      type: String,
-    },
-    customerPhoneNumber: {
-      type: String,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,43 +25,34 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     domainTransferred: {
-      type: {
-        type: String,
-        enum: ["N/A", "No", "Yes"],
-      },
-      registrarName: {
-        type: String,
-        function () {
-          return this.domainTransferred === "No";
-        },
-      }, 
+      type: String,
+      enum: ["N/A", "No", "Yes", ""],
+      default: "",
+    },
+    registrarName: {
+      type: String,
     },
     domainInfo: {
       type: String,
     },
     customerEmails: {
-      type: {
-        type: String,
-        enum: [
+      type: String,
+      enum: {
+        values: [
           "Create New Company Emails",
           "Existing Emails Attached to Domain",
           "N/A - Customer Has Their Own",
+          "",
         ],
+        message: "{VALUE} is not supported",
       },
-      emailsToBeCreated: {
-        type: String,
-        function () {
-          return this.customerEmails.type === "Create New Company Emails";
-        },
-      },
-      existingEmailsAttached: {
-        type: String,
-        function () {
-          return (
-            this.customerEmails.type === "Existing Emails Attached to Domain"
-          );
-        },
-      },
+      default: "",
+    },
+    emailsToBeCreated: {
+      type: String,
+    },
+    existingEmailsAttached: {
+      type: String,
     },
     socialMedia: {
       type: [String],
@@ -84,28 +70,29 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     blogToBeAdded: {
-      type:{
-        type: String,
-        enum: ["Yes", "No"],
-      },
-      preferredPageNamesForBlog: {
-        type: String,
-        function () {
-          return this.blogToBeAdded === "Yes";
-        },
-      },
+      type: String,
+      enum: ["Yes", "No", ""],
+      default: "",
     },
-    keywordforblogposts:{
+    preferredPageNamesForBlog: {
+      type: String,
+    },
+    keywordforblogposts: {
       type: String,
     },
     companyLogo: {
       type: String,
-      enum: [
-        "create new company logo",
-        "logo file attached in monday",
-        "take from current website",
-        "added logo to general master",
-      ],
+      enum: {
+        values: [
+          "create new company logo",
+          "logo file attached in monday",
+          "take from current website",
+          "added logo to general master",
+          "",
+        ],
+        message: "{values} is not supported",
+      },
+      default: "",
     },
     images: {
       type: String,
@@ -114,44 +101,39 @@ const newWebsiteContentSchema = new mongoose.Schema(
         "images attached in Monday.com",
         "photographer to be booked",
         "take from current website",
+        "",
       ],
+      default: "",
     },
-    pageName:{
+    pageName: {
       type: String,
     },
     googleReviews: {
-      type: {
-        type: String,
-        enum: ["Currently Live", "New Set-Up Required", "Yes"],
-      },
-      linkToCurrentGoogleReviews: {
-        type: String,
-        function () {
-          return this.googleReviews.type === "Currently Live";
-        },
-      },
-    },
-    copywriterRequired: {
       type: String,
-      enum: ["Yes", "No",""],
+      enum: ["Currently Live", "New Set-Up Required", "Yes", ""],
+      default: "",
+    },
+    linkToCurrentGoogleReviews: {
+      type: String,
+    },
+    isCopywriterRequired: {
+      type: String,
+      enum: { values: ["Yes", "No", ""], message: "{values} is not supported" },
+      default: "",
     },
     contentRequired: {
       type: String,
-      function () {
-        return this.copywriterRequired === "Yes";
-      },
     },
     contactInformation: {
-      type: {
-        type: String,
-        enum: ["New Contact Information", "Use From Current Website"],
+      type: String,
+      enum: {
+        values: ["New Contact Information", "Use From Current Website", ""],
+        message: "{values} is not supported",
       },
-      newContactInformation: {
-        type: String,
-        function () {
-          return this.contactInformation.type === "New Contact Information";
-        },
-      },
+      default: "",
+    },
+    newContactInformation: {
+      type: String,
     },
     notesForDesign: {
       type: String,
@@ -159,78 +141,192 @@ const newWebsiteContentSchema = new mongoose.Schema(
     notesForCopywriter: {
       type: String,
     },
-    isTrueFalse:{
-      type: Boolean,
-    },
-
-
-    // emailCurrent:{
-    //  type:String
-    // },
-    // productFlowStatus:{
-    //   type:String
-    // },
-    // productFlow:{
-    //   type:String
-    // },
-    // techincalMaster:{
-    //   type:String
-    // },
-    // copywriterTracker:{
-    //   type:String
-    // },
-    updated_by: 
-    { 
+    updated_by: {
       type: mongoose.Schema.Types.ObjectId,
-       ref: "User",
-      },
-
+      ref: "User",
+    },
   },
   { timestamps: true }
 );
 
-const NewWebsiteContent = mongoose.model("NewWebsiteContent", newWebsiteContentSchema);
+const NewWebsiteContent = mongoose.model(
+  "NewWebsiteContent",
+  newWebsiteContentSchema
+);
 
 export default NewWebsiteContent;
 
 
+// import mongoose from "mongoose";
 
+// const newWebsiteContentSchema = new mongoose.Schema(
+//   {
+//     customer: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//       required: true,
+//     },
+//     typeOfCustomer: {
+//       type: String,
+//       enum: ["Renewal", "New Customer", "Existing HOM Customer",""],
+//       required: true,
+//     },
 
+//     createdBy: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//       required: true,
+//     },
+//     currentDomain: {
+//       type: String,
+//     },
+//     newDomain: {
+//       type: String,
+//     },
+//     domainTransferred: {
+//       type: {
+//         type: String,
+//         enum: ["N/A", "No", "Yes"],
+//       },
+//       registrarName: {
+//         type: String,
+//         function () {
+//           return this.domainTransferred === "No";
+//         },
+//       },
+//     },
+//     domainInfo: {
+//       type: String,
+//     },
+//     customerEmails: {
+//       type: {
+//         type: String,
+//         enum: [
+//           "Create New Company Emails",
+//           "Existing Emails Attached to Domain",
+//           "N/A - Customer Has Their Own",
+//         ],
+//       },
+//       emailsToBeCreated: {
+//         type: String,
+//         function () {
+//           return this.customerEmails.type === "Create New Company Emails";
+//         },
+//       },
+//       existingEmailsAttached: {
+//         type: String,
+//         function () {
+//           return (
+//             this.customerEmails.type === "Existing Emails Attached to Domain"
+//           );
+//         },
+//       },
+//     },
+//     socialMedia: {
+//       type: [String],
+//     },
+//     keyPhrasesAgreed: {
+//       type: [String],
+//     },
+//     keyAreasAgreed: {
+//       type: [String],
+//     },
+//     theme: {
+//       type: String,
+//     },
+//     colours: {
+//       type: String,
+//     },
+//     blogToBeAdded: {
+//       type:{
+//         type: String,
+//         enum: ["Yes", "No"],
+//       },
+//       preferredPageNamesForBlog: {
+//         type: String,
+//         function () {
+//           return this.blogToBeAdded === "Yes";
+//         },
+//       },
+//     },
+//     keywordforblogposts:{
+//       type: String,
+//     },
+//     companyLogo: {
+//       type: String,
+//       enum: [
+//         "create new company logo",
+//         "logo file attached in monday",
+//         "take from current website",
+//         "added logo to general master",
+//       ],
+//     },
+//     images: {
+//       type: String,
+//       enum: [
+//         "client to send",
+//         "images attached in Monday.com",
+//         "photographer to be booked",
+//         "take from current website",
+//       ],
+//     },
+//     pageName:{
+//       type: String,
+//     },
+//     googleReviews: {
+//       type: {
+//         type: String,
+//         enum: ["Currently Live", "New Set-Up Required", "Yes"],
+//       },
+//       linkToCurrentGoogleReviews: {
+//         type: String,
+//         function () {
+//           return this.googleReviews.type === "Currently Live";
+//         },
+//       },
+//     },
+//     isCopywriterRequired: {
+//       type: String,
+//       enum: ["Yes", "No",""],
+//     },
+//     contentRequired: {
+//       type: String,
+//       function () {
+//         return this.copywriterRequired === "Yes";
+//       },
+//     },
+//     contactInformation: {
+//       type: {
+//         type: String,
+//         enum: ["New Contact Information", "Use From Current Website"],
+//       },
+//       newContactInformation: {
+//         type: String,
+//         function () {
+//           return this.contactInformation.type === "New Contact Information";
+//         },
+//       },
+//     },
+//     notesForDesign: {
+//       type: String,
+//     },
+//     notesForCopywriter: {
+//       type: String,
+//     },
 
+//     updated_by:
+//     {
+//       type: mongoose.Schema.Types.ObjectId,
+//        ref: "User",
+//       },
 
+//   },
+//   { timestamps: true }
+// );
 
+// const NewWebsiteContent = mongoose.model("NewWebsiteContent", newWebsiteContentSchema);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// export default NewWebsiteContent;
 
 // import mongoose from "mongoose";
 
@@ -255,7 +351,7 @@ export default NewWebsiteContent;
 //     domainInfo: {
 //       type: String,
 //     },
-//     domainTransferred: {   
+//     domainTransferred: {
 //       type: String,
 //       enum: ["N/A", "No", "Yes"],
 //       required: true,
@@ -266,7 +362,7 @@ export default NewWebsiteContent;
 //         return this.domainTransferred === "No";
 //       },
 //     },
-    
+
 //     // username: {
 //     //   type: String,
 //     //   required: function () {
@@ -422,8 +518,8 @@ export default NewWebsiteContent;
 //       ref: "User",
 //       required: true,
 //     },
-//     updated_by: 
-//     { 
+//     updated_by:
+//     {
 //       type: mongoose.Schema.Types.ObjectId,
 //        ref: "User",
 //       },

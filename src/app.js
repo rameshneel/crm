@@ -8,7 +8,6 @@ import config from './config/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-console.log("path",__filename);
 const app = express();
 app.use(
   cors({
@@ -49,7 +48,7 @@ app.use(cookieParser());
 import userRouter from "./routes/user.routes.js";
 import customerRoutes from "./routes/customer.route.js";
 import leadRoutes from "./routes/lead.routes.js";
-// import newWebsite from "./routes/newWebsiteContent.js";
+import newWebsite from "./routes/newWebsiteContent.js";
 import amendmentRoutes from "./routes/amendment.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import technicalMasterRoutes from "./routes/techincalMaster.routes.js";
@@ -61,7 +60,7 @@ import updatesRoutes from "./routes/update.routes.js";
 app.use("/api/users", userRouter);
 app.use("/api/customers", customerRoutes);
 app.use("/api/leads", leadRoutes);
-// app.use("/api/newwebsite", newWebsite);
+app.use("/api/newwebsite", newWebsite);
 app.use("/api/amendments", amendmentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/technicalmasters", technicalMasterRoutes);
