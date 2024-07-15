@@ -414,7 +414,7 @@ export const getAllLeads = asyncHandler(async (req, res, next) => {
         select: 'fullName avatar',
       });
 
-    return res.status(200).json(new ApiResponse(200, leads, "Leads retrieved successfully"));
+    return res.status(200).json(new ApiResponse(200, {leads}, "Leads retrieved successfully"));
 
   } catch (error) {
     return next(error);
