@@ -77,7 +77,47 @@ function getEntityName(entity, entityType) {
 const getUpdateById = asyncHandler(async (req, res, next) => {
   const { updateId } = req.params;
   try {
-    const update = await Update.findById(updateId);
+    const update = await Update.findById(updateId)
+    .populate({
+      path: "mentions",
+      model: "User",
+      select: "fullName email avatar",
+    })
+    .populate({
+      path: "createdBy",
+      model: "User",
+      select: "fullName email avatar",
+    })
+    .populate({
+      path: "likes",
+      model: "User",
+      select: "name email",
+    })
+    .populate({
+      path: "replies",
+      model: "Update",
+      populate: [
+        {
+          path: "mentions",
+          model: "User",
+          select: "fullname avatar",
+        },
+        {
+          path: "createdBy",
+          model: "User",
+          select: "fullName avatar",
+        },
+        {
+          path: "replies",
+          model: "Update",
+        },
+        {
+          path: "likes",
+          model: "User",
+          select: "fullname avatar",
+        },
+      ],
+    });;
     if (!update) {
       throw new Error("Update not found");
     }
@@ -492,6 +532,7 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
     const updates = await Update.find({
       itemType: correctEntityType,
       itemId: entityId,
+      isReply: false
     })
       .sort({ isPinned: -1, createdAt: -1 })
       .populate({
@@ -512,6 +553,7 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
       .populate({
         path: "replies",
         model: "Update",
+        options: { sort: { isPinned: -1, createdAt: -1 } },
         populate: [
           {
             path: "mentions",
@@ -860,9 +902,6 @@ const deleteReply = asyncHandler(async (req, res, next) => {
 });
 
 
-
-
-
 //teting
 const updatedUpda = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
@@ -991,6 +1030,175 @@ const handleNewFiles = async (files, userId, update) => {
     await newFile.save();
   }
 };
+
+
+const createEntityUpdat = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+  const user = await User.findById(userId);
+  let { entityId, entityType } = req.params;
+
+  const correctEntityType = getCorrectEntityType(entityType);
+
+  try {
+    const { content: rawContent, mentions: mentionString } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(entityId)) {
+      return next(new ApiError(400, "Invalid entityId format"));
+    }
+
+    const mentions = mentionString
+      ? mentionString.split(",").map((id) => id.trim())
+      : [];
+
+    // प्रोसेस कंटेंट और इमेज
+    const processedContent = await processContentImages(rawContent, userId);
+
+    const update = new Update({
+      content: processedContent,
+      createdBy: userId,
+      files: [],
+      mentions,
+      itemType: correctEntityType,
+      itemId: entityId,
+    });
+
+    // Handle file uploads
+    console.log("file", req.files);
+    if (req.files && req.files.length > 0) {
+      for (let file of req.files) {
+        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+          file.filename
+        }`;
+        update.files.push(fileUrl);
+
+        const newFile = new File({
+          uploadedBy: userId,
+          fileUrl: fileUrl,
+          itemType: correctEntityType,
+          itemId: entityId,
+          source: "UpdateFile",
+        });
+
+        await newFile.save();
+      }
+    }
+
+    await update.save();
+
+    const EntityModel = getEntityModel(correctEntityType);
+    if (!EntityModel) {
+      throw new ApiError(400, `Invalid entity type: ${correctEntityType}`);
+    }
+
+    const entity = await EntityModel.findById(entityId);
+    if (!entity) {
+      throw new ApiError(
+        404,
+        `${correctEntityType} with id ${entityId} not found`
+      );
+    }
+
+    if (!entity.updates) {
+      entity.updates = [];
+    }
+    entity.updates.push(update._id);
+    await entity.save({ validateBeforeSave: false });
+
+    // Handle mentions and notifications
+    if (mentions.length > 0) {
+      const mentionedUsers = await User.find({ _id: { $in: mentions } });
+
+      for (let mentionedUser of mentionedUsers) {
+        const notification = new Notification({
+          title: `Mentioned in ${correctEntityType} Update`,
+          message: `You were mentioned in an update for ${correctEntityType} ${getEntityName(
+            entity,
+            correctEntityType
+          )}.`,
+          category: "i_was_mentioned",
+          isRead: false,
+          assignedTo: mentionedUser._id,
+          assignedBy: userId,
+          mentionedUsers: [mentionedUser._id],
+          item: update._id,
+          itemType: correctEntityType,
+          linkUrl: `https://high-oaks-media-crm.vercel.app/${correctEntityType.toLowerCase()}s/update/${
+            update._id
+          }`,
+        });
+
+        await notification.save();
+      }
+      console.log("entity");
+      const entityName = getEntityName(entity, correctEntityType);
+      console.log("entityName", entityName);
+      await sendEmailForMentions(
+        user.email,
+        mentionedUsers,
+        correctEntityType,
+        entityName,
+        update._id,
+        processedContent
+      );
+    }
+
+    return res.status(201).json(
+      new ApiResponse(
+        201,
+        { update },
+        "Update created successfully "
+        // "with files and notifications"
+      )
+    );
+  } catch (error) {
+    console.error("Error in createEntityUpdate:", error);
+    next(error);
+  }
+});
+
+async function processContentImages(content, userId) {
+  const cheerio = require('cheerio');
+
+  const path = require('path');
+  const crypto = require('crypto');
+
+  const $ = cheerio.load(content);
+  const imagePromises = [];
+
+  $('img').each((index, element) => {
+    const src = $(element).attr('src');
+    if (src && src.startsWith('data:image')) {
+      const imagePromise = processBase64Image(src, userId)
+        .then(newSrc => {
+          $(element).attr('src', newSrc);
+        });
+      imagePromises.push(imagePromise);
+    }
+  });
+
+  await Promise.all(imagePromises);
+  return $.html();
+}
+
+async function processBase64Image(src, userId) {
+  const matches = src.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+  if (matches && matches.length === 3) {
+    const imageExtension = matches[1];
+    const imageData = Buffer.from(matches[2], 'base64');
+    
+    // यूनीक फाइलनेम जनरेट करें
+    const hash = crypto.createHash('md5').update(imageData).digest('hex');
+    const imageName = `${hash}.${imageExtension}`;
+    const imagePath = path.join(__dirname, 'public', 'uploads', imageName);
+    
+    // फाइल को डिस्क पर सेव करें
+    await fs.writeFile(imagePath, imageData);
+    
+    // नया URL रिटर्न करें
+    return `/uploads/${imageName}`;
+  }
+  return src;
+}
 
 export {
   getUpdateById,
