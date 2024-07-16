@@ -448,36 +448,36 @@ const updatePinnedStatus = asyncHandler(async (req, res, next) => {
     if (!update) {
       return res.status(404).json(new ApiResponse(404, {}, "Update not found"));
     }
-    const correctEntityType = getCorrectEntityType(update.itemType);
-    const EntityModel = getEntityModel(correctEntityType);
-    if (!EntityModel) {
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(400, {}, `Invalid entity type: ${correctEntityType}`)
-        );
-    }
-    const entity = await EntityModel.findById(update.itemId);
-    if (!entity) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, {}, `${correctEntityType} not found`));
-    }
+    // const correctEntityType = getCorrectEntityType(update.itemType);
+    // const EntityModel = getEntityModel(correctEntityType);
+    // if (!EntityModel) {
+    //   return res
+    //     .status(400)
+    //     .json(
+    //       new ApiResponse(400, {}, `Invalid entity type: ${correctEntityType}`)
+    //     );
+    // }
+    // const entity = await EntityModel.findById(update.itemId);
+    // if (!entity) {
+    //   return res
+    //     .status(404)
+    //     .json(new ApiResponse(404, {}, `${correctEntityType} not found`));
+    // }
 
     update.isPinned = isPinned;
-    await update.save();
+    await update.save({validateBeforeSave:false});
 
     // If pinning, ensure this update is at the top of the entity's updates array
-    if (isPinned) {
-      entity.updates = entity.updates.filter((id) => !id.equals(update._id));
-      entity.updates.unshift(update._id);
-    } else {
-      // If unpinning, move it to its original position (we'll put it at the end for simplicity)
-      entity.updates = entity.updates.filter((id) => !id.equals(update._id));
-      entity.updates.push(update._id);
-    }
+    // if (isPinned) {
+    //   entity.updates = entity.updates.filter((id) => !id.equals(update._id));
+    //   entity.updates.unshift(update._id);
+    // } else {
+    //   // If unpinning, move it to its original position (we'll put it at the end for simplicity)
+    //   entity.updates = entity.updates.filter((id) => !id.equals(update._id));
+    //   entity.updates.push(update._id);
+    // }
 
-    await entity.save();
+    // await entity.save();
 
     return res
       .status(200)
@@ -900,7 +900,6 @@ const deleteReply = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-
 
 //teting
 const updatedUpda = asyncHandler(async (req, res, next) => {
