@@ -346,11 +346,10 @@ const deleteFileById = asyncHandler(async (req, res, next) => {
 });
 const singleuploadImage = asyncHandler(async (req, res, next) => {
   try {
-    
-    if (!req.file) {
+    if (!req.files) {
       return res.status(400).json(new ApiResponse(400, null, "No file uploaded!"));
     }
-    const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.file.filename}`;
+    const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.files[0].filename}`;
     console.log("File URL:", fileUrl);
     // const newFile = new File({
     //   uploadedBy: userId,
@@ -367,7 +366,6 @@ const singleuploadImage = asyncHandler(async (req, res, next) => {
     return next(err);
   }
 });
-
 const singleuploadVideo = asyncHandler(async (req, res, next) => {
   try {
     
