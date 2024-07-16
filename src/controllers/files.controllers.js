@@ -344,10 +344,60 @@ const deleteFileById = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+const singleuploadImage = asyncHandler(async (req, res, next) => {
+  try {
+    
+    if (!req.file) {
+      return res.status(400).json(new ApiResponse(400, null, "No file uploaded!"));
+    }
+    const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.file.filename}`;
+    console.log("File URL:", fileUrl);
+    // const newFile = new File({
+    //   uploadedBy: userId,
+    //   fileUrl: fileUrl,
+    //   itemType: correctEntityType,
+    //   itemId: entityId,
+    //   source: "UpdateFile",
+    // });
+    // await newFile.save();
+
+    return res.status(200).json(new ApiResponse(200, { fileUrl }, "Image uploaded successfully!"));
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+});
+
+const singleuploadVideo = asyncHandler(async (req, res, next) => {
+  try {
+    
+    if (!req.file) {
+      return res.status(400).json(new ApiResponse(400, null, "No file uploaded!"));
+    }
+    const url = `${req.protocol}://${req.get("host")}/files/${req.file.filename}`;
+    console.log("File URL:", fileUrl);
+    // const newFile = new File({
+    //   uploadedBy: userId,
+    //   fileUrl: fileUrl,
+    //   itemType: correctEntityType,
+    //   itemId: entityId,
+    //   source: "UpdateFile",
+    // });
+    // await newFile.save();
+
+    return res.status(200).json(new ApiResponse(200, { url }, "Video uploaded successfully!"));
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+});
+
  
 export {
   uploadFilesToGallery,
   getAllFilesForEntity,
   getFileById,
   deleteFileById,
-};
+  singleuploadImage,
+  singleuploadVideo,
+}
