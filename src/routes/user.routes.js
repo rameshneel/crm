@@ -44,6 +44,6 @@ router.route('/:userId').delete(verifyJWT,deleteUsers);
 router.route('/').get(verifyJWT,getAllUsers);
 router.route("/update/:userId").patch(verifyJWT,upload.single("avatar"),updateUser)
 
-router.route('/upload',fileUploadforupdate,uploadForSingleFile)
+router.route('/upload').post(fileUploadforupdate,uploadForSingleFile)
 
 export default router
