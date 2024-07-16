@@ -397,11 +397,11 @@ const uploadForSingleFile = asyncHandler(async (req, res, next) => {
 
     const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.files[0].filename}`;
     let itemType, message;
-    
-    if (req.file.mimetype.startsWith('image')) {
+     
+    if (req.files[0].mimetype.startsWith('image')) {
       itemType = "Image";
       message = "Image uploaded successfully!";
-    } else if (req.file.mimetype.startsWith('video')) {
+    } else if (req.files[0].mimetype.startsWith('video')) {
       itemType = "Video";
       message = "Video uploaded successfully!";
     } else {
