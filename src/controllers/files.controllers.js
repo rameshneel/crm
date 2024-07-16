@@ -389,6 +389,42 @@ const singleuploadVideo = asyncHandler(async (req, res, next) => {
     return next(err);
   }
 });
+const uploadForSingleFile = asyncHandler(async (req, res, next) => {
+  try {
+    if (!req.files) {
+      return res.status(400).json(new ApiResponse(400, null, "No file uploaded!"));
+    }
+
+    const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.files[0].filename}`;
+    let itemType, message;
+    
+    if (req.file.mimetype.startsWith('image')) {
+      itemType = "Image";
+      message = "Image uploaded successfully!";
+    } else if (req.file.mimetype.startsWith('video')) {
+      itemType = "Video";
+      message = "Video uploaded successfully!";
+    } else {
+      // Handle unsupported file types
+      return res.status(415).json(new ApiResponse(415, null, "Unsupported file type!"));
+    }
+
+    // Save to database or perform other operations
+    // const newFile = new File({
+    //   uploadedBy: userId,
+    //   fileUrl: fileUrl,
+    //   itemType: correctEntityType,
+    //   itemId: entityId,
+    //   source: "UpdateFile",
+    // });
+    // await newFile.save();
+
+    return res.status(200).json(new ApiResponse(200, { fileUrl }, message));
+  } catch (err) {
+    console.error(err);
+    return next(err);
+  }
+});
 
  
 export {
@@ -398,4 +434,5 @@ export {
   deleteFileById,
   singleuploadImage,
   singleuploadVideo,
+  uploadForSingleFile
 }

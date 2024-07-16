@@ -18,7 +18,8 @@ import {
 } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { uploadFile } from "../helper/multererror.js";
+import { fileUploadforupdate, uploadFile } from "../helper/multererror.js";
+import { uploadForSingleFile } from "../controllers/files.controllers.js";
 
 
 const router = Router()
@@ -42,5 +43,7 @@ router.route('/delete').delete(verifyJWT,deleteUser);
 router.route('/:userId').delete(verifyJWT,deleteUsers);
 router.route('/').get(verifyJWT,getAllUsers);
 router.route("/update/:userId").patch(verifyJWT,upload.single("avatar"),updateUser)
+
+router.route('/upload',fileUploadforupdate,uploadForSingleFile)
 
 export default router
