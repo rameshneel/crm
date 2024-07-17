@@ -797,7 +797,6 @@ const replyToUpdat = asyncHandler(async (req, res, next) => {
 
     await session.commitTransaction();
     session.endSession();
-
     return res.json(new ApiResponse(201, { reply }, "Reply created successfully"));
   } catch (error) {
     await session.abortTransaction();
@@ -873,7 +872,9 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
       );
     }
 
-    return res.json(
+    return res
+    .status(201)
+    .json(
       new ApiResponse(201, { reply }, "Reply created successfully")
     );
   } catch (error) {
