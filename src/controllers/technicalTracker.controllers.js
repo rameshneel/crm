@@ -119,7 +119,9 @@ const getTechnicalTrackerById = async (req, res, next) => {
     const userId = req.user._id;
     const userRole = req.user.role;
 
-    const tracker = await TechnicalTracker.findById(id);
+    const tracker = await TechnicalTracker.findById(id)
+      .populate("customer", "companyName contactName")
+      .populate("createdBy", "name email avatar");
     if (!tracker) {
       throw new ApiError(404, "Technical tracker not found");
     }
@@ -161,8 +163,8 @@ const getAllTechnicalTrackers = async (req, res, next) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("customer", "name email")
-      .populate("createdBy", "name email");
+      .populate("customer", "companyName contactName")
+      .populate("createdBy", "name email avatar");
 
     const totalPages = Math.ceil(total / limit);
 
