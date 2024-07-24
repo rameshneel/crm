@@ -23,7 +23,7 @@ function getCorrectEntityType(entityType) {
     // 'newwebsite': 'NewWebsite',
     // 'technicalmaster': 'TechnicalMaster',
     // 'copywritertracker': 'CopywriterTracker',
-    // 'technicaltracker': 'TechnicalTracker',
+    technicaltracker: "TechnicalTracker",
     customer: "Customer",
     order: "Order",
     user: "User",
@@ -52,7 +52,6 @@ function getEntityModel(entityType) {
     // NewWebsite,
     // TechnicalMaster,
     // CopywriterTracker,
-    // TechnicalTracker
   };
   return models[entityType];
 }
@@ -60,6 +59,8 @@ function getEntityName(entity, entityType) {
   switch (entityType) {
     case "Customer":
       return entity.companyName;
+    case "TechnicalTracker":
+      return entity.refNo;
     case "Order":
       return entity.orderNo;
     case "Lead":
@@ -78,46 +79,46 @@ const getUpdateById = asyncHandler(async (req, res, next) => {
   const { updateId } = req.params;
   try {
     const update = await Update.findById(updateId)
-    .populate({
-      path: "mentions",
-      model: "User",
-      select: "fullName email avatar",
-    })
-    .populate({
-      path: "createdBy",
-      model: "User",
-      select: "fullName email avatar",
-    })
-    .populate({
-      path: "likes",
-      model: "User",
-      select: "name email",
-    })
-    .populate({
-      path: "replies",
-      model: "Update",
-      populate: [
-        {
-          path: "mentions",
-          model: "User",
-          select: "fullname avatar",
-        },
-        {
-          path: "createdBy",
-          model: "User",
-          select: "fullName avatar",
-        },
-        {
-          path: "replies",
-          model: "Update",
-        },
-        {
-          path: "likes",
-          model: "User",
-          select: "fullname avatar",
-        },
-      ],
-    });;
+      .populate({
+        path: "mentions",
+        model: "User",
+        select: "fullName email avatar",
+      })
+      .populate({
+        path: "createdBy",
+        model: "User",
+        select: "fullName email avatar",
+      })
+      .populate({
+        path: "likes",
+        model: "User",
+        select: "name email",
+      })
+      .populate({
+        path: "replies",
+        model: "Update",
+        populate: [
+          {
+            path: "mentions",
+            model: "User",
+            select: "fullname avatar",
+          },
+          {
+            path: "createdBy",
+            model: "User",
+            select: "fullName avatar",
+          },
+          {
+            path: "replies",
+            model: "Update",
+          },
+          {
+            path: "likes",
+            model: "User",
+            select: "fullname avatar",
+          },
+        ],
+      });
     if (!update) {
       throw new Error("Update not found");
     }
@@ -465,7 +466,7 @@ const updatePinnedStatus = asyncHandler(async (req, res, next) => {
     // }
 
     update.isPinned = isPinned;
-    await update.save({validateBeforeSave:false});
+    await update.save({ validateBeforeSave: false });
 
     // If pinning, ensure this update is at the top of the entity's updates array
     // if (isPinned) {
@@ -532,7 +533,7 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
     const updates = await Update.find({
       itemType: correctEntityType,
       itemId: entityId,
-      isReply: false
+      isReply: false,
     })
       .sort({ isPinned: -1, createdAt: -1 })
       .populate({
@@ -745,7 +746,9 @@ const replyToUpdat = asyncHandler(async (req, res, next) => {
       throw new ApiError(404, "Papa update not found");
     }
 
-    const mentions = mentionString ? mentionString.split(",").map((id) => id.trim()) : [];
+    const mentions = mentionString
+      ? mentionString.split(",").map((id) => id.trim())
+      : [];
 
     const reply = new Update({
       content,
@@ -755,13 +758,15 @@ const replyToUpdat = asyncHandler(async (req, res, next) => {
       itemType: originalUpdate.itemType,
       itemId: originalUpdate.itemId,
       parentUpdate: updateId,
-      isReply: true
+      isReply: true,
     });
 
     // Handle file uploads
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const fileUrl = `${req.protocol}://${req.get("host")}/files/${file.filename}`;
+        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+          file.filename
+        }`;
         reply.files.push(fileUrl);
 
         const newFile = new File({
@@ -784,7 +789,9 @@ const replyToUpdat = asyncHandler(async (req, res, next) => {
     const correctEntityType = originalUpdate.itemType;
     const entityName = `with update in mentions ${user.fullName}`;
     if (mentions.length > 0) {
-      const mentionedUsers = await User.find({ _id: { $in: mentions } }).session(session);
+      const mentionedUsers = await User.find({
+        _id: { $in: mentions },
+      }).session(session);
       await sendEmailForMentions(
         // user.email,
         mentionedUsers,
@@ -797,14 +804,16 @@ const replyToUpdat = asyncHandler(async (req, res, next) => {
 
     await session.commitTransaction();
     session.endSession();
-    return res.json(new ApiResponse(201, { reply }, "Reply created successfully"));
+    return res.json(
+      new ApiResponse(201, { reply }, "Reply created successfully")
+    );
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     next(error);
   }
 });
-//simply 
+//simply
 const replyToUpdate = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const user = await User.findById(userId);
@@ -830,13 +839,15 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
       itemType: originalUpdate.itemType,
       itemId: originalUpdate.itemId,
       parentUpdate: updateId,
-      isReply: true
+      isReply: true,
     });
 
     // Handle file uploads
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const fileUrl = `${req.protocol}://${req.get("host")}/files/${file.filename}`;
+        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+          file.filename
+        }`;
         reply.files.push(fileUrl);
 
         const newFile = new File({
@@ -858,10 +869,10 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     // Handle mentions email
     const correctEntityType = originalUpdate.itemType;
     const entityName = `with update in mentions ${user.fullName}`;
-    console.log("enity",entityName);
+    console.log("enity", entityName);
     if (mentions.length > 0) {
       const mentionedUsers = await User.find({ _id: { $in: mentions } });
-      console.log("mentionedUsers",mentionedUsers);
+      console.log("mentionedUsers", mentionedUsers);
       await sendEmailForMentions(
         user.email,
         mentionedUsers,
@@ -871,12 +882,9 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
         content
       );
     }
-
     return res
-    .status(201)
-    .json(
-      new ApiResponse(201, { reply }, "Reply created successfully")
-    );
+      .status(201)
+      .json(new ApiResponse(201, { reply }, "Reply created successfully"));
   } catch (error) {
     next(error);
   }
@@ -1031,7 +1039,6 @@ const handleNewFiles = async (files, userId, update) => {
   }
 };
 
-
 const createEntityUpdat = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const user = await User.findById(userId);
@@ -1157,21 +1164,20 @@ const createEntityUpdat = asyncHandler(async (req, res, next) => {
 });
 
 async function processContentImages(content, userId) {
-  const cheerio = require('cheerio');
+  const cheerio = require("cheerio");
 
-  const path = require('path');
-  const crypto = require('crypto');
+  const path = require("path");
+  const crypto = require("crypto");
 
   const $ = cheerio.load(content);
   const imagePromises = [];
 
-  $('img').each((index, element) => {
-    const src = $(element).attr('src');
-    if (src && src.startsWith('data:image')) {
-      const imagePromise = processBase64Image(src, userId)
-        .then(newSrc => {
-          $(element).attr('src', newSrc);
-        });
+  $("img").each((index, element) => {
+    const src = $(element).attr("src");
+    if (src && src.startsWith("data:image")) {
+      const imagePromise = processBase64Image(src, userId).then((newSrc) => {
+        $(element).attr("src", newSrc);
+      });
       imagePromises.push(imagePromise);
     }
   });
@@ -1184,16 +1190,16 @@ async function processBase64Image(src, userId) {
   const matches = src.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
   if (matches && matches.length === 3) {
     const imageExtension = matches[1];
-    const imageData = Buffer.from(matches[2], 'base64');
-    
+    const imageData = Buffer.from(matches[2], "base64");
+
     // यूनीक फाइलनेम जनरेट करें
-    const hash = crypto.createHash('md5').update(imageData).digest('hex');
+    const hash = crypto.createHash("md5").update(imageData).digest("hex");
     const imageName = `${hash}.${imageExtension}`;
-    const imagePath = path.join(__dirname, 'public', 'uploads', imageName);
-    
+    const imagePath = path.join(__dirname, "public", "uploads", imageName);
+
     // फाइल को डिस्क पर सेव करें
     await fs.writeFile(imagePath, imageData);
-    
+
     // नया URL रिटर्न करें
     return `/uploads/${imageName}`;
   }
