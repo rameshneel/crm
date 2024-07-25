@@ -15,6 +15,7 @@ import { ApiError } from "../utils/ApiError.js";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -52,7 +53,7 @@ function getEntityModel(entityType) {
     Update,
     // NewWebsite,
     TechnicalTracker,
-    TechnicalMaster,
+    // TechnicalMaster,
     // CopywriterTracker,
   };
   return models[entityType];
@@ -366,6 +367,7 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
     await update.save();
 
     const EntityModel = getEntityModel(correctEntityType);
+    // console.log("entity", EntityModel);
     if (!EntityModel) {
       throw new ApiError(400, `Invalid entity type: ${correctEntityType}`);
     }
