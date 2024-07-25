@@ -50,7 +50,8 @@ function getEntityModel(entityType) {
     Lead,
     Update,
     // NewWebsite,
-    // TechnicalMaster,
+    TechnicalTracker,
+    TechnicalMaster,
     // CopywriterTracker,
   };
   return models[entityType];
