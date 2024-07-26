@@ -156,7 +156,6 @@ const NewWebsiteContent = mongoose.model(
 
 export default NewWebsiteContent;
 
-
 // import mongoose from "mongoose";
 
 // const newWebsiteContentSchema = new mongoose.Schema(

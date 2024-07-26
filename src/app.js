@@ -3,8 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { ApiError } from "./utils/ApiError.js";
 import path from "path";
-import { fileURLToPath } from 'url';
-import config from './config/index.js';
+import { fileURLToPath } from "url";
+import config from "./config/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -38,7 +38,7 @@ app.use((req, res, next) => {
 // fornted ke liye
 // app.use(express.static(path.join(__dirname, 'client/build')));
 // app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public', express.static(path.join(__dirname,"..",'public')));
+app.use("/public", express.static(path.join(__dirname, "..", "public")));
 // app.use(express.static( 'public'));
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
@@ -46,9 +46,9 @@ app.use(cookieParser());
 
 //routes import
 import userRouter from "./routes/user.routes.js";
-import customerRoutes from "./routes/customer.route.js";
+import customerRoutes from "./routes/customer.routes.js";
 import leadRoutes from "./routes/lead.routes.js";
-import newWebsite from "./routes/newWebsiteContent.js";
+import newWebsiteRoute from "./routes/newWebsiteContent.routes.js";
 import amendmentRoutes from "./routes/amendment.routes.js";
 import orderRoutes from "./routes/order.routes.js";
 import technicalMasterRoutes from "./routes/techincalMaster.routes.js";
@@ -61,7 +61,7 @@ import updatesRoutes from "./routes/update.routes.js";
 app.use("/api/users", userRouter);
 app.use("/api/customers", customerRoutes);
 app.use("/api/leads", leadRoutes);
-app.use("/api/newwebsite", newWebsite);
+app.use("/api/newwebsite", newWebsiteRoute);
 app.use("/api/amendments", amendmentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/technicalmasters", technicalMasterRoutes);
