@@ -176,8 +176,9 @@ const updatedUpdate = asyncHandler(async (req, res) => {
   }
 
   if (
-    update.createdBy.toString() !== userId.toString() &&
-    req.user.role !== "admin"
+    update.createdBy.toString() !== userId.toString()
+    //  &&
+    // req.user.role !== "admin"
   ) {
     return res
       .status(403)
