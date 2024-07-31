@@ -260,35 +260,35 @@ const updatedUpdate = asyncHandler(async (req, res) => {
   //
 
   // Handle removed files
-  if (update.files && update.files.length > 0) {
-    for (const fileUrl of update.files) {
-      try {
-        // Remove file from update.files array
-        update.files = update.files.filter((f) => f !== fileUrl);
+  // if (update.files && update.files.length > 0) {
+  //   for (const fileUrl of update.files) {
+  //     try {
+  //       // Remove file from update.files array
+  //       update.files = update.files.filter((f) => f !== fileUrl);
 
-        // Delete File document
-        const file = await File.findOneAndDelete({ fileUrl: fileUrl });
-        if (file) {
-          console.log(`File document deleted: ${file._id}`);
-        }
+  //       // Delete File document
+  //       const file = await File.findOneAndDelete({ fileUrl: fileUrl });
+  //       if (file) {
+  //         console.log(`File document deleted: ${file._id}`);
+  //       }
 
-        // Delete physical file
-        const fileName = path.basename(fileUrl);
-        const filePath = path.join(
-          __dirname,
-          "..",
-          "..",
-          "public",
-          "files",
-          fileName
-        );
-        await fs.unlink(filePath);
-        console.log(`Physical file deleted: ${filePath}`);
-      } catch (error) {
-        console.error(`Error deleting file: ${fileUrl}`, error);
-      }
-    }
-  }
+  //       // Delete physical file
+  //       const fileName = path.basename(fileUrl);
+  //       const filePath = path.join(
+  //         __dirname,
+  //         "..",
+  //         "..",
+  //         "public",
+  //         "files",
+  //         fileName
+  //       );
+  //       await fs.unlink(filePath);
+  //       console.log(`Physical file deleted: ${filePath}`);
+  //     } catch (error) {
+  //       console.error(`Error deleting file: ${fileUrl}`, error);
+  //     }
+  //   }
+  // }
 
   // Handle new files
   if (req.files && req.files.length > 0) {
@@ -729,7 +729,6 @@ const deleteUpdate = asyncHandler(async (req, res) => {
       )
     );
 });
-
 //reply for all entiety
 const replyToUpdat = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
