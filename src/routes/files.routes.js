@@ -5,7 +5,8 @@ import {
   getFileById,
   deleteFileById,
   singleuploadImage,
-  singleuploadVideo
+  singleuploadVideo,
+  
 } from "../controllers/files.controllers.js";
 import { fileUploadforupdate } from "../helper/multererror.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
