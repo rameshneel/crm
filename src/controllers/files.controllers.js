@@ -14,9 +14,9 @@ import path from "path";
 
 function getCorrectEntityType(entityType) {
   const specialCases = {
-    newwebsite: "NewWebsite",
-    technicalmaster: "TechnicalMaster",
-    copywritertracker: "CopywriterTracker",
+    // newwebsite: "NewWebsite",
+    // technicalmaster: "TechnicalMaster",
+    // copywritertracker: "CopywriterTracker",
     technicaltracker: "TechnicalTracker",
     customer: "Customer",
     order: "Order",
@@ -41,9 +41,9 @@ function getEntityModel(entityType) {
     User,
     Amendment,
     Lead,
-    NewWebsite,
-    TechnicalMaster,
-    CopywriterTracker,
+    // NewWebsite,
+    // TechnicalMaster,
+    // CopywriterTracker,
     TechnicalTracker,
   };
   return models[entityType];
