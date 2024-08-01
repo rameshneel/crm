@@ -52,7 +52,7 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
   try {
     const { entityId, entityType } = req.params;
     const correctEntityType = getCorrectEntityType(entityType);
-
+    console.log("correct", correctEntityType);
     const validEntityTypes = [
       "Customer",
       "Order",
