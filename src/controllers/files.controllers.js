@@ -10,15 +10,14 @@ import { User } from "../models/user.model.js";
 import Amendment from "../models/amendment.model.js";
 import Lead from "../models/lead.model.js";
 import fs from "fs/promises";
-import path from "path"; 
-
+import path from "path";
 
 function getCorrectEntityType(entityType) {
   const specialCases = {
-    // 'newwebsite': 'NewWebsite',
-    // 'technicalmaster': 'TechnicalMaster',
-    // 'copywritertracker': 'CopywriterTracker',
-    // 'technicaltracker': 'TechnicalTracker',
+    newwebsite: "NewWebsite",
+    technicalmaster: "TechnicalMaster",
+    copywritertracker: "CopywriterTracker",
+    technicaltracker: "TechnicalTracker",
     customer: "Customer",
     order: "Order",
     user: "User",
@@ -42,10 +41,10 @@ function getEntityModel(entityType) {
     User,
     Amendment,
     Lead,
-    // NewWebsite,
-    // TechnicalMaster,
-    // CopywriterTracker,
-    // TechnicalTracker
+    NewWebsite,
+    TechnicalMaster,
+    CopywriterTracker,
+    TechnicalTracker,
   };
   return models[entityType];
 }
@@ -88,7 +87,7 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
       itemType: correctEntityType,
       itemId: entityId,
       // source: "FileGallery",
-    }).sort({ createdAt: -1 }); 
+    }).sort({ createdAt: -1 });
 
     // const fileData = files.map((file) => ({
     //   id: file._id,
@@ -141,7 +140,6 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
 //         .json(new ApiResponse(400, {}, "Invalid entity type"));
 //     }
 
-
 //     if (!mongoose.Types.ObjectId.isValid(entityId)) {
 //       return res
 //         .status(400)
@@ -172,7 +170,7 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
 //       await newFile.save();
 //       uploadedFiles.push(path);
 //     }
-   
+
 //     return res
 //       .status(201)
 //       .json(
@@ -192,7 +190,7 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
     const correctEntityType = getCorrectEntityType(entityType);
 
     if (!req.files || req.files.length === 0) {
-      throw new ApiError(400,"Please Select files")
+      throw new ApiError(400, "Please Select files");
       // return res
       //   .status(400)
       //   .json(new ApiResponse(400, {}, "No files uploaded"));
@@ -210,14 +208,14 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
       "TechnicalTracker",
     ];
     if (!validEntityTypes.includes(correctEntityType)) {
-      throw new ApiError(400,"Invalid entity type")
+      throw new ApiError(400, "Invalid entity type");
       // return res
       //   .status(400)
       //   .json(new ApiResponse(400, {}, "Invalid entity type"));
     }
-    
+
     if (!mongoose.Types.ObjectId.isValid(entityId)) {
-      throw new ApiError(400,"Invalid entity ID")
+      throw new ApiError(400, "Invalid entity ID");
       // return res
       //   .status(400)
       //   .json(new ApiResponse(400, {}, "Invalid entity ID"));
@@ -232,7 +230,7 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
     }
 
     const uploadedFiles = [];
-    
+
     // for (const file of req.files) {
     //   const { path: localPath, filename } = file;
 
@@ -245,13 +243,15 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
     //   });
 
     //   await newFile.save();
-      
+
     // }
 
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const fileUrl = `${req.protocol}://${req.get('host')}/files/${file.filename}`;
-  
+        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+          file.filename
+        }`;
+
         const newFile = new File({
           uploadedBy: userId,
           fileUrl: fileUrl,
@@ -260,14 +260,16 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
           source: "FileGallery",
         });
         await newFile.save();
-        uploadedFiles.push({ id: newFile.fileUrl, });
+        uploadedFiles.push({ id: newFile.fileUrl });
       }
     }
 
     // Send response
-    res.status(201).json(
-      new ApiResponse(201, { uploadedFiles }, "Files uploaded to gallery")
-    );
+    res
+      .status(201)
+      .json(
+        new ApiResponse(201, { uploadedFiles }, "Files uploaded to gallery")
+      );
 
     // for (const file of uploadedFiles) {
     //   try {
@@ -277,7 +279,6 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
     //     console.error(`Error deleting local file ${file.localPath}:`, unlinkError);
     //   }
     // }
-
   } catch (error) {
     console.error("Error in uploadFilesToGallery:", error);
     next(error);
@@ -347,9 +348,13 @@ const deleteFileById = asyncHandler(async (req, res, next) => {
 const singleuploadImage = asyncHandler(async (req, res, next) => {
   try {
     if (!req.files) {
-      return res.status(400).json(new ApiResponse(400, null, "No file uploaded!"));
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "No file uploaded!"));
     }
-    const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.files[0].filename}`;
+    const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+      req.files[0].filename
+    }`;
     console.log("File URL:", fileUrl);
     // const newFile = new File({
     //   uploadedBy: userId,
@@ -360,7 +365,9 @@ const singleuploadImage = asyncHandler(async (req, res, next) => {
     // });
     // await newFile.save();
 
-    return res.status(200).json(new ApiResponse(200, { fileUrl }, "Image uploaded successfully!"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { fileUrl }, "Image uploaded successfully!"));
   } catch (err) {
     console.error(err);
     return next(err);
@@ -368,11 +375,14 @@ const singleuploadImage = asyncHandler(async (req, res, next) => {
 });
 const singleuploadVideo = asyncHandler(async (req, res, next) => {
   try {
-    
     if (!req.file) {
-      return res.status(400).json(new ApiResponse(400, null, "No file uploaded!"));
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "No file uploaded!"));
     }
-    const url = `${req.protocol}://${req.get("host")}/files/${req.file.filename}`;
+    const url = `${req.protocol}://${req.get("host")}/files/${
+      req.file.filename
+    }`;
     console.log("File URL:", fileUrl);
     // const newFile = new File({
     //   uploadedBy: userId,
@@ -383,7 +393,9 @@ const singleuploadVideo = asyncHandler(async (req, res, next) => {
     // });
     // await newFile.save();
 
-    return res.status(200).json(new ApiResponse(200, { url }, "Video uploaded successfully!"));
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { url }, "Video uploaded successfully!"));
   } catch (err) {
     console.error(err);
     return next(err);
@@ -392,21 +404,27 @@ const singleuploadVideo = asyncHandler(async (req, res, next) => {
 const uploadForSingleFile = asyncHandler(async (req, res, next) => {
   try {
     if (!req.files) {
-      return res.status(400).json(new ApiResponse(400, null, "No file uploaded!"));
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "No file uploaded!"));
     }
 
-    const fileUrl = `${req.protocol}://${req.get("host")}/files/${req.files[0].filename}`;
+    const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+      req.files[0].filename
+    }`;
     let itemType, message;
-     
-    if (req.files[0].mimetype.startsWith('image')) {
+
+    if (req.files[0].mimetype.startsWith("image")) {
       itemType = "Image";
       message = "Image uploaded successfully!";
-    } else if (req.files[0].mimetype.startsWith('video')) {
+    } else if (req.files[0].mimetype.startsWith("video")) {
       itemType = "Video";
       message = "Video uploaded successfully!";
     } else {
       // Handle unsupported file types
-      return res.status(415).json(new ApiResponse(415, null, "Unsupported file type!"));
+      return res
+        .status(415)
+        .json(new ApiResponse(415, null, "Unsupported file type!"));
     }
 
     // Save to database or perform other operations
@@ -426,7 +444,6 @@ const uploadForSingleFile = asyncHandler(async (req, res, next) => {
   }
 });
 
- 
 export {
   uploadFilesToGallery,
   getAllFilesForEntity,
@@ -434,5 +451,5 @@ export {
   deleteFileById,
   singleuploadImage,
   singleuploadVideo,
-  uploadForSingleFile
-}
+  uploadForSingleFile,
+};
