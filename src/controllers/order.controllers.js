@@ -1130,10 +1130,9 @@ const sendInvoiceForEmail = async (req, res, next) => {
     const toEmail = to || order.customer?.customerEmail;
     const fromEmail = from || `"High Oaks Media" <${process.env.EMAIL_FROM}>`;
     const emailSubject = subject || `Invoice for Order #${orderNo}`;
-    const invoicePdfUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/invoices/${path.basename(invoicePath)}`;
-    console.log("invoice cbjhscbhsdbj", invoicePdfUrl);
+    const invoicePdfUrl = `https://${req.get("host")}/invoices/${path.basename(
+      invoicePath
+    )}`;
     const emailContent = generateEmailContent(
       customerName,
       orderNo,
@@ -1157,7 +1156,6 @@ const sendInvoiceForEmail = async (req, res, next) => {
       "invoices",
       pdfFilename
     );
-    console.log("Full PDF Path:", fullPdfPath);
 
     // Read the PDF file
     const pdfBuffer = await readFileAsync(fullPdfPath);

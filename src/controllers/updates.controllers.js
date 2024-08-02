@@ -293,9 +293,7 @@ const updatedUpdate = asyncHandler(async (req, res) => {
   // Handle new files
   if (req.files && req.files.length > 0) {
     for (let file of req.files) {
-      const fileUrl = `${req.protocol}://${req.get("host")}/files/${
-        file.filename
-      }`;
+      const fileUrl = `https://${req.get("host")}/files/${file.filename}`;
       update.files.push(fileUrl);
 
       const newFile = new File({
@@ -348,9 +346,7 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
     console.log("file", req.files);
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
-          file.filename
-        }`;
+        const fileUrl = `https://${req.get("host")}/files/${file.filename}`;
         update.files.push(fileUrl);
 
         const newFile = new File({
@@ -503,8 +499,6 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
   try {
     const { entityId, entityType } = req.params;
     const correctEntityType = getCorrectEntityType(entityType);
-    console.log("thhth");
-
     const validEntityTypes = [
       "Customer",
       "Order",
@@ -849,9 +843,7 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     // Handle file uploads
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
-          file.filename
-        }`;
+        const fileUrl = `https://${req.get("host")}/files/${file.filename}`;
         reply.files.push(fileUrl);
 
         const newFile = new File({
