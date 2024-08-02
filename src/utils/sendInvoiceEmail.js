@@ -1,10 +1,10 @@
-
 import nodemailer from "nodemailer";
 import { ApiError } from "./ApiError.js";
 
 const createTransporter = () => {
-  const { EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE, EMAIL_USER, EMAIL_PASS } = process.env;
-  
+  const { EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE, EMAIL_USER, EMAIL_PASS } =
+    process.env;
+
   return nodemailer.createTransport({
     host: EMAIL_HOST,
     port: parseInt(EMAIL_PORT, 10),
@@ -13,7 +13,14 @@ const createTransporter = () => {
   });
 };
 
- const sendInvoiceEmail = async ({ to, subject, html, from, pdfBuffer, pdfFilename }) => {
+const sendInvoiceEmail = async ({
+  to,
+  subject,
+  html,
+  from,
+  pdfBuffer,
+  pdfFilename,
+}) => {
   if (!to || !subject || !pdfBuffer) {
     throw new ApiError(400, "Missing required parameters");
   }
@@ -46,9 +53,8 @@ const createTransporter = () => {
     throw new ApiError(500, "Error sending invoice email");
   }
 };
-
-
-export default sendInvoiceEmail
+console.log("sending ivoice   bbbb", sendInvoiceEmail);
+export default sendInvoiceEmail;
 
 //form axios
 
@@ -58,7 +64,7 @@ export default sendInvoiceEmail
 
 // const createTransporter = () => {
 //   const { EMAIL_HOST, EMAIL_PORT, EMAIL_SECURE, EMAIL_USER, EMAIL_PASS } = process.env;
-  
+
 //   return nodemailer.createTransport({
 //     host: EMAIL_HOST,
 //     port: parseInt(EMAIL_PORT, 10),
@@ -115,11 +121,6 @@ export default sendInvoiceEmail
 //   }
 // };
 
-
-
-
-
-
 // import nodemailer from "nodemailer";
 // import axios from "axios";
 // import { ApiError } from "./ApiError.js";
@@ -141,19 +142,19 @@ export default sendInvoiceEmail
 
 // /**
 //  * Send emails to mentioned all detiled.
-//  * @param {string} toemail 
-//  * @param {string} subject 
-//  * @param {string} text 
-//  * @param {string} html 
-//  * @param {string} from 
-//  * @param {string} invoicePdfUrl 
+//  * @param {string} toemail
+//  * @param {string} subject
+//  * @param {string} text
+//  * @param {string} html
+//  * @param {string} from
+//  * @param {string} invoicePdfUrl
 //  */
 
 // const fetchPdf = async (url) => {
 //   try {
 //     const response = await axios.get(url, {
 //       responseType: "arraybuffer",
-//       timeout: 40000, 
+//       timeout: 40000,
 //     });
 //     return Buffer.from(response.data, "binary");
 //   } catch (error) {
@@ -162,7 +163,7 @@ export default sendInvoiceEmail
 // };
 
 // const sendInvoiceEmail = async (
-//   toemail, 
+//   toemail,
 //   subject,
 //   text,
 //   html,
@@ -175,7 +176,7 @@ export default sendInvoiceEmail
 //   }
 //   try {
 //     console.log("Preparing to send invoice email", {
-//       to: toemail , 
+//       to: toemail ,
 //       subject,
 //       invoicePdfUrl,
 //     });
@@ -187,7 +188,7 @@ export default sendInvoiceEmail
 
 //     const info = await transporter.sendMail({
 //       from: from || `"High Oaks Media" <${process.env.EMAIL_FROM}>`,
-//       to: toemail,  
+//       to: toemail,
 //       subject,
 //       text,
 //       html,
@@ -212,10 +213,3 @@ export default sendInvoiceEmail
 // };
 
 // export default sendInvoiceEmail;
-
-
-
-
-
-
-
