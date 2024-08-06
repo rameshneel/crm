@@ -18,13 +18,13 @@ export const createProductFlow = async (req, res, next) => {
   }
   // Extract and validate fields from the request body
   const {
-    currentStage,
-    datePhase1Instructed,
-    datePhase2Instructed,
-    demoLink,
-    demoCompletedDate,
-    liveDate,
-    notes,
+    currentStage = "",
+    datePhase1Instructed = null,
+    datePhase2Instructed = null,
+    demoLink = "",
+    demoCompletedDate = null,
+    liveDate = "",
+    notes = "",
   } = req.body;
 
   // Validate currentStage
