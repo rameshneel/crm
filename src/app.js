@@ -57,6 +57,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import filesRoutes from "./routes/files.routes.js";
 import updatesRoutes from "./routes/update.routes.js";
 import productFlowRoutes from "./routes/productFlow.routes.js";
+import copywriterTrackerRoutes from "./routes/copywriterTracker.routes.js";
 
 //routes declaration
 app.use("/api/users", userRouter);
@@ -71,6 +72,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/files", filesRoutes);
 app.use("/api/updates", updatesRoutes);
 app.use("/api/productflows", productFlowRoutes);
+app.use("/api/copywritertrackers", copywriterTrackerRoutes);
 
 // app.use((err, req, res, next) => {
 //     console.log(err.stack);

@@ -34,6 +34,12 @@ const copywriterTrackerSchema = new Schema(
     dateComplete: {
       type: Date,
     },
+    updates: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Update",
+      },
+    ],
   },
   {
     timestamps: true, // adds createdAt and updatedAt fields automatically
