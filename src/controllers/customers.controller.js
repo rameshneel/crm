@@ -9,6 +9,7 @@ import sendEmailForMentions from "../utils/sendEmailForMentions.js";
 import Update from "../models/update.model.js";
 
 const createCustomer = asyncHandler(async (req, res, next) => {
+  const activeUser = req.user?._id;
   try {
     const {
       companyName,
@@ -37,7 +38,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
     }
     let logoUrl;
     if (req.file && req.file.path) {
-      logoUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+      logoUrl = `htpps://${req.get("host")}/images/${req.file.filename}`;
     }
     const newCustomer = new Customer({
       companyName,
@@ -59,7 +60,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       newGACode,
       logo: logoUrl,
       ordersRenewals,
-      createdBy,
+      createdBy: createdBy || activeUser,
     });
 
     const createdCustomer = await newCustomer.save();
@@ -263,17 +264,18 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
     // ) {
     //   throw new ApiError(400, "At least one field is required for update");
     // }
-       let logoUrl
+    let logoUrl;
     if (req.file && req.file.path) {
-      
-        logoUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
-      }
+      logoUrl = `${req.protocol}://${req.get("host")}/images/${
+        req.file.filename
+      }`;
+    }
 
-      // if (existedUser) {
-      //   fs.unlinkSync(avatarLocalPath);
-      //   throw new ApiError(409, "Email already exists");
-      // }
-    
+    // if (existedUser) {
+    //   fs.unlinkSync(avatarLocalPath);
+    //   throw new ApiError(409, "Email already exists");
+    // }
+
     // const atemail = await Customer.findOne(email)
     const user = await User.findById(userId);
     if (!user) {
@@ -391,4 +393,3 @@ export {
   getCustomerById,
   updateCustomer,
 };
-
