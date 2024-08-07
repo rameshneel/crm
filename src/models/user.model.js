@@ -9,22 +9,22 @@ const userSchema = new Schema(
       required: true,
       trim: true,
       index: true,
-      validate: /^[a-zA-Z\s]*$/ // Validate only alphabets and spaces
+      validate: /^[a-zA-Z\s]*$/, // Validate only alphabets and spaces
     },
     email: {
       type: String,
-      required: [true, 'Email is required'],
+      required: [true, "Email is required"],
       unique: true,
       lowercase: true,
       trim: true,
-      validate: /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/ // Validate email format
+      validate: /^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$/, // Validate email format
     },
     avatar: {
       type: String,
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: [true, "Password is required"],
       // minlength: [8, 'Password must be at least 8 characters long'],
       // // Implement further checks for password strength if necessary
     },
@@ -35,13 +35,13 @@ const userSchema = new Schema(
       type: String,
     },
     refreshToken: {
-      type: String
+      type: String,
     },
     role: {
       type: String,
       enum: ["admin", "salesman"],
-      default: "salesman", 
-      required: true
+      default: "salesman",
+      required: true,
     },
 
     resetToken: {
@@ -59,13 +59,15 @@ const userSchema = new Schema(
     // dateTime: {
     //   type: Date,
     // },
-    timeZone:{
-      type:String,
+    timeZone: {
+      type: String,
     },
-    updates: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Update',
-    }],
+    updates: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Update",
+      },
+    ],
   },
   {
     timestamps: true,
@@ -109,11 +111,10 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
-userSchema.pre('findOneAndDelete', async function(next) {
-  const userId = this.getQuery()['_id'];
-  await Customer.updateMany({ createdBy: userId }, { $set: { createdBy: null } });
-  next();
-});
+// userSchema.pre('findOneAndDelete', async function(next) {
+//   const userId = this.getQuery()['_id'];
+//   await Customer.updateMany({ createdBy: userId }, { $set: { createdBy: null } });
+//   next();
+// });
 
 export const User = mongoose.model("User", userSchema);
-
