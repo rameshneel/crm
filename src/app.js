@@ -67,7 +67,7 @@ app.use("/api/newwebsite", newWebsiteRoute);
 app.use("/api/amendments", amendmentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/technicalmasters", technicalMasterRoutes);
-app.use("/api/technicaltracker", technicalTrackerRoutes);
+app.use("/api/technicaltrackers", technicalTrackerRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/files", filesRoutes);
 app.use("/api/updates", updatesRoutes);
