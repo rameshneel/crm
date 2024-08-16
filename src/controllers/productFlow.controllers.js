@@ -90,9 +90,9 @@ export const getProductFlows = async (req, res, next) => {
     const userId = req.user._id;
     const userRole = req.user.role;
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    // const page = parseInt(req.query.page) || 1;
+    // const limit = parseInt(req.query.limit) || 10;
+    // const skip = (page - 1) * limit;
 
     let query = {};
     if (userRole !== "admin") {
@@ -102,22 +102,22 @@ export const getProductFlows = async (req, res, next) => {
     const total = await ProductFlow.countDocuments(query);
     const productFlows = await ProductFlow.find(query)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
+      // .skip(skip)
+      // .limit(limit)
       .populate("customer", "companyName contactName")
       .populate("createdBy", "name email avatar")
       .populate("updates");
 
-    const totalPages = Math.ceil(total / limit);
+    // const totalPages = Math.ceil(total / limit);
 
     res.status(200).json(
       new ApiResponse(
         200,
         {
           productFlows,
-          currentPage: page,
-          totalPages,
-          totalProductFlows: total,
+          // currentPage: page,
+          // totalPages,
+          // totalProductFlows: total,
         },
         "ProductFlows retrieved successfully"
       )
