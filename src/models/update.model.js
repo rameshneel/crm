@@ -53,7 +53,7 @@ const updateSchema = new Schema(
     },
     itemType: {
       type: String,
-      enum: [
+      enum:{ values:[
         "Customer",
         "Order",
         "Lead",
@@ -64,6 +64,7 @@ const updateSchema = new Schema(
         "ProductFlow",
         "CopywriterTracker",
       ],
+      message: "{VALUE} is not supported"},
     },
     itemId: {
       type: mongoose.Schema.Types.ObjectId,

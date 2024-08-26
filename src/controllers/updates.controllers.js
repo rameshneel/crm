@@ -26,7 +26,7 @@ function getCorrectEntityType(entityType) {
   const specialCases = {
     // 'newwebsite': 'NewWebsite',
     // 'technicalmaster': 'TechnicalMaster',
-    productflow:' ProductFlow',
+    productflow:'ProductFlow',
     copywritertracker: 'CopywriterTracker',
     technicaltracker: "TechnicalTracker",
     customer: "Customer",
