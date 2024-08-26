@@ -515,6 +515,8 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
       "TechnicalMaster",
       "CopywriterTracker",
       "TechnicalTracker",
+      "ProductFlow",
+      "CopywriterTracker",
     ];
     if (!validEntityTypes.includes(correctEntityType)) {
       return res

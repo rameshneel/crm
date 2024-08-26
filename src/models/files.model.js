@@ -28,6 +28,8 @@ const fileSchema = new Schema(
         "Reply",
         "Update",
         "TechnicalTracker",
+        "ProductFlow",
+        "CopywriterTracker",
       ],
     },
     itemId: {

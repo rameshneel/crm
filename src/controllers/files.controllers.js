@@ -13,16 +13,19 @@ import fs from "fs/promises";
 import path from "path";
 
 function getCorrectEntityType(entityType) {
+  console.log("entity function", entityType);
   const specialCases = {
-    // newwebsite: "NewWebsite",
-    // technicalmaster: "TechnicalMaster",
-    // copywritertracker: "CopywriterTracker",
+    // 'newwebsite': 'NewWebsite',
+    // 'technicalmaster': 'TechnicalMaster',
+    productflow:' ProductFlow:',
+    copywritertracker: 'CopywriterTracker',
     technicaltracker: "TechnicalTracker",
     customer: "Customer",
     order: "Order",
     user: "User",
     amendment: "Amendment",
     lead: "Lead",
+    update: "Update",
   };
 
   const lowerCaseType = entityType.toLowerCase();
@@ -41,13 +44,16 @@ function getEntityModel(entityType) {
     User,
     Amendment,
     Lead,
+    Update,
     // NewWebsite,
-    // TechnicalMaster,
-    // CopywriterTracker,
     TechnicalTracker,
+    // TechnicalMaster,
+    ProductFlow,
+    CopywriterTracker,
   };
   return models[entityType];
 }
+
 const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
   try {
     const { entityId, entityType } = req.params;
@@ -63,6 +69,8 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
       "TechnicalMaster",
       "CopywriterTracker",
       "TechnicalTracker",
+      "ProductFlow",
+      "CopywriterTracker",
     ];
     if (!validEntityTypes.includes(correctEntityType)) {
       return res
@@ -134,6 +142,8 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
       "TechnicalMaster",
       "CopywriterTracker",
       "TechnicalTracker",
+      "ProductFlow",
+      "CopywriterTracker",
     ];
     if (!validEntityTypes.includes(correctEntityType)) {
       throw new ApiError(400, "Invalid entity type");
