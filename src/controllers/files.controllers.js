@@ -11,6 +11,9 @@ import Lead from "../models/lead.model.js";
 import TechnicalTracker from "../models/technicalTracker.model.js";
 import fs from "fs/promises";
 import path from "path";
+import Update from "../models/update.model.js";
+import ProductFlow from "../models/productFlow.model.js";
+import CopywriterTracker from "../models/copywriterTracker.model.js";
 
 function getCorrectEntityType(entityType) {
   console.log("entity function", entityType);
