@@ -61,6 +61,8 @@ const updateSchema = new Schema(
         "Reply",
         "Update",
         "TechnicalTracker",
+        "ProductFlow",
+        "CopywriterTracker",
       ],
     },
     itemId: {

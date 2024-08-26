@@ -15,6 +15,8 @@ import { ApiError } from "../utils/ApiError.js";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
+import ProductFlow from "../models/productFlow.model.js";
+import CopywriterTracker from "../models/copywriterTracker.model.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,7 +26,8 @@ function getCorrectEntityType(entityType) {
   const specialCases = {
     // 'newwebsite': 'NewWebsite',
     // 'technicalmaster': 'TechnicalMaster',
-    // 'copywritertracker': 'CopywriterTracker',
+    productFlow:' productFlow:',
+    copywritertracker: 'CopywriterTracker',
     technicaltracker: "TechnicalTracker",
     customer: "Customer",
     order: "Order",
@@ -54,7 +57,8 @@ function getEntityModel(entityType) {
     // NewWebsite,
     TechnicalTracker,
     // TechnicalMaster,
-    // CopywriterTracker,
+    ProductFlow,
+    CopywriterTracker,
   };
   return models[entityType];
 }
@@ -72,7 +76,9 @@ function getEntityName(entity, entityType) {
       return entity.name;
     case "Amendment":
       return entity.amendmentNumber;
-    case "User":
+    case "ProductFlow":
+      return entity.name;
+      case "CopywriterTracker":
       return entity.name;
     default:
       return "Unknown";
