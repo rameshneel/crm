@@ -26,7 +26,7 @@ function getCorrectEntityType(entityType) {
   const specialCases = {
     // 'newwebsite': 'NewWebsite',
     // 'technicalmaster': 'TechnicalMaster',
-    productflow:' ProductFlow:',
+    productflow:' ProductFlow',
     copywritertracker: 'CopywriterTracker',
     technicaltracker: "TechnicalTracker",
     customer: "Customer",
@@ -77,7 +77,7 @@ function getEntityName(entity, entityType) {
     case "Amendment":
       return entity.amendmentNumber;
     case "ProductFlow":
-      return entity.name;
+      return entity.liveDate;
       case "CopywriterTracker":
       return entity.name;
     default:
@@ -347,7 +347,8 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
       itemType: correctEntityType,
       itemId: entityId,
     });
-
+    console.log("update",update);
+    
     // Handle file uploads
     console.log("file", req.files);
     if (req.files && req.files.length > 0) {
@@ -368,13 +369,11 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
     }
 
     await update.save();
-
     const EntityModel = getEntityModel(correctEntityType);
     // console.log("entity", EntityModel);
     if (!EntityModel) {
       throw new ApiError(400, `Invalid entity type: ${correctEntityType}`);
     }
-
     const entity = await EntityModel.findById(entityId);
     if (!entity) {
       throw new ApiError(
@@ -382,7 +381,6 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
         `${correctEntityType} with id ${entityId} not found`
       );
     }
-
     if (!entity.updates) {
       entity.updates = [];
     }
@@ -426,7 +424,6 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
         content
       );
     }
-
     return res.status(201).json(
       new ApiResponse(
         201,
