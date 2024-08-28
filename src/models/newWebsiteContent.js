@@ -25,10 +25,10 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     domainTransferred: {
-      type: String,
-      enum: ["N/A", "No", "Yes", ""],
-      default: "",
-    },
+      type: [String],
+      enum: ["N/A", "No", "Yes"],
+      default: [],
+    } ,   
     registrarName: {
       type: String,
     },
