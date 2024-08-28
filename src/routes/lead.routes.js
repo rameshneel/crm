@@ -18,9 +18,10 @@ router.get("/",getAllLeads);
 //for Appointement Routes
 
 router.post("/appointments/:lead_id", addAppointment);
-router.patch("/appointments/:lead_id", deleteAppointment);
+// router.patch("/appointments/:lead_id", deleteAppointment);
 router.delete("/appointments/:appointment_id", deleteAppointment);
-router.patch("/appointments/update/:appointment_id", updateAppointment);
+// router.patch("/appointments/update/:appointment_id", updateAppointment);
+router.patch("/appointments/:appointment_id", updateAppointment);
 router.get("/lead/appointments/:lead_id", getAppointmentsByDate);
 router.get("/lead/appointments",getAllAppointments);  
 
