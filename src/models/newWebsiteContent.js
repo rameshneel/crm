@@ -36,17 +36,17 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     customerEmails: {
-      type: String,
+      type: [String],
       enum: {
         values: [
           "Create New Company Emails",
           "Existing Emails Attached to Domain",
           "N/A - Customer Has Their Own",
-          "",
+          ""
         ],
-        message: "{VALUE} is not supported",
+        message: "{VALUE} is not supported"
       },
-      default: "",
+      default: []
     },
     emailsToBeCreated: {
       type: String,
@@ -81,37 +81,47 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     companyLogo: {
-      type: String,
+      type: [String],
       enum: {
         values: [
-          "create new company logo",
-          "logo file attached in monday",
-          "take from current website",
-          "added logo to general master",
-          "",
+          "Create new company logo",
+          "Logo file attached in monday",
+          "Take from current website",
+          "Added logo to general master",
+          ""
         ],
-        message: "{values} is not supported",
+        message: "{VALUE} is not supported"
       },
-      default: "",
+      default: []
     },
     images: {
-      type: String,
-      enum: [
-        "client to send",
-        "images attached in Monday.com",
-        "photographer to be booked",
-        "take from current website",
-        "",
-      ],
-      default: "",
+      type: [String], 
+      enum: {
+        values: [
+          "Client to send & images attached in Monday.com",
+          "Photographer to be booked",
+          "Take from current website",
+          ""
+        ],
+        message: "{VALUE} is not supported" 
+      },
+      default: [] 
     },
     pageName: {
       type: String,
     },
     googleReviews: {
-      type: String,
-      enum: ["Currently Live", "New Set-Up Required", "Yes", ""],
-      default: "",
+      type: [String], 
+      enum: {
+        values: [
+          "Currently Live",
+          "New Set-Up Required",
+          "Yes",
+          ""
+        ],
+        message: "{VALUE} is not supported" 
+      },
+      default: [] 
     },
     linkToCurrentGoogleReviews: {
       type: String,
@@ -122,15 +132,32 @@ const newWebsiteContentSchema = new mongoose.Schema(
       default: "",
     },
     contentRequired: {
-      type: String,
+      type: [String], 
+      enum: {
+        values: [
+          "Additional Pages",
+          "New content based on copywriter questionnaire",
+          "New content based on current website",
+          "SEO",
+          "Non SEO",
+          "Rework",
+          "Blog Posts"
+        ],
+        message: "{VALUE} is not supported" 
+      },
+      default: [] 
     },
     contactInformation: {
-      type: String,
+      type: [String], 
       enum: {
-        values: ["New Contact Information", "Use From Current Website", ""],
-        message: "{values} is not supported",
+        values: [
+          "New Contact Information",
+          "Use From Current Website",
+          ""
+        ],
+        message: "{VALUE} is not supported" 
       },
-      default: "",
+      default: [] 
     },
     newContactInformation: {
       type: String,
