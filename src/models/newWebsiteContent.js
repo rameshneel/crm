@@ -57,13 +57,13 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     socialMedia: {
-      type: [String],
+      type: String,
     },
     keyPhrasesAgreed: {
-      type: [String],
+      type: String,
     },
     keyAreasAgreed: {
-      type: [String],
+      type: String,
     },
     theme: {
       type: String,
