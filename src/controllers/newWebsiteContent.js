@@ -250,9 +250,9 @@ const deleteWebsiteContent = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { customer_id } = req.params;
 
-  if (!customer_id || !isValidObjectId(customer_id)) {
-    return next(new ApiError(400, "Invalid or missing Customer ID"));
-  }
+  // if (!customer_id || !isValidObjectId(customer_id)) {
+  //   return next(new ApiError(400, "Invalid or missing Customer ID"));
+  // }
 
   try {
     const customerContent = await NewWebsiteContent.findById(customer_id);
