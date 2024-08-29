@@ -26,7 +26,9 @@ const newWebsiteContentSchema = new mongoose.Schema(
     },
     domainTransferred: {
       type: [String],
-      enum: ["N/A", "No", "Yes"],
+      enum:{values: ["N/A", "No", "Yes"],
+        message: "{VALUE} is not supported"
+      },
       default: [],
     } ,   
     registrarName: {
