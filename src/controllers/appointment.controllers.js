@@ -285,6 +285,60 @@ const getAppointmentBySingle = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getAllAppointmentsForLeadId = asyncHandler(async (req, res, next) => {
+  try {
+    console.log("for query lead appointment");
+    
+    const user_id = req.user?._id;
+    const user = await User.findById(user_id);
+
+    if (!user) {
+      return next(new ApiError(404, "User not found"));
+    }
+
+    const { lead_id } = req.query;
+
+    // Prepare the query object
+    let query = {};
+
+    // If lead_id is provided, validate and add to query
+    if (lead_id) {
+      if (!mongoose.Types.ObjectId.isValid(lead_id)) {
+        return next(new ApiError(400, "Invalid lead_id"));
+      }
+      query.lead = lead_id;
+    }
+
+    let appointments;
+
+    // Admins can see all or filtered appointments
+    if (user.role === "admin") {
+      appointments = await Appointment.find(query)
+        .populate("lead")
+        .populate({
+          path: "createdBy",
+          select: "fullName avatar",
+        });
+    } else {
+      return next(new ApiError(403, "Unauthorized access"));
+    }
+
+    if (appointments.length === 0) {
+      throw new ApiError(204, "No appointments found");
+    }
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        appointments,
+        "Appointments retrieved successfully"
+      )
+    );
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 
 export {
@@ -293,5 +347,6 @@ export {
   updateAppointment,
   getAppointmentsByDate,
   getAllAppointments,
-  getAppointmentBySingle
+  getAppointmentBySingle,
+  getAllAppointmentsForLeadId
 };
