@@ -70,9 +70,9 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     blogToBeAdded: {
-      type: String,
+      type:[String],
       enum: ["Yes", "No", ""],
-      default: "",
+      default: [],
     },
     preferredPageNamesForBlog: {
       type: String,
@@ -172,6 +172,10 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    updates: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Update',
+    }],
   },
   { timestamps: true }
 );
