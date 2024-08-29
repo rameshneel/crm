@@ -26,7 +26,7 @@ const newWebsiteContentSchema = new mongoose.Schema(
     },
     domainTransferred: {
       type: [String],
-      enum:{values: ["N/A", "No", "Yes"],
+      enum:{values: ["N/A", "No", "Yes",""],
         message: "{VALUE} is not supported"
       },
       default: [],
@@ -143,7 +143,8 @@ const newWebsiteContentSchema = new mongoose.Schema(
           "SEO",
           "Non SEO",
           "Rework",
-          "Blog Posts"
+          "Blog Posts",
+          ""
         ],
         message: "{VALUE} is not supported" 
       },
