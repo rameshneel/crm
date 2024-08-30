@@ -26,7 +26,7 @@ const newWebsiteContentSchema = new mongoose.Schema(
     },
     domainTransferred: {
       type: [String],
-      enum:{values: ["N/A", "No", "Yes",""],
+      enum:{values: ["N/A", "No", "Yes(Our IPS Tag: 123-REG)",""],
         message: "{VALUE} is not supported"
       },
       default: [],
@@ -168,6 +168,9 @@ const newWebsiteContentSchema = new mongoose.Schema(
     notesForDesign: {
       type: String,
     },
+    keyWordForBlogPosts: {
+       type: String,
+     },
     notesForCopywriter: {
       type: String,
     },
