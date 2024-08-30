@@ -24,7 +24,7 @@ router.delete("/appointments/:appointment_id", deleteAppointment);
 router.patch("/appointments/:appointment_id", updateAppointment);
 router.get("/lead/appointments/:lead_id", getAppointmentsByDate);
 router.get("/lead/appointments",getAllAppointments);  
-router.get("/lead/appointments",getAllAppointmentsForLeadId); 
+router.get("/appointments/lead",getAllAppointmentsForLeadId); 
 router.get('/appointments/:id', getAppointmentBySingle);
 
 export default router;
