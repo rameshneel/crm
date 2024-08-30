@@ -1,9 +1,10 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { isValidObjectId } from "mongoose";
+import { isValidObjectId, } from "mongoose";
 import Appointment from "../models/appointement.model.js";
 import { User } from "../models/user.model.js";
+
 
 const addAppointment = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
@@ -297,13 +298,15 @@ const getAllAppointmentsForLeadId = asyncHandler(async (req, res, next) => {
     }
 
     const { lead_id } = req.query;
+    console.log("lead id",lead_id);
+    
 
     // Prepare the query object
     let query = {};
 
     // If lead_id is provided, validate and add to query
     if (lead_id) {
-      if (!mongoose.Types.ObjectId.isValid(lead_id)) {
+      if (!isValidObjectId(lead_id)) {
         return next(new ApiError(400, "Invalid lead_id"));
       }
       query.lead = lead_id;
