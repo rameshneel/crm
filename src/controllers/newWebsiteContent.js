@@ -47,6 +47,7 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
     contactInformation,
     newContactInformation,
     notesForCopywriter,
+    keyWordForBlogPosts
   } = req.body;
 
   // Conditional checks
@@ -108,6 +109,7 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
       contactInformation,
       newContactInformation,
       notesForCopywriter,
+      keyWordForBlogPosts,
       createdBy: userId,
     });
 
@@ -192,7 +194,7 @@ const updateNewWebsiteContent = asyncHandler(async (req, res, next) => {
 
   const newWebsiteContent = await NewWebsiteContent.findById(id);
   if (!newWebsiteContent) {
-    return next(new ApiError(404, "New Website Content not found"));
+    return next(new ApiError(404, "New Website Content id not found"));
   }
 
   // Ensure only the creator or an admin can update the content
