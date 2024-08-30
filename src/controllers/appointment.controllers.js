@@ -326,9 +326,9 @@ const getAllAppointmentsForLeadId = asyncHandler(async (req, res, next) => {
       return next(new ApiError(403, "Unauthorized access"));
     }
 
-    if (appointments.length === 0) {
-      throw new ApiError(204, "No appointments found");
-    }
+    // if (appointments.length === 0) {
+    //   throw new ApiError(204, "No appointments found");
+    // }
 
     res.status(200).json(
       new ApiResponse(
