@@ -514,7 +514,7 @@ const getAllUpdatesForEntity = asyncHandler(async (req, res, next) => {
       "User",
       "Amendment",
       "Lead",
-      "NewWebsite",
+      "NewWebsiteContent",
       "TechnicalMaster",
       "CopywriterTracker",
       "TechnicalTracker",
