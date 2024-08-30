@@ -63,6 +63,7 @@ const updateSchema = new Schema(
         "TechnicalTracker",
         "ProductFlow",
         "CopywriterTracker",
+        "NewWebsiteContent"
       ],
       message: "{VALUE} is not supported"},
     },

@@ -14,12 +14,14 @@ import path from "path";
 import Update from "../models/update.model.js";
 import ProductFlow from "../models/productFlow.model.js";
 import CopywriterTracker from "../models/copywriterTracker.model.js";
+import NewWebsiteContent from "../models/newWebsiteContent.js"
 
 function getCorrectEntityType(entityType) {
   console.log("entity function", entityType);
   const specialCases = {
     // 'newwebsite': 'NewWebsite',
     // 'technicalmaster': 'TechnicalMaster',
+    newwebsitecontent:"NewWebsiteContent",
     productflow:'ProductFlow',
     copywritertracker: 'CopywriterTracker',
     technicaltracker: "TechnicalTracker",
@@ -48,6 +50,7 @@ function getEntityModel(entityType) {
     Amendment,
     Lead,
     Update,
+    NewWebsiteContent,
     // NewWebsite,
     TechnicalTracker,
     // TechnicalMaster,
@@ -56,7 +59,6 @@ function getEntityModel(entityType) {
   };
   return models[entityType];
 }
-
 const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
   try {
     const { entityId, entityType } = req.params;
@@ -74,6 +76,7 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
       "TechnicalTracker",
       "ProductFlow",
       "CopywriterTracker",
+      "NewWebsiteContent"
     ];
     if (!validEntityTypes.includes(correctEntityType)) {
       return res
@@ -87,7 +90,11 @@ const getAllFilesForEntity = asyncHandler(async (req, res, next) => {
         .json(new ApiResponse(400, {}, "Invalid entity ID"));
     }
     const EntityModel = getEntityModel(correctEntityType);
+    console.log("entity model dd",EntityModel);
+    console.log("entity id",entityId);
+    
     const entity = await EntityModel.findById(entityId);
+    console.log("entity data abcd",entity);
     if (!entity) {
       return res
         .status(404)
@@ -147,6 +154,7 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
       "TechnicalTracker",
       "ProductFlow",
       "CopywriterTracker",
+      "NewWebsiteContent"
     ];
     if (!validEntityTypes.includes(correctEntityType)) {
       throw new ApiError(400, "Invalid entity type");

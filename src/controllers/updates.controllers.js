@@ -17,6 +17,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import ProductFlow from "../models/productFlow.model.js";
 import CopywriterTracker from "../models/copywriterTracker.model.js";
+import NewWebsiteContent from "../models/newWebsiteContent.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,7 @@ function getCorrectEntityType(entityType) {
   const specialCases = {
     // 'newwebsite': 'NewWebsite',
     // 'technicalmaster': 'TechnicalMaster',
+    newwebsitecontent:"NewWebsiteContent",
     productflow:'ProductFlow',
     copywritertracker: 'CopywriterTracker',
     technicaltracker: "TechnicalTracker",
@@ -54,6 +56,7 @@ function getEntityModel(entityType) {
     Amendment,
     Lead,
     Update,
+    NewWebsiteContent,
     // NewWebsite,
     TechnicalTracker,
     // TechnicalMaster,
@@ -73,6 +76,8 @@ function getEntityName(entity, entityType) {
     case "Lead":
       return entity.name;
     case "Update":
+      return entity.name;
+      case "NewWebsiteContent":
       return entity.name;
     case "Amendment":
       return entity.amendmentNumber;
@@ -327,6 +332,7 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
   let { entityId, entityType } = req.params;
 
   const correctEntityType = getCorrectEntityType(entityType);
+console.log("bhola baba");
 
   try {
     const { content, mentions: mentionString } = req.body;

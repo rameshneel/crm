@@ -30,6 +30,7 @@ const fileSchema = new Schema(
         "TechnicalTracker",
         "ProductFlow",
         "CopywriterTracker",
+        "NewwebsiteContent"
       ],
     },
     itemId: {
