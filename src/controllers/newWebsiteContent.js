@@ -248,38 +248,40 @@ const updateNewWebsiteContent = asyncHandler(async (req, res, next) => {
 
 const deleteWebsiteContent = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
-  const { customer_id } = req.params;
+  const { id } = req.params;
 
-  // if (!customer_id || !isValidObjectId(customer_id)) {
-  //   return next(new ApiError(400, "Invalid or missing Customer ID"));
-  // }
+  // Validate the ID
+  if (!isValidObjectId(id)) {
+    return next(new ApiError(400, "Invalid or missing Customer ID"));
+  }
 
   try {
-    const customerContent = await NewWebsiteContent.findById(customer_id);
+    // Find the content by ID
+    const customerContent = await NewWebsiteContent.findById(id);
 
+    // Check if the content exists
     if (!customerContent) {
-      return next(new ApiError(404, "Customer content does not exist"));
+      return next(new ApiError(404, "New Website content does not exist"));
     }
 
-    // Check if the user is either the creator or an admin
-    if (
-      customerContent.createdBy.toString() !== userId.toString() &&
-      !req.user.isAdmin
-    ) {
-      return next(
-        new ApiError(403, "You are not authorized to delete this content")
-      );
+    // Check user permissions
+    const isOwner = customerContent.createdBy.toString() === userId.toString();
+    if (!isOwner && !req.user.isAdmin) {
+      return next(new ApiError(403, "You are not authorized to delete this content"));
     }
 
-    await customerContent.remove();
+    // Delete the content
+    await customerContent.deleteOne();
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, {}, "Customer content deleted successfully"));
+    // Respond with success
+    return res.status(200).json(new ApiResponse(200, {}, "Customer content deleted successfully"));
   } catch (error) {
-    return next(error);
+    // Log error details for debugging
+    console.error("Error deleting content:", error);
+    return next(new ApiError(500, "An error occurred while deleting content"));
   }
 });
+
  
 export {
   createNewWebsiteContent,
