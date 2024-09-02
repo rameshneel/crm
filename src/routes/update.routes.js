@@ -21,7 +21,7 @@ router.post("/:entityType/:entityId", fileUploadforupdate, createEntityUpdate);
 router.get("/:updateId", getUpdateById);
 router.get("/:entityType/:entityId", getAllUpdatesForEntity);
 router.post("/toggle/:updateId/like", toggleLike);
-router.patch("/update/reply/:updateId",fileUploadforupdate, replyToUpdate);
+router.post("/update/reply/:updateId",fileUploadforupdate, replyToUpdate);
 router.patch("/:updateId/pin", updatePinnedStatus);
 router.patch("/log/:updateId/view", logUpdateView);
 router.delete("/:id",deleteUpdate);
