@@ -185,7 +185,6 @@ const updatedUpdate = asyncHandler(async (req, res) => {
   if (!update) {
     throw new ApiError(404, "Update not found");
   }
-
   if (
     update.createdBy.toString() !== userId.toString()
     //  &&
@@ -896,27 +895,59 @@ const replyToUpdate = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+// const deleteReply = asyncHandler(async (req, res, next) => {
+//   const userId = req.user?._id;
+//   const { replyId } = req.params;
+//   try {
+//     const reply = await Update.findById(replyId);
+//     if (!reply) {
+//       throw new ApiError(404, "Reply not found");
+//     }
+//     if (!reply.createdBy.equals(userId) && req.user.role !== "admin") {
+//       throw new ApiError(403, "You don't have permission to delete this reply");
+//     }
+//     await Update.findByIdAndUpdate(reply.itemId, {
+//       $pull: { replies: replyId },
+//     });
+//     await Update.findByIdAndDelete(replyId);
+//     return res.json(new ApiResponse(200, null, "Reply deleted successfully"));
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
 const deleteReply = asyncHandler(async (req, res, next) => {
-  const userId = req.user?._id;
-  const { replyId } = req.params;
   try {
+    const userId = req.user?._id;
+    const { replyId } = req.params;
+
+    // Fetch the reply
     const reply = await Update.findById(replyId);
     if (!reply) {
-      throw new ApiError(404, "Reply not found");
+      return next(new ApiError(404, "Reply not found"));
     }
+
+    // Check if the user has permission to delete the reply
     if (!reply.createdBy.equals(userId) && req.user.role !== "admin") {
-      throw new ApiError(403, "You don't have permission to delete this reply");
+      return next(new ApiError(403, "You don't have permission to delete this reply"));
     }
+
+    // Remove the reply from the parent update
     await Update.findByIdAndUpdate(reply.itemId, {
       $pull: { replies: replyId },
     });
+
+    // Delete the reply
     await Update.findByIdAndDelete(replyId);
+
+    // Delete the associated files
+    await File.deleteMany({ itemId: replyId, source: "UpdateFile" });
+
     return res.json(new ApiResponse(200, null, "Reply deleted successfully"));
   } catch (error) {
     next(error);
   }
 });
-
 //teting
 const updatedUpda = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
