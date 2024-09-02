@@ -12,6 +12,7 @@ const addAppointment = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "Invalid lead_id");
   }
   try {
+    const { title, content, time, date } = req.body;
     const d1 = new Date(date);
     const datetimes = d1.toLocaleDateString();
     console.log("date:", datetimes);
