@@ -1,10 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { isValidObjectId, } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import Appointment from "../models/appointement.model.js";
 import { User } from "../models/user.model.js";
-
 
 const addAppointment = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
@@ -13,20 +12,30 @@ const addAppointment = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "Invalid lead_id");
   }
   try {
-    const { title, content, time, date } = req.body;
-
     const d1 = new Date(date);
-    const datetimes = new Date(date).toLocaleDateString();
+    const datetimes = d1.toLocaleDateString();
     console.log("date:", datetimes);
     console.log("time", time);
-
+    
     const timeParts = time.split(":");
     console.log(timeParts);
+    
+    // Create a combined date-time string in ISO format
     const d = `${date}T${time}:00.000+00:00`;
     console.log(d);
-
+    
+    // Convert the provided date and time to a Date object
+    const appointmentDateTime = new Date(d);
+    
+    // Check if the provided date and time are in the past
+    if (appointmentDateTime < new Date()) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, null, "Cannot book an appointment for a past date and time"));
+    }
+    
     const existingAppointment = await Appointment.findOne({ time, date: d });
-
+    
     if (existingAppointment) {
       return res
         .status(400)
@@ -80,71 +89,130 @@ const deleteAppointment = asyncHandler(async (req, res, next) => {
   }
 });
 
+// const updateAppointment = asyncHandler(async (req, res, next) => {
+//   const { appointment_id } = req.params;
+//   console.log(appointment_id);
+//   if (!isValidObjectId(appointment_id)) {
+//     throw new ApiError(400, "Invalid appointment_id");
+//   }
+  
+//   const app = await Appointment.findById(appointment_id);
+//   if (!app) {
+//     throw new ApiError(400, "appointment_id not fond");
+//   }
+//   try {
+//     const { title, content, time, date } = req.body;
+
+//     const existingAppointment = await Appointment.findOne({
+//       time,
+//       dummydate: date,
+//     });
+
+//     if (
+//       existingAppointment &&
+//       existingAppointment._id.toString() !== appointment_id
+//     ) {
+//       // Another appointment exists at the updated time
+//       return res
+//         .status(400)
+//         .json(
+//           new ApiResponse(
+//             400,
+//             null,
+//             "Another appointment already exists at the updated time and date"
+//           )
+//         );
+//     }
+//     const d = `${date}T${time}:00.000+00:00`;
+//     console.log("update d value = ", d);
+//     // No appointment exists at the updated time or it's the same appointment being updated, proceed with updating
+//     const updatedAppointment = await Appointment.findByIdAndUpdate(
+//       appointment_id,
+//       {
+//         title,
+//         content,
+//         time,
+//         date: d,
+//       },
+//       { new: true }
+//     );
+
+//     if (!updatedAppointment) {
+//       return res
+//         .status(404)
+//         .json(new ApiResponse(404, null, "Appointment not found"));
+//     }
+
+//     return res
+//       .status(200)
+//       .json(
+//         new ApiResponse(
+//           200,
+//           updatedAppointment,
+//           "Appointment Updated Successfully"
+//         )
+//       );
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
 const updateAppointment = asyncHandler(async (req, res, next) => {
   const { appointment_id } = req.params;
-  console.log(appointment_id);
+
+  // Validate appointment ID
   if (!isValidObjectId(appointment_id)) {
-    throw new ApiError(400, "Invalid appointment_id");
+    return next(new ApiError(400, "Invalid appointment_id"));
   }
-  const app = await Appointment.findById(appointment_id);
-  if (!app) {
-    throw new ApiError(400, "appointment_id not fond");
+
+  // Find the appointment by ID
+  const appointment = await Appointment.findById(appointment_id);
+  if (!appointment) {
+    return next(new ApiError(404, "Appointment not found"));
   }
-  try {
-    const { title, content, time, date } = req.body;
 
-    const existingAppointment = await Appointment.findOne({
-      time,
-      dummydate: date,
-    });
+  const { title, content, time, date } = req.body;
 
-    if (
-      existingAppointment &&
-      existingAppointment._id.toString() !== appointment_id
-    ) {
-      // Another appointment exists at the updated time
-      return res
-        .status(400)
-        .json(
-          new ApiResponse(
-            400,
-            null,
-            "Another appointment already exists at the updated time and date"
-          )
-        );
-    }
-    const d = `${date}T${time}:00.000+00:00`;
-    console.log("update d value = ", d);
-    // No appointment exists at the updated time or it's the same appointment being updated, proceed with updating
-    const updatedAppointment = await Appointment.findByIdAndUpdate(
-      appointment_id,
-      {
-        title,
-        content,
-        time,
-        date: d,
-      },
-      { new: true }
-    );
-
-    if (!updatedAppointment) {
-      return res
-        .status(404)
-        .json(new ApiResponse(404, null, "Appointment not found"));
-    }
-
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          updatedAppointment,
-          "Appointment Updated Successfully"
-        )
-      );
-  } catch (error) {
-    return next(error);
+  // Validate input fields
+  if (!title || !content || !time || !date) {
+    return next(new ApiError(400, "All fields (title, content, time, date) are required"));
   }
+
+  // Create a combined date-time object
+  const newDateTime = new Date(`${date}T${time}:00.000+00:00`);
+
+  // Check if the provided date and time are in the past
+  if (newDateTime < new Date()) {
+    return res.status(400).json(new ApiResponse(400, null, "Cannot update the appointment to a past date and time"));
+  }
+
+  // Check if an appointment exists with the same date and time, excluding the current one
+  const existingAppointment = await Appointment.findOne({
+    time,
+    dummydate: date,
+    _id: { $ne: appointment_id }  // Exclude the current appointment from the search
+  });
+
+  if (existingAppointment) {
+    return res.status(400).json(new ApiResponse(400, null, "Another appointment already exists at the updated time and date"));
+  }
+
+  // Prepare the updated appointment data
+  const updatedData = {
+    title,
+    content,
+    time,
+    date: newDateTime.toISOString(), // Use a consistent date-time format
+  };
+
+  // Update the appointment
+  const updatedAppointment = await Appointment.findByIdAndUpdate(appointment_id, updatedData, { new: true });
+
+  if (!updatedAppointment) {
+    return res.status(404).json(new ApiResponse(404, null, "Appointment not found after update"));
+  }
+
+  return res.status(200).json(new ApiResponse(200, updatedAppointment, "Appointment updated successfully"));
 });
 
 const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
@@ -274,13 +342,11 @@ const getAppointmentBySingle = asyncHandler(async (req, res, next) => {
     }
 
     // Send the response with the appointment data
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        appointment,
-        "Appointment retrieved successfully"
-      )
-    );
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, appointment, "Appointment retrieved successfully")
+      );
   } catch (error) {
     next(error);
   }
@@ -289,7 +355,7 @@ const getAppointmentBySingle = asyncHandler(async (req, res, next) => {
 const getAllAppointmentsForLeadId = asyncHandler(async (req, res, next) => {
   try {
     console.log("for query lead appointment");
-    
+
     const user_id = req.user?._id;
     const user = await User.findById(user_id);
 
@@ -298,8 +364,7 @@ const getAllAppointmentsForLeadId = asyncHandler(async (req, res, next) => {
     }
 
     const { lead_id } = req.query;
-    console.log("lead id",lead_id);
-    
+    console.log("lead id", lead_id);
 
     // Prepare the query object
     let query = {};
@@ -316,12 +381,10 @@ const getAllAppointmentsForLeadId = asyncHandler(async (req, res, next) => {
 
     // Admins can see all or filtered appointments
     if (user.role === "admin") {
-      appointments = await Appointment.find(query)
-        .populate("lead")
-        .populate({
-          path: "createdBy",
-          select: "fullName avatar",
-        });
+      appointments = await Appointment.find(query).populate("lead").populate({
+        path: "createdBy",
+        select: "fullName avatar",
+      });
     } else {
       return next(new ApiError(403, "Unauthorized access"));
     }
@@ -330,19 +393,19 @@ const getAllAppointmentsForLeadId = asyncHandler(async (req, res, next) => {
     //   throw new ApiError(204, "No appointments found");
     // }
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        appointments,
-        "Appointments retrieved successfully"
-      )
-    );
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          appointments,
+          "Appointments retrieved successfully"
+        )
+      );
   } catch (error) {
     next(error);
   }
 });
-
-
 
 export {
   addAppointment,
@@ -351,5 +414,5 @@ export {
   getAppointmentsByDate,
   getAllAppointments,
   getAppointmentBySingle,
-  getAllAppointmentsForLeadId
+  getAllAppointmentsForLeadId,
 };
