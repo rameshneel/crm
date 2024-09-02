@@ -21,10 +21,10 @@ router.post("/:entityType/:entityId", fileUploadforupdate, createEntityUpdate);
 router.get("/:updateId", getUpdateById);
 router.get("/:entityType/:entityId", getAllUpdatesForEntity);
 router.post("/toggle/:updateId/like", toggleLike);
-router.post("/update/reply/:updateId",fileUploadforupdate, replyToUpdate);
+router.patch("/update/reply/:updateId",fileUploadforupdate, replyToUpdate);
 router.patch("/:updateId/pin", updatePinnedStatus);
 router.patch("/log/:updateId/view", logUpdateView);
-router.delete("/:id",deleteUpdate)
+router.delete("/:id",deleteUpdate);
 router.delete('/replies/:replyId',  deleteReply);
 router.patch('/:id', fileUploadforupdate, updatedUpdate);
 export default router;
