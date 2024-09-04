@@ -129,9 +129,9 @@ const newWebsiteContentSchema = new mongoose.Schema(
       type: String,
     },
     isCopywriterRequired: {
-      type: [String],
-      enum: { values: ["Yes", "No", ""], message: "{values} is not supported" },
-      default: [],
+      type: String,
+      enum: { values: ["Yes", "No", ""], message: "{VALUE} is not supported" },
+      default: "",
     },
     contentRequired: {
       type: [String], 

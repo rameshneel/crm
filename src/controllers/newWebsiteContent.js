@@ -171,7 +171,7 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
     keyWordForBlogPosts
   } = req.body;
 
-  // Conditional checks
+  // Conditional checks 
   if (domainTransferred.includes("No") && !registrarName) {
     return next(new ApiError(400, "Registrar name is required if domain is not transferred"));
   }
@@ -196,7 +196,7 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, "New contact information is required if using new contact information"));
   }
 
-  if (isCopywriterRequired.includes("Yes") && !contentRequired) {
+  if (isCopywriterRequired === "Yes" && !contentRequired) {
     return next(new ApiError(400, "Content required is needed if a copywriter is required"));
   }
 
