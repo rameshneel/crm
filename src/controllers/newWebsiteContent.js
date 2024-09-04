@@ -6,6 +6,127 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 
+// const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
+//   const userId = req.user?._id;
+//   const { customerId } = req.params;
+
+//   if (!isValidObjectId(customerId)) {
+//     return next(new ApiError(400, "Invalid customer_id"));
+//   }
+
+//   const customer = await Customer.findById(customerId);
+//   if (!customer) {
+//     return next(new ApiError(404, "Customer does not exist"));
+//   }
+
+//   const {
+//     typeOfCustomer,
+//     currentDomain,
+//     newDomain,
+//     domainInfo,
+//     domainTransferred,
+//     registrarName,
+//     customerEmails,
+//     emailsToBeCreated,
+//     existingEmailsAttached,
+//     theme,
+//     colours,
+//     companyLogo,
+//     images,
+//     notesForDesign,
+//     pageName,
+//     isCopywriterRequired,
+//     contentRequired,
+//     socialMedia,
+//     keyPhrasesAgreed,
+//     keyAreasAgreed,
+//     blogToBeAdded,
+//     preferredPageNamesForBlog,
+//     googleReviews,
+//     linkToCurrentGoogleReviews,
+//     contactInformation,
+//     newContactInformation,
+//     notesForCopywriter,
+//     keyWordForBlogPosts
+//   } = req.body;
+
+//   // Conditional checks
+//   if (domainTransferred === "No" && !registrarName) {
+//     return next(new ApiError(400, "Registrar name is required if domain is not transferred"));
+//   }
+
+//   if (customerEmails === "Create New Company Emails" && !emailsToBeCreated) {
+//     return next(new ApiError(400, "Emails to be created are required if creating new company emails"));
+//   }
+
+//   if (customerEmails === "Existing Emails Attached to Domain" && !existingEmailsAttached) {
+//     return next(new ApiError(400, "Existing emails attached are required if using existing emails"));
+//   }
+
+//   if (blogToBeAdded === "Yes" && !preferredPageNamesForBlog) {
+//     return next(new ApiError(400, "Preferred page names for blog are required if blog is to be added"));
+//   }
+
+//   if (googleReviews === "Currently Live" && !linkToCurrentGoogleReviews) {
+//     return next(new ApiError(400, "Link to current Google reviews is required if Google reviews are currently live"));
+//   }
+
+//   if (contactInformation === "New Contact Information" && !newContactInformation) {
+//     return next(new ApiError(400, "New contact information is required if using new contact information"));
+//   }
+
+//   if (isCopywriterRequired === "Yes" && !contentRequired) {
+//     return next(new ApiError(400, "Content required is needed if a copywriter is required"));
+//   }
+
+//   try {
+//     const newCustomer = await NewWebsiteContent.create({
+//       customer: customerId,
+//       typeOfCustomer,
+//       currentDomain,
+//       newDomain,
+//       domainInfo,
+//       domainTransferred,
+//       registrarName,
+//       customerEmails,
+//       emailsToBeCreated,
+//       existingEmailsAttached,
+//       theme,
+//       colours,
+//       companyLogo,
+//       images,
+//       notesForDesign,
+//       pageName,
+//       isCopywriterRequired,
+//       contentRequired,
+//       socialMedia,
+//       keyPhrasesAgreed,
+//       keyAreasAgreed,
+//       blogToBeAdded,
+//       preferredPageNamesForBlog,
+//       googleReviews,
+//       linkToCurrentGoogleReviews,
+//       contactInformation,
+//       newContactInformation,
+//       notesForCopywriter,
+//       keyWordForBlogPosts,
+//       createdBy: userId,
+//     });
+
+//     return res
+//       .status(201)
+//       .json(
+//         new ApiResponse(
+//           201,
+//           newCustomer,
+//           "Website Content created successfully"
+//         )
+//       );
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
 const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const { customerId } = req.params;
@@ -51,31 +172,31 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
   } = req.body;
 
   // Conditional checks
-  if (domainTransferred === "No" && !registrarName) {
+  if (domainTransferred.includes("No") && !registrarName) {
     return next(new ApiError(400, "Registrar name is required if domain is not transferred"));
   }
 
-  if (customerEmails === "Create New Company Emails" && !emailsToBeCreated) {
+  if (customerEmails.includes("Create New Company Emails") && !emailsToBeCreated) {
     return next(new ApiError(400, "Emails to be created are required if creating new company emails"));
   }
 
-  if (customerEmails === "Existing Emails Attached to Domain" && !existingEmailsAttached) {
+  if (customerEmails.includes("Existing Emails Attached to Domain") && !existingEmailsAttached) {
     return next(new ApiError(400, "Existing emails attached are required if using existing emails"));
   }
 
-  if (blogToBeAdded === "Yes" && !preferredPageNamesForBlog) {
+  if (blogToBeAdded.includes("Yes") && !preferredPageNamesForBlog) {
     return next(new ApiError(400, "Preferred page names for blog are required if blog is to be added"));
   }
 
-  if (googleReviews === "Currently Live" && !linkToCurrentGoogleReviews) {
+  if (googleReviews.includes("Currently Live") && !linkToCurrentGoogleReviews) {
     return next(new ApiError(400, "Link to current Google reviews is required if Google reviews are currently live"));
   }
 
-  if (contactInformation === "New Contact Information" && !newContactInformation) {
+  if (contactInformation.includes("New Contact Information") && !newContactInformation) {
     return next(new ApiError(400, "New contact information is required if using new contact information"));
   }
 
-  if (isCopywriterRequired === "Yes" && !contentRequired) {
+  if (isCopywriterRequired.includes("Yes") && !contentRequired) {
     return next(new ApiError(400, "Content required is needed if a copywriter is required"));
   }
 
@@ -113,19 +234,12 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
       createdBy: userId,
     });
 
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          newCustomer,
-          "Website Content created successfully"
-        )
-      );
+    return res.status(201).json(new ApiResponse(201, newCustomer, "Website Content created successfully"));
   } catch (error) {
     return next(error);
   }
 });
+
 
 const getAllNewWebsiteContent = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -184,6 +298,70 @@ const getNewWebsiteContentById =asyncHandler( async (req, res,next) => {
   }
 });
 
+// const updateNewWebsiteContent = asyncHandler(async (req, res, next) => {
+//   const userId = req.user._id;
+//   const { id } = req.params;
+
+//   if (!isValidObjectId(id)) {
+//     return next(new ApiError(400, "Invalid ID"));
+//   }
+
+//   const newWebsiteContent = await NewWebsiteContent.findById(id);
+//   if (!newWebsiteContent) {
+//     return next(new ApiError(404, "New Website Content id not found"));
+//   }
+
+//   // Ensure only the creator or an admin can update the content
+//   if (newWebsiteContent.createdBy.toString() !== userId && req.user.role !== 'admin') {
+//     return next(new ApiError(403, "You do not have permission to update this content"));
+//   }
+
+//   const updates = req.body;
+
+//   // Conditional checks
+//   if (updates.domainTransferred === "No" && !updates.registrarName) {
+//     return next(new ApiError(400, "Registrar name is required if domain is not transferred"));
+//   }
+
+//   if (updates.customerEmails === "Create New Company Emails" && !updates.emailsToBeCreated) {
+//     return next(new ApiError(400, "Emails to be created are required if creating new company emails"));
+//   }
+
+//   if (updates.customerEmails === "Existing Emails Attached to Domain" && !updates.existingEmailsAttached) {
+//     return next(new ApiError(400, "Existing emails attached are required if using existing emails"));
+//   }
+
+//   if (updates.blogToBeAdded === "Yes" && !updates.preferredPageNamesForBlog) {
+//     return next(new ApiError(400, "Preferred page names for blog are required if blog is to be added"));
+//   }
+
+//   if (updates.googleReviews === "Currently Live" && !updates.linkToCurrentGoogleReviews) {
+//     return next(new ApiError(400, "Link to current Google reviews is required if Google reviews are currently live"));
+//   }
+
+//   if (updates.contactInformation === "New Contact Information" && !updates.newContactInformation) {
+//     return next(new ApiError(400, "New contact information is required if using new contact information"));
+//   }
+
+//   if (updates.isCopywriterRequired === "Yes" && !updates.contentRequired) {
+//     return next(new ApiError(400, "Content required is needed if a copywriter is required"));
+//   }
+
+//   try {
+//     Object.keys(updates).forEach((key) => {
+//       newWebsiteContent[key] = updates[key];
+//     });
+
+//     newWebsiteContent.updated_by = userId;
+
+//     await newWebsiteContent.save();
+
+//     return res.status(200).json(new ApiResponse(200, newWebsiteContent, "Website Content updated successfully"));
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
 const updateNewWebsiteContent = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
   const { id } = req.params;
@@ -194,7 +372,7 @@ const updateNewWebsiteContent = asyncHandler(async (req, res, next) => {
 
   const newWebsiteContent = await NewWebsiteContent.findById(id);
   if (!newWebsiteContent) {
-    return next(new ApiError(404, "New Website Content id not found"));
+    return next(new ApiError(404, "New Website Content ID not found"));
   }
 
   // Ensure only the creator or an admin can update the content
@@ -233,7 +411,37 @@ const updateNewWebsiteContent = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, "Content required is needed if a copywriter is required"));
   }
 
+  // Clear out related fields when conditions are not met
+  if (updates.isCopywriterRequired === "No" || !updates.isCopywriterRequired) {
+    updates.contentRequired = ""; // or null, based on your preference
+  }
+
+  if (updates.blogToBeAdded === "No" || !updates.blogToBeAdded) {
+    updates.preferredPageNamesForBlog = ""; // or null
+  }
+
+  if (updates.customerEmails !== "Create New Company Emails") {
+    updates.emailsToBeCreated = ""; // or null
+  }
+
+  if (updates.customerEmails !== "Existing Emails Attached to Domain") {
+    updates.existingEmailsAttached = ""; // or null
+  }
+
+  if (updates.domainTransferred !== "No") {
+    updates.registrarName = ""; // or null
+  }
+
+  if (updates.contactInformation !== "New Contact Information") {
+    updates.newContactInformation = ""; // or null
+  }
+
+  if (updates.googleReviews !== "Currently Live") {
+    updates.linkToCurrentGoogleReviews = ""; // or null
+  }
+
   try {
+    // Apply the updates
     Object.keys(updates).forEach((key) => {
       newWebsiteContent[key] = updates[key];
     });
@@ -247,6 +455,7 @@ const updateNewWebsiteContent = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
+
 
 const deleteWebsiteContent = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
