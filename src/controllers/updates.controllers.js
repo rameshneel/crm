@@ -434,7 +434,7 @@ console.log("bhola baba");
       ? mentionString.split(",").map((id) => id.trim())
       : [];
 
-      console.log("MENTIIIIONNNNNN",mentions);
+      // console.log("MENTIIIIONNNNNN",mentions);
       // console.log("MENTIIIIONNNNNN xvbfbfgfg",mentionString);
 
     const update = new Update({
