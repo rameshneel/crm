@@ -18,6 +18,7 @@ import { fileURLToPath } from "url";
 import ProductFlow from "../models/productFlow.model.js";
 import CopywriterTracker from "../models/copywriterTracker.model.js";
 import NewWebsiteContent from "../models/newWebsiteContent.js"
+// import { sendNotification } from './notification.controllers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -325,6 +326,93 @@ const updatedUpdate = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, { update }, "Update edited successfully"));
 });
+
+const updatedUpdatess = asyncHandler(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { content, mentions: mentionString } = req.body;
+    const userId = req.user._id;
+
+    // Fetch the update
+    const update = await Update.findById(id);
+    if (!update) {
+      return next(new ApiError(404, "Update not found"));
+    }
+
+    // Check if the user has permission to edit the update
+    if (update.createdBy.toString() !== userId.toString() && req.user.role !== "admin") {
+      return res.status(403).json(new ApiResponse(403, null, "You don't have permission to edit this update"));
+    }
+
+    // Update the content if provided
+    if (content) {
+      update.content = content;
+    }
+
+    // Update the mentions if provided
+    const mentions = mentionString ? mentionString.split(",").map((id) => id.trim()) : [];
+
+    // Handle mentions and notifications
+    if (mentions.length > 0) {
+      const mentionedUsers = await User.find({ _id: { $in: mentions } });
+      const entity = await getEntityModel(update.itemType).findById(update.itemId);
+      if (!entity) {
+        return next(new ApiError(404, `${update.itemType} with id ${update.itemId} not found`));
+      }
+      const entityName = getEntityName(entity, update.itemType);
+      await sendEmailForMentions(req.user.email, mentionedUsers, update.itemType, entityName, update._id, content);
+    }
+
+    // Handle removed files
+    const removedFiles = update.files.filter((f) => !req.files?.find((file) => `https://${req.get("host")}/files/${file.filename}` === f));
+    for (const fileUrl of removedFiles) {
+      try {
+        // Remove file from update.files array
+        update.files = update.files.filter((f) => f !== fileUrl);
+
+        // Delete File document
+        const file = await File.findOneAndDelete({ fileUrl: fileUrl });
+        if (file) {
+          console.log(`File document deleted: ${file._id}`);
+        }
+
+        // Delete physical file
+        const fileName = path.basename(fileUrl);
+        const filePath = path.join(__dirname, "..", "..", "public", "files", fileName);
+        await fs.unlink(filePath);
+        console.log(`Physical file deleted: ${filePath}`);
+      } catch (error) {
+        console.error(`Error deleting file: ${fileUrl}`, error);
+      }
+    }
+
+    // Handle new files
+    if (req.files && req.files.length > 0) {
+      for (let file of req.files) {
+        const fileUrl = `https://${req.get("host")}/files/${file.filename}`;
+        update.files.push(fileUrl);
+
+        const newFile = new File({
+          uploadedBy: userId,
+          fileUrl: fileUrl,
+          itemType: update.itemType,
+          itemId: update.itemId,
+          source: "UpdateFile",
+        });
+
+        await newFile.save();
+      }
+    }
+
+    // Save the updated update
+    await update.save({ validateBeforeSave: false });
+
+    res.status(200).json(new ApiResponse(200, { update }, "Update edited successfully"));
+  } catch (error) {
+    next(error);
+  }
+});
+
 const createEntityUpdate = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const user = await User.findById(userId);
@@ -335,6 +423,8 @@ console.log("bhola baba");
 
   try {
     const { content, mentions: mentionString } = req.body;
+    console.log("MENTIIIIONNNNNN",mentions);
+    
 
     if (!mongoose.Types.ObjectId.isValid(entityId)) {
       return next(new ApiError(400, "Invalid entityId format"));
@@ -343,6 +433,9 @@ console.log("bhola baba");
     const mentions = mentionString
       ? mentionString.split(",").map((id) => id.trim())
       : [];
+
+      console.log("MENTIIIIONNNNNN",mentions);
+      console.log("MENTIIIIONNNNNN xvbfbfgfg",mentionString);
 
     const update = new Update({
       content,
@@ -417,17 +510,39 @@ console.log("bhola baba");
 
         await notification.save();
       }
-      console.log("entity");
-      const entityName = getEntityName(entity, correctEntityType);
-      console.log("entityName", entityName);
-      await sendEmailForMentions(
-        user.email,
-        mentionedUsers,
-        correctEntityType,
-        entityName,
-        update._id,
-        content
-      );
+      // for (let mentionedUser of mentionedUsers) {
+      //   const notification = new Notification({
+      //     title: `Mentioned in ${correctEntityType} Update`,
+      //     message: `You were mentioned in an update for ${correctEntityType} ${getEntityName(
+      //       entity,
+      //       correctEntityType
+      //     )}.`,
+      //     category: "i_was_mentioned",
+      //     isRead: false,
+      //     assignedTo: mentionedUser._id,
+      //     assignedBy: userId,
+      //     mentionedUsers: [mentionedUser._id],
+      //     item: update._id,
+      //     itemType: correctEntityType,
+      //     linkUrl: `https://high-oaks-media-crm.vercel.app/${correctEntityType.toLowerCase()}s/update/${
+      //       update._id
+      //     }`,
+      //   });
+      
+      //   await notification.save();
+      //   await sendNotification(notification);
+      // }
+      // console.log("entity");
+      // const entityName = getEntityName(entity, correctEntityType);
+      // console.log("entityName", entityName);
+      // await sendEmailForMentions(
+      //   user.email,
+      //   mentionedUsers,
+      //   correctEntityType,
+      //   entityName,
+      //   update._id,
+      //   content
+      // );
     }
     return res.status(201).json(
       new ApiResponse(
