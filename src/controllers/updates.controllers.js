@@ -419,11 +419,9 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
   let { entityId, entityType } = req.params;
 
   const correctEntityType = getCorrectEntityType(entityType);
-console.log("bhola baba");
-
   try {
     const { content, mentions: mentionString } = req.body;
-    console.log("MENTIIIIONNNNNN",mentions);
+   
     
 
     if (!mongoose.Types.ObjectId.isValid(entityId)) {
@@ -433,10 +431,6 @@ console.log("bhola baba");
     const mentions = mentionString
       ? mentionString.split(",").map((id) => id.trim())
       : [];
-
-      // console.log("MENTIIIIONNNNNN",mentions);
-      // console.log("MENTIIIIONNNNNN xvbfbfgfg",mentionString);
-
     const update = new Update({
       content,
       createdBy: userId,
@@ -507,7 +501,6 @@ console.log("bhola baba");
             update._id
           }`,
         });
-
         await notification.save();
       }
       // for (let mentionedUser of mentionedUsers) {
