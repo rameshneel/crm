@@ -279,7 +279,13 @@ const getAllNewWebsiteContent = asyncHandler(async (req, res, next) => {
 
 const getNewWebsiteContentById =asyncHandler( async (req, res,next) => {
   try {
-    const customer = await NewWebsiteContent.findById(req.params.id);
+    const customer = await NewWebsiteContent.findById(req.params.id).populate({
+      path: "createdBy",
+      // select: user.role === "admin" ? "" : "fullName email avatar",
+      select:"fullName email avatar",
+    }).populate({
+      path: "customer"
+    }).sort({ createdAt: -1 });
     if (customer) {
       res
         .status(200)
