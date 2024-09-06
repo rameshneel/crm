@@ -570,9 +570,9 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       return next(new ApiError(404, "User not found"));
     }
 
-    let page = parseInt(req.query.page, 10) || 1;
-    let limit = parseInt(req.query.limit, 10) || 10;
-    let skip = (page - 1) * limit;
+    // let page = parseInt(req.query.page, 10) || 1;
+    // let limit = parseInt(req.query.limit, 10) || 10;
+    // let skip = (page - 1) * limit;
 
     let year = parseInt(req.query.year, 10);
     let query = {};
@@ -599,8 +599,8 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
           path: "createdBy",
           select: "fullName avatar",
         })
-        .skip(skip)
-        .limit(limit)
+        // .skip(skip)
+        // .limit(limit)
         .sort({ createdAt: -1 });
 
       totalSums = await Order.aggregate([
@@ -629,8 +629,8 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
           path: "createdBy",
           select: "fullName avatar",
         })
-        .skip(skip)
-        .limit(limit)
+        // .skip(skip)
+        // .limit(limit)
         .sort({ createdAt: -1 });
 
       totalSums = await Order.aggregate([
@@ -660,7 +660,7 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
       totalRenewalValue: 0,
     };
 
-    const totalPages = Math.ceil(totalCount / limit);
+    // const totalPages = Math.ceil(totalCount / limit);
 
     return res.status(200).json(
       new ApiResponse(
@@ -668,10 +668,10 @@ const getAllOrders = asyncHandler(async (req, res, next) => {
         {
           orders,
           totals,
-          totalPages,
+          // totalPages,
           totalCount,
-          currentPage: page,
-          pageSize: limit,
+          // currentPage: page,
+          // pageSize: limit,
         },
         "Orders and their totals retrieved successfully"
       )
