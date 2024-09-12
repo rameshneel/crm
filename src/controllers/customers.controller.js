@@ -38,7 +38,7 @@ const createCustomer = asyncHandler(async (req, res, next) => {
     }
     let logoUrl;
     if (req.file && req.file.path) {
-      logoUrl = `htpps://${req.get("host")}/images/${req.file.filename}`;
+      logoUrl = `https://${req.get("host")}/images/${req.file.filename}`;
     }
     const newCustomer = new Customer({
       companyName,
