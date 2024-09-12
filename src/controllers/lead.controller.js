@@ -103,7 +103,7 @@ export const addLead = asyncHandler(async (req, res, next) => {
     }
     const lead = await Lead.create(leadData);
 
-    return res.status(201).json(new ApiResponse(200, lead, "Lead added successfully"));
+    return res.status(201).json(new ApiResponse(201, lead, "Lead added successfully"));
   } catch (error) {
     return next(error);
   }
