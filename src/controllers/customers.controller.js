@@ -207,12 +207,12 @@ const customerList = asyncHandler(async (req, res, next) => {
     if (user.role === "admin") {
       customers = await Customer.find().populate({
         path: "createdBy",
-      });
+      }).sort({ customerNo: 1 }) ;
     } else if (user.role === "salesman") {
       customers = await Customer.find({ createdBy: activeUser }).populate({
         path: "createdBy",
         select: "name email",
-      });
+      }).sort({ customerNo: 1 }) ;
     }
 
     return res.json(
