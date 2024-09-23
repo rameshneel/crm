@@ -62,8 +62,8 @@ const getLeaveRequests = asyncHandler(async (req, res, next) => {
     }
 
     const leaveRequests = await Leave.find(query)
-      .populate('employeeId', 'name email')
-      .populate('approvedBy', 'name email')
+      .populate('employeeId', 'fullName email avatar')
+      .populate('approvedBy', 'fullName email avatar')
       .sort({ createdAt: -1 });
 
     const formattedRequests = leaveRequests.map(request => ({
