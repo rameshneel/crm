@@ -195,13 +195,69 @@ const getLeaveSummary = asyncHandler(async (req, res, next) => {
     next(err);
   }
 });
+const getLeaveRequestsById = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id;
+  const isAdmin = req.user?.role === 'admin';
+  const { id } = req.params; // Get the ID from the URL parameters
+
+  try {
+    let query = { isDeleted: false };
+
+    if (id) {
+      // If an ID is provided, retrieve the specific leave request
+      query._id = id;
+    } else if (!isAdmin) {
+      // If no ID is provided, fetch leave requests based on user role
+      query.employeeId = userId;
+    }
+
+    const leaveRequests = await Leave.find(query)
+      .populate('employeeId', 'fullName email avatar')
+      .populate('approvedBy', 'fullName email avatar')
+      .sort({ createdAt: -1 });
+
+    // If an ID was provided, return a single request
+    if (id) {
+      const request = leaveRequests[0];
+      if (!request) {
+        return res.status(404).json(new ApiResponse(404, null, "Leave request not found."));
+      }
+
+      const formattedRequest = {
+        ...request.toObject(),
+        formattedStartDate: request.startDate.toLocaleDateString(),
+        formattedEndDate: request.endDate.toLocaleDateString(),
+        formattedReturnDate: request.returnDate.toLocaleDateString(),
+      };
+
+      return res.status(200).json(
+        new ApiResponse(200, formattedRequest, "Leave request retrieved successfully.")
+      );
+    }
+
+    // For multiple leave requests, format them
+    const formattedRequests = leaveRequests.map(request => ({
+      ...request.toObject(),
+      formattedStartDate: request.startDate.toLocaleDateString(),
+      formattedEndDate: request.endDate.toLocaleDateString(),
+      formattedReturnDate: request.returnDate.toLocaleDateString(),
+    }));
+
+    return res.status(200).json(
+      new ApiResponse(200, formattedRequests, "Leave requests retrieved successfully.")
+    );
+  } catch (err) {
+    next(err);
+  }
+});
 
 export {
   addLeaveRequest,
   getLeaveRequests,
   updateLeaveRequest,
   deleteLeaveRequest,
-  getLeaveSummary
+  getLeaveSummary,
+  getLeaveRequestsById
 };
 
 
