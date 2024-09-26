@@ -4,7 +4,8 @@ import {
   getLeaveRequests,
   updateLeaveRequest,
   deleteLeaveRequest,
-  getLeaveRequestsById
+  getLeaveRequestsById,
+  getLeaveRequestsByEmployeId
 } from '../controllers/leave.controllers.js'; 
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 
@@ -20,6 +21,7 @@ router.get('/',  getLeaveRequests);
 // Route to update a specific leave request by ID
 router.put('/:leaveId', updateLeaveRequest);
 router.get('/:id', getLeaveRequestsById);
+router.get('/employee/:id', getLeaveRequestsByEmployeId);
 
 // Route to soft delete a specific leave request by ID
 router.delete('/:leaveId', deleteLeaveRequest);

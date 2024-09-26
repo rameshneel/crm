@@ -1,6 +1,6 @@
 import Leave from '../models/leave.model.js';
 import {User} from '../models/user.model.js'; 
-import { isValidObjectId } from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -13,36 +13,51 @@ const addLeaveRequest = asyncHandler(async (req, res, next) => {
     throw new ApiError(400, "All fields are required.");
   }
 
+  // Convert dates to proper Date objects
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const returnDateObj = new Date(returnDate);
+
+  if (end <= start) {
+    throw new ApiError(400, "End date must be after start date.");
+  }
+
+  if (returnDateObj <= end) {
+    throw new ApiError(400, "Return date must be after end date.");
+  }
+
   try {
     const user = await User.findById(userId);
     if (!user) {
       throw new ApiError(404, "User not found.");
     }
 
+    // Calculate totalWorkingDays and totalDayHoliday
+    const totalWorkingDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1; // Include both start and end
+    const totalDayHoliday = totalWorkingDays; // Assuming total holidays equals total working days for this request
+
     const leaveRequest = await Leave.create({
       employeeId: userId,
       leaveType,
       leaveReason,
-      startDate: new Date(startDate),
-      endDate: new Date(endDate),
-      returnDate: new Date(returnDate),
+      startDate: start,
+      endDate: end,
+      returnDate: returnDateObj,
+      totalWorkingDays,
+      totalDayHoliday,
+      // Set initial response to null or as needed
     });
 
-    // Send notification to manager (you'd implement this)
+    // Optionally, send a notification to the manager
     // notifyManager(user.managerId, leaveRequest);
 
     return res.status(201).json(
       new ApiResponse(201, leaveRequest, "Leave request added successfully.")
     );
   } catch (err) {
-    if (err.message === 'End date must be after start date.' || 
-        err.message === 'Return date must be after end date.') {
-      throw new ApiError(400, err.message);
-    }
     next(err);
   }
 });
-
 const getLeaveRequests = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const isAdmin = req.user?.role === 'admin';
@@ -79,8 +94,7 @@ const getLeaveRequests = asyncHandler(async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
-
+}); 
 const updateLeaveRequest = asyncHandler(async (req, res, next) => {
   const { leaveId } = req.params;
   const isAdmin = req.user?.role === 'admin';
@@ -122,7 +136,6 @@ const updateLeaveRequest = asyncHandler(async (req, res, next) => {
     next(err);
   }
 });
-
 const deleteLeaveRequest = asyncHandler(async (req, res, next) => {
   const { leaveId } = req.params;
   const userId = req.user?._id;
@@ -157,7 +170,6 @@ const deleteLeaveRequest = asyncHandler(async (req, res, next) => {
     next(err);
   }
 });
-
 const getLeaveSummary = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const isAdmin = req.user?.role === 'admin';
@@ -251,13 +263,216 @@ const getLeaveRequestsById = asyncHandler(async (req, res, next) => {
   }
 });
 
+
+const getLeaveRequestsByEmployeId = asyncHandler(async (req, res, next) => {
+  const userId = req.user?._id; // ID of the currently authenticated user
+  const { id } = req.params; // Get employeeId from the route parameter
+
+  try {
+    const matchStage = {
+      isDeleted: false,
+      employeeId: new mongoose.Types.ObjectId(id), // Ensure employeeId is an ObjectId
+    };
+
+    const aggregationPipeline = [
+      { $match: matchStage },
+      {
+        $group: {
+          _id: "$employeeId",
+          totalWorkingDays: {
+            $sum: {
+              $cond: [
+                { $eq: ["$managerResponse", "Approved"] }, // Only count if approved
+                "$totalWorkingDays", // Use the stored totalWorkingDays
+                0 // If not approved, add 0
+              ]
+            }
+          },
+          totalHolidays: {
+            $sum: {
+              $cond: [
+                { $eq: ["$managerResponse", "Approved"] }, // Only count if approved
+                "$totalDayHoliday", // Use the stored totalDayHoliday
+                0 // If not approved, add 0
+              ]
+            }
+          },
+          leaveRequests: { $push: "$$ROOT" } // Push all leave requests into an array
+        }
+      },
+      {
+        $addFields: {
+          warning: {
+            $cond: [
+              { $gt: ["$totalWorkingDays", 20] }, // Check if totalWorkingDays exceeds 20
+              true,
+              false
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users', // Assuming employee details are in the 'users' collection
+          localField: '_id',
+          foreignField: '_id',
+          as: 'employeeDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$employeeDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $project: {
+          employeeId: '$_id',
+          fullName: '$employeeDetails.fullName',
+          email: '$employeeDetails.email',
+          avatar: '$employeeDetails.avatar',
+          totalWorkingDays: "$totalWorkingDays",
+          totalHolidays: "$totalHolidays",
+          warning: "$warning", // Directly use the calculated warning
+          toalremaingleave: { $subtract: [20, "$totalWorkingDays"] },
+
+          leaveRequests: {
+            $map: {
+              input: "$leaveRequests",
+              as: "request",
+              in: {
+                startDate: "$$request.startDate",
+                endDate: "$$request.endDate",
+                returnDate: "$$request.returnDate",
+                managerResponse: "$$request.managerResponse",
+              }
+            }
+          }
+        }
+      }
+    ];
+
+    const result = await Leave.aggregate(aggregationPipeline);
+
+    return res.status(200).json(
+      new ApiResponse(200, result, "Leave requests retrieved successfully.")
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+// const getLeaveRequestsById = asyncHandler(async (req, res, next) => {
+//   const userId = req.user?._id; 
+//   const { id } = req.params;
+
+//   try {
+//     const matchStage = {
+//       isDeleted: false,
+//       employeeId: new mongoose.Types.ObjectId(id), // Ensure employeeId is an ObjectId
+//     };
+
+//     const aggregationPipeline = [
+//       { $match: matchStage },
+//       {
+//         $group: {
+//           _id: "$employeeId",
+//           totalWorkingDays: {
+//             $sum: {
+//               $cond: [
+//                 { $eq: ["$managerResponse", "Approved"] }, // Only count if approved
+//                 { $divide: [{ $subtract: ["$endDate", "$startDate"] }, 86400000] }, // Calculate days
+//                 0 // If not approved, add 0
+//               ]
+//             }
+//           },
+//           totalHolidays: {
+//             $sum: {
+//               $cond: [
+//                 { $eq: ["$managerResponse", "Approved"] }, // Only count if approved
+//                 "$totalDayHoliday", // Add totalDayHoliday from the approved request
+//                 0 // If not approved, add 0
+//               ]
+//             }
+//           },
+//           leaveRequests: { $push: "$$ROOT" } // Push all leave requests into an array
+//         }
+//       },
+//       {
+//         $addFields: {
+//           warning: {
+//             $cond: [
+//               { $gt: ["$totalWorkingDays", 20] }, // Check if totalWorkingDays exceeds 20
+//               true,
+//               false
+//             ]
+//           }
+//         }
+//       },
+//       {
+//         $lookup: {
+//           from: 'users', // Assuming employee details are in the 'users' collection
+//           localField: '_id',
+//           foreignField: '_id',
+//           as: 'employeeDetails'
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: '$employeeDetails',
+//           preserveNullAndEmptyArrays: true
+//         }
+//       },
+//       {
+//         $project: {
+//           employeeId: '$_id',
+//           fullName: '$employeeDetails.fullName',
+//           email: '$employeeDetails.email',
+//           avatar: '$employeeDetails.avatar',
+//           totalWorkingDays: "$totalWorkingDays",
+//           totalHolidays: "$totalHolidays",
+//           warning: "$warning", // Directly use the calculated warning
+//           leaveRequests: {
+//             $map: {
+//               input: "$leaveRequests",
+//               as: "request",
+//               in: {
+//                 startDate: "$$request.startDate",
+//                 endDate: "$$request.endDate",
+//                 returnDate: "$$request.returnDate",
+//                 managerResponse: "$$request.managerResponse",
+//               }
+//             }
+//           }
+//         }
+//       }
+//     ];
+
+//     const result = await Leave.aggregate(aggregationPipeline);
+
+//     return res.status(200).json(
+//       new ApiResponse(200, result, "Leave requests retrieved successfully.")
+//     );
+//   } catch (err) {
+//     next(err);
+//   }
+// });
+
+
+
+
+
+
+
+
 export {
   addLeaveRequest,
   getLeaveRequests,
   updateLeaveRequest,
   deleteLeaveRequest,
   getLeaveSummary,
-  getLeaveRequestsById
+  getLeaveRequestsById,
+  getLeaveRequestsByEmployeId
 };
 
 
