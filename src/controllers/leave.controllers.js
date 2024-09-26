@@ -333,9 +333,8 @@ const getLeaveRequestsByEmployeId = asyncHandler(async (req, res, next) => {
           avatar: '$employeeDetails.avatar',
           totalWorkingDays: "$totalWorkingDays",
           totalHolidays: "$totalHolidays",
-          warning: "$warning", // Directly use the calculated warning
+          warning: "$warning", 
           toalremaingleave: { $subtract: [20, "$totalWorkingDays"] },
-
           leaveRequests: {
             $map: {
               input: "$leaveRequests",
