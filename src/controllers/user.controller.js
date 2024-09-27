@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
     if (req.file && req.file.path) {
       // avatarUrl = `/public/images/${req.file.filename}`;
       // avatarUrl = `${req.baseUrl}/public/images/${req.file.filename}`;
-      avatarUrl = `https//${req.get("host")}/images/${req.file.filename}`;
+      avatarUrl = `https://${req.get("host")}/images/${req.file.filename}`;
       // avatarUrl = `${config.baseUrl}/images/${req.file.filename}`;
     }
 
