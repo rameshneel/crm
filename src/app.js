@@ -59,6 +59,7 @@ import updatesRoutes from "./routes/update.routes.js";
 import productFlowRoutes from "./routes/productFlow.routes.js";
 import copywriterTrackerRoutes from "./routes/copywriterTracker.routes.js";
 import leaveRoutes from './routes/leave.routes.js';
+import salesRoutes from './routes/sales.routes.js';
 
 //routes declaration
 app.use("/api/users", userRouter);
@@ -75,6 +76,7 @@ app.use("/api/updates", updatesRoutes);
 app.use("/api/productflows", productFlowRoutes);
 app.use("/api/copywritertrackers", copywriterTrackerRoutes);
 app.use('/api/leaves', leaveRoutes);
+app.use('/api/sales', salesRoutes);
 
 // app.use((err, req, res, next) => {
 //     console.log(err.stack);
