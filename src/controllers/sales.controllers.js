@@ -290,6 +290,9 @@ const getSalesmanOrderStats = asyncHandler(async (req, res, next) => {
     }
 
     const [startDate, endDate] = getStartAndEndDates(year);
+    console.log("SATRT",startDate);
+    console.log("end",endDate);
+    
     const matchCondition = user.role === "admin" ? {} : { createdBy: req.user._id };
 
     const orders = await getOrdersWithPopulate(matchCondition, startDate, endDate);
@@ -312,12 +315,20 @@ const getSalesmanOrderStats = asyncHandler(async (req, res, next) => {
 });
 
 // Helper functions
+// function getStartAndEndDates(year) {
+//   console.log("year",year);
+  
+//   const startDate = new Date(year, 0, 1); // January 1st of the given year
+//   const endDate = new Date(year + 11, 31, 23, 59, 59, 999); // January 1st of the following year
+//   return [startDate.toISOString(), endDate.toISOString()];
+// }
 function getStartAndEndDates(year) {
+  console.log("year", year);
+  
   const startDate = new Date(year, 0, 1); // January 1st of the given year
-  const endDate = new Date(year + 1, 0, 1); // January 1st of the following year
-  return [startDate, endDate];
+  const endDate = new Date(year, 11, 31, 23, 59, 59, 999); // December 31st of the given year
+  return [startDate.toISOString(), endDate.toISOString()];
 }
-
 async function getOrdersWithPopulate(matchCondition, startDate, endDate) {
   return await Order.find({
     ...matchCondition,
@@ -329,7 +340,6 @@ async function getOrdersWithPopulate(matchCondition, startDate, endDate) {
   .populate('createdBy', 'fullName avatar')
   .exec();
 }
-
 async function calculateOrderStats(orders) {
   const orderStats = {};
 
@@ -337,7 +347,7 @@ async function calculateOrderStats(orders) {
     if (!order.createdBy) {
       continue;
     }
-
+ 
     const salesmanId = order.createdBy._id.toString();
     const orderType = order.orderType;
 
@@ -366,7 +376,6 @@ async function calculateOrderStats(orders) {
 
   return Object.values(orderStats);
 }
-
 function calculateTotalOverallResult(orderStats) {
   let totalSalesmanValue = 0;
   let totalSalesmanOrders = 0;
@@ -1343,14 +1352,7 @@ const getOrderStatsByCreator = asyncHandler(async (req, res, next) => {
 });
 
 export {
-  getSalesmanCurrentYearStats,
-  getSalesmanMonthlyStats,
   getSalesmanOrderStats,
-  getOrderStatsByCreator,
-  getThisMonthTotalSales,
-  getNewBusinessTotalSales,
-  getRenewalTotalSales,
-  getSalesMonthlyStatus,
   getMonthStatus
 };
 
