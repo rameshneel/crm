@@ -128,7 +128,7 @@ const getAllAmendment = asyncHandler(async (req, res, next) => {
     } else if (user.role === "salesman") {
       amendments = await Amendment.find({ generated_by: activeUser })
         .populate({
-          path: "customer_id",
+          path: "customer",
         })
         .populate({
           path: "generated_by",
