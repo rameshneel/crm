@@ -550,7 +550,7 @@ const getMonthStatus = asyncHandler(async (req, res) => {
     .populate({
       path: 'createdBy',
       select: 'fullName avatar',
-    });
+    }).populate({path:"customer",select:"companyName"});
 
   // Calculate total order values
   const totalOrderValue = totalOrders.reduce((acc, order) => acc + order.orderValue, 0);
