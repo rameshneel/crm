@@ -4,6 +4,7 @@ import mongoose, { isValidObjectId } from 'mongoose';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { createNotifications } from './notification.controllers.js';
 
 const addLeaveRequest = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
@@ -47,7 +48,21 @@ const addLeaveRequest = asyncHandler(async (req, res, next) => {
       totalDayHoliday,
       // Set initial response to null or as needed
     });
+// Notification Logic
+const notificationData = {
+  title: `New Leave Request from ${user.name}`, // Assuming user.name exists
+  message: `Leave Type: ${leaveType}. From ${start.toDateString()} to ${end.toDateString()}.`,
+  category: "leave_request",
+  assignedTo: user.managerId, // Assuming user.managerId contains the manager's ID
+  assignedBy: userId,
+  mentionedUsers: [], // Add any mentioned users if necessary
+  item: leaveRequest._id,
+  itemType: "LeaveRequest",
+  linkUrl: `https://yourapp.com/leaves/${leaveRequest._id}`, // Update with the correct link
+  createdBy: userId,
+};
 
+await createNotifications(notificationData);
     // Optionally, send a notification to the manager
     // notifyManager(user.managerId, leaveRequest);
 
@@ -125,7 +140,21 @@ const updateLeaveRequest = asyncHandler(async (req, res, next) => {
     if (!leaveRequest) {
       throw new ApiError(404, "Leave request not found.");
     }
+ // Notification Logic
+ const notificationData = {
+  title: `Leave Request Update for ${leaveRequest.employeeId.name}`,
+  message: `Your leave request has been ${managerResponse}. Comments: ${managerComments || "No comments provided."}`,
+  category: "leave_request_update",
+  assignedTo: leaveRequest.employeeId._id, // The employee being notified
+  assignedBy: req.user._id, // The admin updating the request
+  mentionedUsers: [], // Add any mentioned users if needed
+  item: leaveRequest._id,
+  itemType: "LeaveRequest",
+  linkUrl: `https://yourapp.com/leaves/${leaveRequest._id}`, // Update with the correct link
+  createdBy: req.user._id,
+};
 
+await createNotifications(notificationData);
     // Send notification to employee (you'd implement this)
     // notifyEmployee(leaveRequest.employeeId, leaveRequest);
 
@@ -262,8 +291,6 @@ const getLeaveRequestsById = asyncHandler(async (req, res, next) => {
     next(err);
   }
 });
-
-
 const getLeaveRequestsByEmployeId = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id; // ID of the currently authenticated user
   const { id } = req.params; // Get employeeId from the route parameter
@@ -455,14 +482,7 @@ const getLeaveRequestsByEmployeId = asyncHandler(async (req, res, next) => {
 //   } catch (err) {
 //     next(err);
 //   }
-// });
-
-
-
-
-
-
-
+// }); 
 
 export {
   addLeaveRequest,

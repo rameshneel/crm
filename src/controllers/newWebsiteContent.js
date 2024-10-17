@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { createNotifications } from "./notification.controllers.js";
 
 // const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
 //   const userId = req.user?._id;
@@ -233,13 +234,24 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
       keyWordForBlogPosts,
       createdBy: userId,
     });
+   // Notification Logic
+   const notificationData = {
+    title: "New Website Content Created",
+    message: `Website content for ${customer.companyName} has been created successfully.`,
+    category: "website_content_creation",
+    assignedTo: userId, // Notify the user who created the content
+    createdBy: userId,
+    item: newCustomer._id,
+    itemType: "NewWebsiteContent",
+    linkUrl: `https://yourapp.com/website-content/${newCustomer._id}`, // Update with correct link
+  };
 
+  await createNotifications(notificationData);
     return res.status(201).json(new ApiResponse(201, newCustomer, "Website Content created successfully"));
   } catch (error) {
     return next(error);
   }
 });
-
 
 const getAllNewWebsiteContent = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -264,7 +276,8 @@ const getAllNewWebsiteContent = asyncHandler(async (req, res, next) => {
       // select: user.role === "admin" ? "" : "fullName email avatar",
       select:"fullName email avatar",
     }).populate({
-      path: "customer"
+      path: "customer",
+      select:"companyName",
     }).sort({ createdAt: -1 });
 
     return res.status(200).json(
@@ -284,7 +297,8 @@ const getNewWebsiteContentById =asyncHandler( async (req, res,next) => {
       // select: user.role === "admin" ? "" : "fullName email avatar",
       select:"fullName email avatar",
     }).populate({
-      path: "customer"
+      path: "customer",
+      select:"companyName",
     }).sort({ createdAt: -1 });
     if (customer) {
       res
