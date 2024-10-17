@@ -124,7 +124,7 @@ const addOrder = asyncHandler(async (req, res, next) => {
         mentionedUsers: [],
         item: order._id,
         itemType: "Order",
-        linkUrl: `https://high-oaks-media-crm.vercel.app/orders/orderDetails/${order_id}`,
+        linkUrl: `https://high-oaks-media-crm.vercel.app/orders/orderDetails/${order._id}`,
         createdBy: userId,
       };
   
