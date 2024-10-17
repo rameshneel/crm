@@ -15,6 +15,7 @@ const __dirname = path.dirname(__filename);
 import sendInvoiceEmail from "../utils/sendInvoiceEmail.js";
 import Customer from "../models/customer.model.js";
 import Update from "../models/update.model.js";
+import { createNotifications } from "./notification.controllers.js";
 
 const readFileAsync = promisify(fs.readFile);
 
@@ -26,7 +27,11 @@ const addOrder = asyncHandler(async (req, res, next) => {
   if (!isValidObjectId(customer_id)) {
     return next(new ApiError(400, "Invalid Customer ID"));
   }
+  const customer = await Customer.findById(customer_id);
 
+  if (!customer) {
+    throw new ApiError(404, "Customer not found");
+  }
   const {
     dateOfOrder,
     buildingAddress,
@@ -108,7 +113,23 @@ const addOrder = asyncHandler(async (req, res, next) => {
     });
 
     await order.save();
-    console.log("save");
+
+    if (createdBy) {
+      const notificationData = {
+        title: ` ${customer.companyName}`,
+        message: `You were assigned an order: ${customer.companyName}.`,
+        category: "assigned_to_me",
+        assignedTo:createdBy,
+        assignedBy: userId,
+        mentionedUsers: [],
+        item: order._id,
+        itemType: "Order",
+        linkUrl: `https://high-oaks-media-crm.vercel.app/orders/orderDetails/${order_id}`,
+        createdBy: userId,
+      };
+  
+      await createNotifications(notificationData); 
+    }
     res
       .status(201)
       .json(new ApiResponse(201, order, "Order created successfully"));
@@ -158,7 +179,13 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       return next(new ApiError(404, "User not found"));
     }
 
-    const order = await Order.findById(order_id);
+    const order = await Order.findById(order_id).populate({
+      path: "customer",
+      select:"companyName",
+    });
+    console.log("order,ramesh",order);
+    
+    
     if (!order) {
       return next(new ApiError(404, "Order not found"));
     }
@@ -207,42 +234,6 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       }
     }
 
-    // let avatarurl = "";
-    // console.log(avatarurl);
-    // const avatarLocalPat = req.file.customerSignature;
-    // console.log("HYHHHYH",avatarLocalPat);
-
-    // if (req.file && req.file.path) {
-
-    //   console.log(avatarLocalPath);
-
-    //   try {
-    //     const formData = new FormData();
-    //     formData.append("file", fs.createReadStream(avatarLocalPath));
-    //     const apiURL =
-    //       "https://crm.neelnetworks.org/public/file_upload/api.php";
-    //     const apiResponse = await axios.post(apiURL, formData, {
-    //       headers: {
-    //         ...formData.getHeaders(),
-    //       },
-    //     });
-    //     console.log(apiResponse.data);
-    //     avatarurl = apiResponse.data?.img_upload_path;
-    //     if (!avatarurl) {
-    //       throw new Error("img_upload_path not found in API response");
-    //     }
-
-    //     fs.unlink(avatarLocalPath, (err) => {
-    //       if (err) {
-    //         console.error("Error removing avatar file:", err.message);
-    //       } else {
-    //         console.log("Avatar file removed successfully");
-    //       }
-    //     });
-    //   } catch (error) {
-    //     console.error("Error uploading avatar:", error.message);
-    //   }
-    // }
 
     const updateData = {
       orderType,
@@ -280,6 +271,52 @@ const updateOrder = asyncHandler(async (req, res, next) => {
       new: true,
       runValidators: true,
     });
+    console.log("updATE order",updateOrder);
+  
+     // Handle mentions and notifications
+
+     if (createdBy) {
+      const notificationData = {
+        title: `New Order Assigned: ${order.customer.companyName}`,
+        message: `You have been assigned a new order from ${order.customer.companyName}. Please review the details!`,
+        category: "assigned_to_me",
+        assignedTo: createdBy,
+        assignedBy: userId,
+        mentionedUsers: [],
+        item: order._id,
+        itemType: "Order",
+        linkUrl: `https://high-oaks-media-crm.vercel.app/orders/orderDetails/${order_id}`,
+        createdBy: userId,
+      };
+    
+      await createNotifications(notificationData); 
+    }
+    
+  //    if (Array.isArray(createdBy) && createdBy.length > 0) {
+  //     try {
+  //     const mentionedUsers = await User.find({ _id: { $in: createdBy } });
+  
+  //     for (let mentionedUser  of mentionedUsers) {
+  //       const notification = new Notification({
+  //         title: `Mentioned in ${orderType}`,
+  //         message: `You were  assgin order  an order }.`,
+  //         category: "assigned_to_me",
+  //         isRead: false,
+  //         assignedTo: mentionedUser ._id,
+  //         assignedBy: userId,
+  //         mentionedUsers: [],
+  //         item: order_id,
+  //         itemType: "Order",
+  //         linkUrl: `https://high-oaks-media-crm.vercel.app/orders/update/${order_id}`,
+  //       });
+  
+  //       await notification.save();
+  //     }
+  //   } catch (error) {
+  //     console.error('Error creating notifications:', error);
+  //     return next(new ApiError(500, "Failed to create notifications"));
+  //   }
+  // }
 
     if (!updatedOrder) {
       return next(new ApiError(404, "Order not found after update"));
@@ -330,116 +367,116 @@ const deleteOrder = asyncHandler(async (req, res, next) => {
   }
 });
 
-// const getAllOrders = asyncHandler(async (req, res, next) => {
-//   try {
-//     const user_id = req.user?._id;
-//     const user = await User.findById(user_id);
+const getAllOrders = asyncHandler(async (req, res, next) => {
+  try {
+    const user_id = req.user?._id;
+    const user = await User.findById(user_id);
 
-//     if (!user) {
-//       return next(new ApiError(404, "User not found"));
-//     }
+    if (!user) {
+      return next(new ApiError(404, "User not found"));
+    }
 
-//     let page = parseInt(req.query.page, 10);
-//     let limit = parseInt(req.query.limit, 10);
-//     let skip = (page - 1) * limit;
+    let page = parseInt(req.query.page, 10);
+    let limit = parseInt(req.query.limit, 10);
+    let skip = (page - 1) * limit;
 
-//     let orders;
-//     let totalSums;
-//     let totalCount;
+    let orders;
+    let totalSums;
+    let totalCount;
 
-//     if (user.role === "admin") {
-//       totalCount = await Order.countDocuments();
-//       orders = await Order.find()
-//         .populate({
-//           path: "customer",
-//           // select: "companyName customerEmail",
-//         })
-//         .populate({
-//           path: "createdBy",
-//           select: "fullName avatar",
-//         })
-//         .skip(skip)
-//         .limit(limit)
-//         .sort({ createdAt: -1 });
+    if (user.role === "admin") {
+      totalCount = await Order.countDocuments();
+      orders = await Order.find()
+        .populate({
+          path: "customer",
+          // select: "companyName customerEmail",
+        })
+        .populate({
+          path: "createdBy",
+          select: "fullName avatar",
+        })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
 
-//       totalSums = await Order.aggregate([
-//         {
-//           $group: {
-//             _id: null,
-//             totalIncrease: { $sum: "$increase" },
-//             totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
-//             totalOrderValue: { $sum: "$orderValue" },
-//             totalDeposit: { $sum: "$deposit" },
-//             totalDdMonthly: { $sum: "$DdMonthly" },
-//             totalRenewalValue: { $sum: "$renewalValue" },
-//           },
-//         },
-//       ]);
-//     } else if (user.role === "salesman") {
-//       totalCount = await Order.countDocuments({ createdBy: user_id });
-//       orders = await Order.find({ createdBy: user_id })
-//         .populate({
-//           path: "customer",
-//           // select: "companyName customerEmail",
-//         })
-//         .populate({
-//           path: "createdBy",
-//           select: "fullName avatar",
-//         })
-//         .skip(skip)
-//         .limit(limit)
-//         .sort({ createdAt: -1 });
+      totalSums = await Order.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalIncrease: { $sum: "$increase" },
+            totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
+            totalOrderValue: { $sum: "$orderValue" },
+            totalDeposit: { $sum: "$deposit" },
+            totalDdMonthly: { $sum: "$DdMonthly" },
+            totalRenewalValue: { $sum: "$renewalValue" },
+          },
+        },
+      ]);
+    } else if (user.role === "salesman") {
+      totalCount = await Order.countDocuments({ createdBy: user_id });
+      orders = await Order.find({ createdBy: user_id })
+        .populate({
+          path: "customer",
+          // select: "companyName customerEmail",
+        })
+        .populate({
+          path: "createdBy",
+          select: "fullName avatar",
+        })
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 });
 
-//       totalSums = await Order.aggregate([
-//         {
-//           $match: { createdBy: user_id },
-//         },
-//         {
-//           $group: {
-//             _id: null,
-//             totalIncrease: { $sum: "$increase" },
-//             totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
-//             totalOrderValue: { $sum: "$orderValue" },
-//             totalDeposit: { $sum: "$deposit" },
-//             totalDdMonthly: { $sum: "$DdMonthly" },
-//             totalRenewalValue: { $sum: "$renewalValue" },
-//           },
-//         },
-//       ]);
-//     } else {
-//       // Handle invalid role case
-//       return next(new ApiError(403, "Unauthorized access"));
-//     }
+      totalSums = await Order.aggregate([
+        {
+          $match: { createdBy: user_id },
+        },
+        {
+          $group: {
+            _id: null,
+            totalIncrease: { $sum: "$increase" },
+            totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
+            totalOrderValue: { $sum: "$orderValue" },
+            totalDeposit: { $sum: "$deposit" },
+            totalDdMonthly: { $sum: "$DdMonthly" },
+            totalRenewalValue: { $sum: "$renewalValue" },
+          },
+        },
+      ]);
+    } else {
+      // Handle invalid role case
+      return next(new ApiError(403, "Unauthorized access"));
+    }
 
-//     const totals = totalSums[0] || {
-//       totalIncrease: 0,
-//       totalExpected2024OrderValue: 0,
-//       totalOrderValue: 0,
-//       totalDeposit: 0,
-//       totalDdMonthly: 0,
-//       totalRenewalValue: 0,
-//     };
+    const totals = totalSums[0] || {
+      totalIncrease: 0,
+      totalExpected2024OrderValue: 0,
+      totalOrderValue: 0,
+      totalDeposit: 0,
+      totalDdMonthly: 0,
+      totalRenewalValue: 0,
+    };
 
-//     const totalPages = Math.ceil(totalCount / limit);
+    const totalPages = Math.ceil(totalCount / limit);
 
-//     return res.status(200).json(
-//       new ApiResponse(
-//         200,
-//         {
-//           orders,
-//           totals,
-//           totalPages,
-//           totalCount,
-//           currentPage: page,
-//           pageSize: limit,
-//         },
-//         "Orders and their totals retrieved successfully"
-//       )
-//     );
-//   } catch (error) {
-//     return next(error);
-//   }
-// });
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          orders,
+          totals,
+          totalPages,
+          totalCount,
+          currentPage: page,
+          pageSize: limit,
+        },
+        "Orders and their totals retrieved successfully"
+      )
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
 // const getAllOrders = asyncHandler(async (req, res, next) => {
 //   try {
 //     const user_id = req.user?._id;
@@ -561,126 +598,125 @@ const deleteOrder = asyncHandler(async (req, res, next) => {
 // });
 
 // generateInvoicePDF.js
-const getAllOrders = asyncHandler(async (req, res, next) => {
-  try {
-    const user_id = req.user?._id;
-    const user = await User.findById(user_id);
+// const getAllOrders = asyncHandler(async (req, res, next) => {
+//   try {
+//     const user_id = req.user?._id;
+//     const user = await User.findById(user_id);
 
-    if (!user) {
-      return next(new ApiError(404, "User not found"));
-    }
+//     if (!user) {
+//       return next(new ApiError(404, "User not found"));
+//     }
 
-    // let page = parseInt(req.query.page, 10) || 1;
-    // let limit = parseInt(req.query.limit, 10) || 10;
-    // let skip = (page - 1) * limit;
+//     // let page = parseInt(req.query.page, 10) || 1;
+//     // let limit = parseInt(req.query.limit, 10) || 10;
+//     // let skip = (page - 1) * limit;
 
-    let year = parseInt(req.query.year, 10);
-    let query = {};
+//     let year = parseInt(req.query.year, 10);
+//     let query = {};
 
-    if (year) {
-      query.dateOfOrder = {
-        $gte: new Date(`${year}-01-01T00:00:00.000Z`),
-        $lt: new Date(`${year + 1}-01-01T00:00:00.000Z`)
-      };
-    }
+//     if (year) {
+//       query.dateOfOrder = {
+//         $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+//         $lt: new Date(`${year}-12-31T00:00:00.000Z`)
+//       };
+//     }
 
-    let orders;
-    let totalSums;
-    let totalCount;
+//     let orders;
+//     let totalSums;
+//     let totalCount;
 
-    if (user.role === "admin") {
-      totalCount = await Order.countDocuments(query);
-      orders = await Order.find(query)
-        .populate({
-          path: "customer",
-          // select: "companyName customerEmail",
-        })
-        .populate({
-          path: "createdBy",
-          select: "fullName avatar",
-        })
-        // .skip(skip)
-        // .limit(limit)
-        .sort({ createdAt: -1 });
+//     if (user.role === "admin") {
+//       totalCount = await Order.countDocuments(query);
+//       orders = await Order.find(query)
+//         .populate({
+//           path: "customer",
+//           // select: "companyName customerEmail",
+//         })
+//         .populate({
+//           path: "createdBy",
+//           select: "fullName avatar",
+//         })
+//         // .skip(skip)
+//         // .limit(limit)
+//         .sort({ createdAt: -1 });
 
-      totalSums = await Order.aggregate([
-        { $match: query },
-        {
-          $group: {
-            _id: null,
-            totalIncrease: { $sum: "$increase" },
-            totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
-            totalOrderValue: { $sum: "$orderValue" },
-            totalDeposit: { $sum: "$deposit" },
-            totalDdMonthly: { $sum: "$DdMonthly" },
-            totalRenewalValue: { $sum: "$renewalValue" },
-          },
-        },
-      ]);
-    } else if (user.role === "salesman") {
-      query.createdBy = user_id;
-      totalCount = await Order.countDocuments(query);
-      orders = await Order.find(query)
-        .populate({
-          path: "customer",
-          // select: "companyName customerEmail",
-        })
-        .populate({
-          path: "createdBy",
-          select: "fullName avatar",
-        })
-        // .skip(skip)
-        // .limit(limit)
-        .sort({ createdAt: -1 });
+//       totalSums = await Order.aggregate([
+//         { $match: query },
+//         {
+//           $group: {
+//             _id: null,
+//             totalIncrease: { $sum: "$increase" },
+//             totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
+//             totalOrderValue: { $sum: "$orderValue" },
+//             totalDeposit: { $sum: "$deposit" },
+//             totalDdMonthly: { $sum: "$DdMonthly" },
+//             totalRenewalValue: { $sum: "$renewalValue" },
+//           },
+//         },
+//       ]);
+//     } else if (user.role === "salesman") {
+//       query.createdBy = user_id;
+//       totalCount = await Order.countDocuments(query);
+//       orders = await Order.find(query)
+//         .populate({
+//           path: "customer",
+//           // select: "companyName customerEmail",
+//         })
+//         .populate({
+//           path: "createdBy",
+//           select: "fullName avatar",
+//         })
+//         // .skip(skip)
+//         // .limit(limit)
+//         .sort({ createdAt: -1 });
 
-      totalSums = await Order.aggregate([
-        { $match: query },
-        {
-          $group: {
-            _id: null,
-            totalIncrease: { $sum: "$increase" },
-            totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
-            totalOrderValue: { $sum: "$orderValue" },
-            totalDeposit: { $sum: "$deposit" },
-            totalDdMonthly: { $sum: "$DdMonthly" },
-            totalRenewalValue: { $sum: "$renewalValue" },
-          },
-        },
-      ]);
-    } else {
-      return next(new ApiError(403, "Unauthorized access"));
-    }
+//       totalSums = await Order.aggregate([
+//         { $match: query },
+//         {
+//           $group: {
+//             _id: null,
+//             totalIncrease: { $sum: "$increase" },
+//             totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
+//             totalOrderValue: { $sum: "$orderValue" },
+//             totalDeposit: { $sum: "$deposit" },
+//             totalDdMonthly: { $sum: "$DdMonthly" },
+//             totalRenewalValue: { $sum: "$renewalValue" },
+//           },
+//         },
+//       ]);
+//     } else {
+//       return next(new ApiError(403, "Unauthorized access"));
+//     }
 
-    const totals = totalSums[0] || {
-      totalIncrease: 0,
-      totalExpected2024OrderValue: 0,
-      totalOrderValue: 0,
-      totalDeposit: 0,
-      totalDdMonthly: 0,
-      totalRenewalValue: 0,
-    };
+//     const totals = totalSums[0] || {
+//       totalIncrease: 0,
+//       totalExpected2024OrderValue: 0,
+//       totalOrderValue: 0,
+//       totalDeposit: 0,
+//       totalDdMonthly: 0,
+//       totalRenewalValue: 0,
+//     };
 
-    // const totalPages = Math.ceil(totalCount / limit);
+//     // const totalPages = Math.ceil(totalCount / limit);
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          orders,
-          totals,
-          // totalPages,
-          totalCount,
-          // currentPage: page,
-          // pageSize: limit,
-        },
-        "Orders and their totals retrieved successfully"
-      )
-    );
-  } catch (error) {
-    return next(error);
-  }
-});
-
+//     return res.status(200).json(
+//       new ApiResponse(
+//         200,
+//         {
+//           orders,
+//           totals,
+//           // totalPages,
+//           totalCount,
+//           // currentPage: page,
+//           // pageSize: limit,
+//         },
+//         "Orders and their totals retrieved successfully"
+//       )
+//     );
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
 
 const createInvoicePDF = asyncHandler(async (req, res, next) => {
   const { orderId } = req.params;
@@ -1510,6 +1546,151 @@ const generateEmailContent = (
   `;
 };
 
+//create Renewals  controllers
+// const getAllOrders = asyncHandler(async (req, res, next) => {
+//   try {
+//     const user_id = req.user?._id;
+//     const user = await User.findById(user_id);
+
+//     if (!user) {
+//       return next(new ApiError(404, "User not found"));
+//     }
+
+//     let year = parseInt(req.query.year, 10);
+//     let query = {};
+
+//     if (year) {
+//       query.dateOfOrder = {
+//         $gte: new Date(`${year}-01-01T00:00:00.000Z`),
+//         $lt: new Date(`${year}-12-31T00:00:00.000Z`),
+//       };
+//     }
+
+//     let orders;
+//     let totalSums;
+//     let totalCount;
+//     let salesmanSummary = [];
+
+//     if (user.role === "admin") {
+//       // Admin: Get orders grouped by salesman
+//       totalCount = await Order.countDocuments(query);
+
+//       // Group by salesman to get total orders and total order value per salesman
+//       salesmanSummary = await Order.aggregate([
+//         { $match: query },
+//         {
+//           $group: {
+//             _id: "$createdBy", // Group by salesman (createdBy field)
+//             totalOrders: { $sum: 1 }, // Count orders
+//             totalOrderValue: { $sum: "$orderValue" }, // Sum of order values
+//           },
+//         },
+//         {
+//           $lookup: {
+//             from: "users", // Join with the User collection to get salesman details
+//             localField: "_id",
+//             foreignField: "_id",
+//             as: "salesmanDetails",
+//           },
+//         },
+//         {
+//           $unwind: "$salesmanDetails", // Unwind the joined salesman details
+//         },
+//         {
+//           $project: {
+//             _id: 0,
+//             salesmanId: "$salesmanDetails._id",
+//             salesmanName: "$salesmanDetails.fullName",
+//             totalOrders: 1,
+//             totalOrderValue: 1,
+//           },
+//         },
+//       ]);
+
+//       orders = await Order.find(query)
+//         .populate({
+//           path: "customer",
+//         })
+//         .populate({
+//           path: "createdBy",
+//           select: "fullName avatar",
+//         })
+//         .sort({ createdAt: -1 });
+
+//       totalSums = await Order.aggregate([
+//         { $match: query },
+//         {
+//           $group: {
+//             _id: null,
+//             totalIncrease: { $sum: "$increase" },
+//             totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
+//             totalOrderValue: { $sum: "$orderValue" },
+//             totalDeposit: { $sum: "$deposit" },
+//             totalDdMonthly: { $sum: "$DdMonthly" },
+//             totalRenewalValue: { $sum: "$renewalValue" },
+//           },
+//         },
+//       ]);
+//     } else if (user.role === "salesman") {
+//       // Salesman can only see their own orders
+//       query.createdBy = user_id;
+
+//       totalCount = await Order.countDocuments(query);
+//       orders = await Order.find(query)
+//         .populate({
+//           path: "customer",
+//         })
+//         .populate({
+//           path: "createdBy",
+//           select: "fullName avatar",
+//         })
+//         .sort({ createdAt: -1 });
+
+//       totalSums = await Order.aggregate([
+//         { $match: query },
+//         {
+//           $group: {
+//             _id: null,
+//             totalIncrease: { $sum: "$increase" },
+//             totalExpected2024OrderValue: { $sum: "$expected2024OrderValue" },
+//             totalOrderValue: { $sum: "$orderValue" },
+//             totalDeposit: { $sum: "$deposit" },
+//             totalDdMonthly: { $sum: "$DdMonthly" },
+//             totalRenewalValue: { $sum: "$renewalValue" },
+//           },
+//         },
+//       ]);
+//     } else {
+//       return next(new ApiError(403, "Unauthorized access"));
+//     }
+
+//     const totals = totalSums[0] || {
+//       totalIncrease: 0,
+//       totalExpected2024OrderValue: 0,
+//       totalOrderValue: 0,
+//       totalDeposit: 0,
+//       totalDdMonthly: 0,
+//       totalRenewalValue: 0,
+//     };
+
+//     return res.status(200).json(
+//       new ApiResponse(
+//         200,
+//         {
+//           orders,
+//           totals,
+//           salesmanSummary, // Admin summary of orders per salesman
+//           totalCount,
+//         },
+//         "Orders, totals, and salesman summary retrieved successfully"
+//       )
+//     );
+//   } catch (error) {
+//     return next(error);
+//   }
+// });
+
+
 export {
   addOrder,
   getAllOrders,
@@ -1700,3 +1881,50 @@ export {
 //     next(error);
 //   }
 // });
+
+
+
+
+
+
+
+
+
+
+
+    // let avatarurl = "";
+    // console.log(avatarurl);
+    // const avatarLocalPat = req.file.customerSignature;
+    // console.log("HYHHHYH",avatarLocalPat);
+
+    // if (req.file && req.file.path) {
+
+    //   console.log(avatarLocalPath);
+
+    //   try {
+    //     const formData = new FormData();
+    //     formData.append("file", fs.createReadStream(avatarLocalPath));
+    //     const apiURL =
+    //       "https://crm.neelnetworks.org/public/file_upload/api.php";
+    //     const apiResponse = await axios.post(apiURL, formData, {
+    //       headers: {
+    //         ...formData.getHeaders(),
+    //       },
+    //     });
+    //     console.log(apiResponse.data);
+    //     avatarurl = apiResponse.data?.img_upload_path;
+    //     if (!avatarurl) {
+    //       throw new Error("img_upload_path not found in API response");
+    //     }
+
+    //     fs.unlink(avatarLocalPath, (err) => {
+    //       if (err) {
+    //         console.error("Error removing avatar file:", err.message);
+    //       } else {
+    //         console.log("Avatar file removed successfully");
+    //       }
+    //     });
+    //   } catch (error) {
+    //     console.error("Error uploading avatar:", error.message);
+    //   }
+    // }

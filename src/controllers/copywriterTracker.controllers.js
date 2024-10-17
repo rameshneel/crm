@@ -3,6 +3,7 @@ import { isValidObjectId } from "mongoose";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import Customer from "../models/customer.model.js";
+import { createNotifications } from "./notification.controllers.js";
 
 export const createCopywriterTracker = async (req, res, next) => {
   const { customerId } = req.params;
@@ -51,6 +52,22 @@ export const createCopywriterTracker = async (req, res, next) => {
 
   try {
     const savedCopywriterTracker = await newCopywriterTracker.save();
+    // Notification Logic
+    const notificationData = {
+      title: `New Copywriter Tracker Created for ${customer.companyName}`,
+      message: `A new tracker has been created with status "${status}". Please review the details.`,
+      category: "assigned_to_me",
+      assignedTo: userId, // You can customize this to notify other users as well
+      assignedBy: userId,
+      mentionedUsers: [],
+      item: savedCopywriterTracker._id,
+      itemType: "CopywriterTracker",
+      linkUrl: `https://yourapp.com/copywriter-trackers/${savedCopywriterTracker._id}`, // Update with the correct link
+      createdBy: userId,
+    };
+
+    await createNotifications(notificationData);
+
     res
       .status(201)
       .json(
@@ -127,6 +144,21 @@ export const updateCopywriterTracker = async (req, res, next) => {
 
   try {
     const updatedTracker = await tracker.save();
+    // Notification Logic
+    const notificationData = {
+      title: `Copywriter Tracker Updated for Customer`,
+      message: `The tracker for customer has been updated. New status: "${updatedTracker.status}". Please check the details.`,
+      category: "assigned_to_me",
+      assignedTo: tracker.createdBy, // Notify the creator of the tracker
+      assignedBy: userId,
+      mentionedUsers: [], // You can add mentioned users here
+      item: updatedTracker._id,
+      itemType: "CopywriterTracker",
+      linkUrl: `https://yourapp.com/copywriter-trackers/${updatedTracker._id}`, // Update with the correct link
+      createdBy: userId,
+    };
+
+    await createNotifications(notificationData);
     res
       .status(200)
       .json(

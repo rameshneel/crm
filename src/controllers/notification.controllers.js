@@ -4,7 +4,28 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+export const createNotifications = async (data) => {
+  try {
+    const notification = new Notification({
+      title: data.title,
+      message: data.message,
+      category: data.category,
+      assignedTo: data.assignedTo,
+      assignedBy: data.assignedBy,
+      mentionedUsers: data.mentionedUsers,
+      item: data.item,
+      itemType: data.itemType,
+      linkUrl: data.linkUrl,
+      createdBy: data.createdBy,
+    });
 
+    await notification.save();
+    console.log("Notification created:", notification);
+  } catch (error) {
+    console.error("Error creating notification:", error);
+    throw new Error("Failed to create notification");
+  }
+};
 // Reusable function to populate fields
 const populateFields = () => [
   { path: "mentionedUsers", select: "_id fullName email avatar" },
@@ -192,9 +213,9 @@ export const getNotificationById = asyncHandler(async (req, res, next) => {
       return res.status(404).json(new ApiResponse(404, null, "Notification not found."));
     }
 
-    if (!notification.assignedTo.equals(userId) && !notification.mentionedUsers.includes(userId)) {
-      return res.status(403).json(new ApiResponse(403, null, "Access denied to this notification."));
-    }
+    // if (!notification.assignedTo.equals(userId) && !notification.mentionedUsers.includes(userId)) {
+    //   return res.status(403).json(new ApiResponse(403, null, "Access denied to this notification."));
+    // }
 
     return res.status(200).json(new ApiResponse(200, notification, "Notification fetched successfully."));
   } catch (error) {

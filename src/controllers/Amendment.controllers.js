@@ -5,6 +5,7 @@ import { isValidObjectId } from "mongoose";
 import Amendment from "../models/amendment.model.js";
 import { User } from "../models/user.model.js";
 import Customer from "../models/customer.model.js";
+import { createNotifications } from "./notification.controllers.js";
 
 // const addAmendment = asyncHandler(async (req, res, next) => {
 //   const { customerId } = req.params;
@@ -90,7 +91,22 @@ const addAmendment = asyncHandler(async (req, res, next) => {
         customer: customerId,
         generated_by:generated_by|| userId,
       });
-
+      if (generated_by) { // Assuming generated_by is the one who should receive the notification
+        const notificationData = {
+          title: `New Amendment Created for Customer: ${customerId}`,
+          message: `A new amendment has been added for the customer with ID: ${customerId}. Please review the amendment details!`,
+          category: "assigned_to_me",
+          assignedTo: generated_by, // Use generated_by for assignedTo
+          assignedBy: userId,
+          mentionedUsers: [],
+          item: appointment._id, // Use the created amendment ID
+          itemType: "Amendment", // Correct item type
+          linkUrl: `https://high-oaks-media-crm.vercel.app/customers/amendmentDetails/${appointment._id}`,
+          createdBy: userId,
+        };
+      
+        await createNotifications(notificationData); 
+      } 
       return res
         .status(201)
         .json(
@@ -225,7 +241,22 @@ const updateAmendment = asyncHandler(async (req, res) => {
   if (!amendment) {
     throw new ApiError(404, "Amendment not found");
   }
-
+// Notification Logic
+if (generated_by) {
+  const notificationData = {
+    title: `Amendment Updated: ${amendmentId}`,
+    message: `The amendment with ID: ${amendmentId} has been successfully updated. Please review the changes!`,
+    category: "assigned_to_me",
+    assignedTo: generated_by,
+    assignedBy: req.user._id,
+    mentionedUsers: [],
+    item: amendment._id, // Use the updated amendment ID
+    itemType: "Amendment", // Correct item type
+    linkUrl: `https://high-oaks-media-crm.vercel.app/amendments/${amendmentId}`,
+    createdBy: req.user._id,
+  };
+  await createNotifications(notificationData); 
+}
   return res
     .status(200)
     .json(new ApiResponse(200, amendment, "Amendment updated successfully"));

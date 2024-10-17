@@ -24,12 +24,12 @@ const notificationSchema = new Schema({
   assignedTo: {
     type: Schema.Types.ObjectId,
     ref: "User",
-    required: true, 
+    // required: true, 
   },
   assignedBy: {
     type: Schema.Types.ObjectId,
     ref: "User",
-    required: true,  
+    // required: true,  
   },
   mentionedUsers: [
     {
@@ -45,7 +45,7 @@ const notificationSchema = new Schema({
   itemType: {
     type: String,
     required: true,
-    enum: ["Customer", "Order", "Lead", "Amendment", "Update", "Reply","NewWebsiteContent"],
+    enum: ["Customer", "Order", "Lead", "Amendment", "Update", "Reply","NewWebsiteContent","Appointment"],
   },
   linkUrl: {
     type: String, 
@@ -56,6 +56,10 @@ const notificationSchema = new Schema({
     type: Date,
     default: Date.now,
     index: true, 
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
   },
 }, {
   timestamps: true 

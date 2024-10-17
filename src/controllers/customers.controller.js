@@ -7,6 +7,7 @@ import mongoose, { isValidObjectId } from "mongoose";
 import Notification from "../models/notification.model.js";
 import sendEmailForMentions from "../utils/sendEmailForMentions.js";
 import Update from "../models/update.model.js";
+import { createNotifications } from "./notification.controllers.js";
 
 const createCustomer = asyncHandler(async (req, res, next) => {
   const activeUser = req.user?._id;
@@ -62,9 +63,24 @@ const createCustomer = asyncHandler(async (req, res, next) => {
       ordersRenewals,
       createdBy: createdBy || activeUser,
     });
-
     const createdCustomer = await newCustomer.save();
-
+    if (createdBy) {
+      const notificationData = {
+        title: `New Customer Created: ${newCustomer.companyName}`,
+        message: `A new customer has been registered: ${newCustomer.companyName}. Please check the details and take necessary actions!`,
+        category: "assigned_to_me",
+        assignedTo: createdBy,
+        assignedBy: activeUser,
+        mentionedUsers: [],
+        item: createdCustomer._id, // Update to use the created customer ID
+        itemType: "Customer", // Change to reflect the correct item type
+        linkUrl: `https://high-oaks-media-crm.vercel.app/customers/customerDetails/${newCustomer._id}`,
+        createdBy: activeUser,
+      };
+    
+      await createNotifications(notificationData); 
+    }
+    
     return res
       .status(201)
       .json(
@@ -323,7 +339,22 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
     if (!updatedCustomer) {
       throw new ApiError(404, "Customer not found");
     }
-
+    if (createdBy) {
+      const notificationData = {
+        title: `Customer Details Updated: ${updatedCustomer.companyName}`,
+        message: `The details for the customer ${updatedCustomer.companyName} have been successfully updated. Please review the changes!`,
+        category: "assigned_to_me",
+        assignedTo: createdBy,
+        assignedBy: activeUser,
+        mentionedUsers: [],
+        item: updatedCustomer._id,
+        itemType: "Customer", 
+        linkUrl: `https://high-oaks-media-crm.vercel.app/customers/customerDetails/${updatedCustomer._id}`,
+        createdBy: activeUser,
+      };
+    
+      await createNotifications(notificationData); 
+    }
     return res
       .status(200)
       .json(

@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { isValidObjectId } from "mongoose";
 import Appointment from "../models/appointement.model.js";
 import { User } from "../models/user.model.js";
+import { createNotifications } from "./notification.controllers.js";
 
 const addAppointment = asyncHandler(async (req, res, next) => {
   const { lead_id } = req.params;
@@ -17,26 +18,32 @@ const addAppointment = asyncHandler(async (req, res, next) => {
     const datetimes = d1.toLocaleDateString();
     console.log("date:", datetimes);
     console.log("time", time);
-    
+
     const timeParts = time.split(":");
     console.log(timeParts);
-    
+
     // Create a combined date-time string in ISO format
     const d = `${date}T${time}:00.000+00:00`;
     console.log(d);
-    
+
     // Convert the provided date and time to a Date object
     const appointmentDateTime = new Date(d);
-    
+
     // Check if the provided date and time are in the past
     if (appointmentDateTime < new Date()) {
       return res
         .status(400)
-        .json(new ApiResponse(400, null, "Cannot book an appointment for a past date and time"));
+        .json(
+          new ApiResponse(
+            400,
+            null,
+            "Cannot book an appointment for a past date and time"
+          )
+        );
     }
-    
+
     const existingAppointment = await Appointment.findOne({ time, date: d });
-    
+
     if (existingAppointment) {
       return res
         .status(400)
@@ -57,7 +64,21 @@ const addAppointment = asyncHandler(async (req, res, next) => {
       dummydate: d1,
       createdBy: user,
     });
+    // Notification Logic
+    const notificationData = {
+      title: `New Appointment Scheduled for Lead: ${lead_id}`,
+      message: `A new appointment has been scheduled for the lead with ID: ${lead_id} on ${date} at ${time}. Please check the details!`,
+      category: "assigned_to_me",
+      assignedTo: user, // Assuming the creator of the appointment should receive the notification
+      assignedBy: user,
+      mentionedUsers: [],
+      item: appointment._id, // Use the created appointment ID
+      itemType: "Appointment", // Correct item type
+      linkUrl: `https://high-oaks-media-crm.vercel.app/appointments/${appointment._id}`,
+      createdBy: user,
+    };
 
+    await createNotifications(notificationData);
     return res
       .status(201)
       .json(
@@ -96,7 +117,7 @@ const deleteAppointment = asyncHandler(async (req, res, next) => {
 //   if (!isValidObjectId(appointment_id)) {
 //     throw new ApiError(400, "Invalid appointment_id");
 //   }
-  
+
 //   const app = await Appointment.findById(appointment_id);
 //   if (!app) {
 //     throw new ApiError(400, "appointment_id not fond");
@@ -176,7 +197,9 @@ const updateAppointment = asyncHandler(async (req, res, next) => {
 
   // Validate input fields
   if (!title || !content || !time || !date) {
-    return next(new ApiError(400, "All fields (title, content, time, date) are required"));
+    return next(
+      new ApiError(400, "All fields (title, content, time, date) are required")
+    );
   }
 
   // Create a combined date-time object
@@ -184,18 +207,34 @@ const updateAppointment = asyncHandler(async (req, res, next) => {
 
   // Check if the provided date and time are in the past
   if (newDateTime < new Date()) {
-    return res.status(400).json(new ApiResponse(400, null, "Cannot update the appointment to a past date and time"));
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(
+          400,
+          null,
+          "Cannot update the appointment to a past date and time"
+        )
+      );
   }
 
   // Check if an appointment exists with the same date and time, excluding the current one
   const existingAppointment = await Appointment.findOne({
     time,
     dummydate: date,
-    _id: { $ne: appointment_id }  // Exclude the current appointment from the search
+    _id: { $ne: appointment_id }, // Exclude the current appointment from the search
   });
 
   if (existingAppointment) {
-    return res.status(400).json(new ApiResponse(400, null, "Another appointment already exists at the updated time and date"));
+    return res
+      .status(400)
+      .json(
+        new ApiResponse(
+          400,
+          null,
+          "Another appointment already exists at the updated time and date"
+        )
+      );
   }
 
   // Prepare the updated appointment data
@@ -207,13 +246,42 @@ const updateAppointment = asyncHandler(async (req, res, next) => {
   };
 
   // Update the appointment
-  const updatedAppointment = await Appointment.findByIdAndUpdate(appointment_id, updatedData, { new: true });
+  const updatedAppointment = await Appointment.findByIdAndUpdate(
+    appointment_id,
+    updatedData,
+    { new: true }
+  );
 
   if (!updatedAppointment) {
-    return res.status(404).json(new ApiResponse(404, null, "Appointment not found after update"));
+    return res
+      .status(404)
+      .json(new ApiResponse(404, null, "Appointment not found after update"));
   }
+    // Notification Logic
+    const notificationData = {
+      title: `Appointment Updated: ${appointment.title}`,
+      message: `The appointment titled "${appointment.title}" has been updated successfully. Please check the new details!`,
+      category: "assigned_to_me",
+      assignedTo: appointment.createdBy, // Assuming the creator of the appointment should receive the notification
+      assignedBy: req.user._id,
+      mentionedUsers: [],
+      item: updatedAppointment._id, // Use the updated appointment ID
+      itemType: "Appointment", // Correct item type
+      linkUrl: `https://high-oaks-media-crm.vercel.app/appointments/${updatedAppointment._id}`,
+      createdBy: req.user._id,
+    };
+  
+    await createNotifications(notificationData);
 
-  return res.status(200).json(new ApiResponse(200, updatedAppointment, "Appointment updated successfully"));
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        updatedAppointment,
+        "Appointment updated successfully"
+      )
+    );
 });
 
 const getAppointmentsByDate = asyncHandler(async (req, res, next) => {
