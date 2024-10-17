@@ -260,9 +260,9 @@ export const markNotificationAsRead = asyncHandler(async (req, res, next) => {
       return res.status(404).json(new ApiResponse(404, null, "Notification not found."));
     }
 
-    if (!notification.assignedTo.equals(userId) && !notification.mentionedUsers.includes(userId)) {
-      return res.status(403).json(new ApiResponse(403, null, "Access denied to this notification."));
-    }
+    // if (!notification.assignedTo.equals(userId) && !notification.mentionedUsers.includes(userId)) {
+    //   return res.status(403).json(new ApiResponse(403, null, "Access denied to this notification."));
+    // }
 
     notification.isRead = true;
     await notification.save();
