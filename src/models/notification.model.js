@@ -45,7 +45,7 @@ const notificationSchema = new Schema({
   itemType: {
     type: String,
     required: true,
-    enum: ["Customer", "Order", "Lead", "Amendment", "Update", "Reply","NewWebsiteContent","Appointment"],
+    enum: ["Customer", "Order", "Lead", "Amendment", "Update", "Reply","NewWebsiteContent","NewWebsite","Appointment"],
   },
   linkUrl: {
     type: String, 
