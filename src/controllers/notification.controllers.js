@@ -50,6 +50,8 @@ const fetchNotifications = async (query, limit, page) => {
 // Get all notifications with pagination
 export const getAllNotifications = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
+  console.log("UserId",userId);
+  
   const isAdmin = req.user.role === 'admin';
   const { limit = 10, page = 1 } = req.query;
 
@@ -78,8 +80,10 @@ export const getAllNotifications = asyncHandler(async (req, res, next) => {
     // Map notifications to add read status
     const notificationsWithReadStatus = notifications.map(notification => ({
       ...notification,
-      readStatus: notification.readBy.includes(userId), // Check if current user has read this notification
+      isRead: notification.readBy.some(id => id.equals(userId)), // Check if current user has read this notification
     }));
+    console.log("notification",notificationsWithReadStatus);
+    
 
     return res.status(200).json(
       new ApiResponse(
