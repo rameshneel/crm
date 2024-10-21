@@ -17,10 +17,10 @@ const notificationSchema = new Schema({
     enum: ["assigned_to_me", "i_was_mentioned", "update_posted", "reply_received", "other"], 
     required: true,
   },
-  isRead: {
-    type: Boolean,
-    default: false,
-  },
+  // isRead: {
+  //   type: Boolean,
+  //   default: false,
+  // },
   assignedTo: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -61,6 +61,12 @@ const notificationSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "User",
   },
+  readBy: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
 }, {
   timestamps: true 
 });

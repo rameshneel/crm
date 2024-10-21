@@ -56,24 +56,75 @@ export const getAllNotifications = asyncHandler(async (req, res, next) => {
   const parsedLimit = Math.max(1, Math.min(100, Number(limit)));
   const parsedPage = Math.max(1, Number(page));
 
+  // Query based on role: admin sees all, others see assigned or mentioned notifications
   const query = isAdmin
     ? {}
     : { $or: [{ assignedTo: userId }, { mentionedUsers: userId }] };
 
   try {
-    const { notifications, totalNotifications } = await fetchNotifications(query, parsedLimit, parsedPage);
-    
-    return res.status(200).json(new ApiResponse(200, {
-      notifications,
-      total: totalNotifications,
-      currentPage: parsedPage,
-      totalPages: Math.ceil(totalNotifications / parsedLimit),
-    }, "Notifications fetched successfully"));
+    const [notifications, totalNotifications] = await Promise.all([
+      Notification.find(query)
+        .sort({ createdAt: -1 }) // Sort by latest created
+        .limit(parsedLimit)
+        .skip((parsedPage - 1) * parsedLimit)
+        .populate({
+          path: 'assignedBy',
+          select: '_id fullName email',
+        })
+        .lean(), // Use lean for better performance when only reading
+      Notification.countDocuments(query),
+    ]);
+
+    // Map notifications to add read status
+    const notificationsWithReadStatus = notifications.map(notification => ({
+      ...notification,
+      readStatus: notification.readBy.includes(userId), // Check if current user has read this notification
+    }));
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          notifications: notificationsWithReadStatus,
+          total: totalNotifications,
+          currentPage: parsedPage,
+          totalPages: Math.ceil(totalNotifications / parsedLimit),
+        },
+        'Notifications fetched successfully'
+      )
+    );
   } catch (error) {
     console.error(error);
-    next(new ApiError(500, "Error fetching notifications"));
+    next(new ApiError(500, 'Error fetching notifications'));
   }
 });
+
+// export const getAllNotifications = asyncHandler(async (req, res, next) => {
+//   const userId = req.user._id;
+//   const isAdmin = req.user.role === 'admin';
+//   const { limit = 10, page = 1 } = req.query;
+
+//   const parsedLimit = Math.max(1, Math.min(100, Number(limit)));
+//   const parsedPage = Math.max(1, Number(page));
+
+//   const query = isAdmin
+//     ? {}
+//     : { $or: [{ assignedTo: userId }, { mentionedUsers: userId }] };
+
+//   try {
+//     const { notifications, totalNotifications } = await fetchNotifications(query, parsedLimit, parsedPage);
+    
+//     return res.status(200).json(new ApiResponse(200, {
+//       notifications,
+//       total: totalNotifications,
+//       currentPage: parsedPage,
+//       totalPages: Math.ceil(totalNotifications / parsedLimit),
+//     }, "Notifications fetched successfully"));
+//   } catch (error) {
+//     console.error(error);
+//     next(new ApiError(500, "Error fetching notifications"));
+//   }
+// });
 
 // Get all unread notifications
 export const getAllUnreadNotifications = asyncHandler(async (req, res, next) => {
@@ -81,20 +132,72 @@ export const getAllUnreadNotifications = asyncHandler(async (req, res, next) => 
 
   try {
     const unreadNotifications = await Notification.find({
-      assignedTo: userId,
-      isRead: false,
+      $or: [{ assignedTo: userId }, { mentionedUsers: userId }],
+      readBy: { $ne: userId }, // User has not read these notifications
     })
       .sort({ createdAt: -1 })
       .populate({
-        path: "assignedBy",
-        select: "_id fullName email",
-      });
+        path: 'assignedBy',
+        select: '_id fullName email',
+      })
+      .lean(); // Use lean for faster read
 
-    return res.status(200).json(new ApiResponse(200, unreadNotifications, "Unread notifications fetched successfully"));
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        unreadNotifications,
+        'Unread notifications fetched successfully'
+      )
+    );
   } catch (error) {
-    next(new ApiError(500, "Error fetching unread notifications"));
+    next(new ApiError(500, 'Error fetching unread notifications'));
   }
 });
+// export const getAllUnreadNotifications = asyncHandler(async (req, res, next) => {
+//   const userId = req.user._id;
+
+//   try {
+//     const unreadNotifications = await Notification.find({
+//       $or: [{ assignedTo: userId }, { mentionedUsers: userId }],
+//       readBy: { $ne: userId }, // User has not read these notifications
+//     })
+//       .sort({ createdAt: -1 })
+//       .populate({
+//         path: 'assignedBy',
+//         select: '_id fullName email',
+//       })
+//       .lean(); // Use lean for faster read
+
+//     return res.status(200).json(
+//       new ApiResponse(
+//         200,
+//         unreadNotifications,
+//         'Unread notifications fetched successfully'
+//       )
+//     );
+//   } catch (error) {
+//     next(new ApiError(500, 'Error fetching unread notifications'));
+//   }
+// });
+// export const getAllUnreadNotifications = asyncHandler(async (req, res, next) => {
+//   const userId = req.user._id;
+
+//   try {
+//     const unreadNotifications = await Notification.find({
+//       assignedTo: userId,
+//       isRead: false,
+//     })
+//       .sort({ createdAt: -1 })
+//       .populate({
+//         path: "assignedBy",
+//         select: "_id fullName email",
+//       });
+
+//     return res.status(200).json(new ApiResponse(200, unreadNotifications, "Unread notifications fetched successfully"));
+//   } catch (error) {
+//     next(new ApiError(500, "Error fetching unread notifications"));
+//   }
+// });
 
 // Get notifications by category
 export const getNotificationsByCategory = asyncHandler(async (req, res, next) => {
@@ -260,12 +363,11 @@ export const markNotificationAsRead = asyncHandler(async (req, res, next) => {
       return res.status(404).json(new ApiResponse(404, null, "Notification not found."));
     }
 
-    // if (!notification.assignedTo.equals(userId) && !notification.mentionedUsers.includes(userId)) {
-    //   return res.status(403).json(new ApiResponse(403, null, "Access denied to this notification."));
-    // }
-
-    notification.isRead = true;
-    await notification.save();
+    // Check if the user has already marked this notification as read
+    if (!notification.readBy.includes(userId)) {
+      notification.readBy.push(userId); // Add the user to the readBy array
+      await notification.save(); // Save the updated notification
+    }
 
     return res.status(200).json(new ApiResponse(200, notification, "Notification marked as read."));
   } catch (error) {
@@ -273,6 +375,32 @@ export const markNotificationAsRead = asyncHandler(async (req, res, next) => {
     next(new ApiError(500, "Error updating notification status"));
   }
 });
+
+
+// export const markNotificationAsRead = asyncHandler(async (req, res, next) => {
+//   const userId = req.user._id;
+//   const { id } = req.params;
+
+//   try {
+//     const notification = await Notification.findById(id);
+
+//     if (!notification) {
+//       return res.status(404).json(new ApiResponse(404, null, "Notification not found."));
+//     }
+
+//     // if (!notification.assignedTo.equals(userId) && !notification.mentionedUsers.includes(userId)) {
+//     //   return res.status(403).json(new ApiResponse(403, null, "Access denied to this notification."));
+//     // }
+
+//     notification.isRead = true;
+//     await notification.save();
+
+//     return res.status(200).json(new ApiResponse(200, notification, "Notification marked as read."));
+//   } catch (error) {
+//     console.error(error);
+//     next(new ApiError(500, "Error updating notification status"));
+//   }
+// });
 
 // Mark multiple notifications as read
 export const markMultipleNotificationsAsRead = asyncHandler(async (req, res, next) => {
@@ -304,7 +432,6 @@ export const markMultipleNotificationsAsRead = asyncHandler(async (req, res, nex
     next(new ApiError(500, "Error updating notification statuses"));
   }
 });
-
 // Get count of unread notifications
 export const getUnreadNotificationsCount = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
@@ -320,7 +447,6 @@ export const getUnreadNotificationsCount = asyncHandler(async (req, res, next) =
     next(new ApiError(500, "Error fetching unread notifications count"));
   }
 });
-
 // Mark all notifications as read
 export const markAllNotificationsAsRead = asyncHandler(async (req, res, next) => {
   const userId = req.user._id;
