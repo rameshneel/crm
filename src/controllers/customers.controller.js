@@ -303,9 +303,13 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
       throw new ApiError(404, "Customer not found");
     }
 
-    if (user.role !== "admin" && customer.createdBy.toString() !== userId) {
+    // if (user.role !== "admin" && customer.createdBy.toString() !== userId) {
+    //   throw new ApiError(401, "Unauthorized request");
+    // }
+    if (user.role !== "admin" && customer.createdBy.toString() !== userId.toString()) {
       throw new ApiError(401, "Unauthorized request");
-    }
+  }
+  
 
     const updatedCustomer = await Customer.findByIdAndUpdate(
       customer_id,
