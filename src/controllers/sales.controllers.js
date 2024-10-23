@@ -303,6 +303,7 @@ const getSalesmanOrderStats = asyncHandler(async (req, res, next) => {
       new ApiResponse(
         200,
         {
+          orders,
           orderStats,
           totalOverallResult,
         },
