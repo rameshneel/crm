@@ -120,40 +120,18 @@ const addAmendment = asyncHandler(async (req, res, next) => {
 
 const getAllAmendment = asyncHandler(async (req, res, next) => {
   try {
-    const activeUser = req.user?._id;
-    const user = await User.findById(activeUser);
+    // Removed user role checks and activeUser retrieval
+    // const activeUser = req.user?._id;
 
-    // let page = parseInt(req.query.page) || 1;
-    // let limit = parseInt(req.query.limit) || 10;
-    // let skip = (page - 1) * limit;
-
-    let amendments;
-    // let totalCount;
-
-    if (user.role === "admin") {
-      amendments = await Amendment.find()
-        .populate({
-          path: "customer",
-        })
-        .populate({
-          path: "generated_by",
-          select: "fullName avatar",
-        });
-      // .skip(skip).limit(limit);
-      // totalCount = await Amendment.countDocuments();
-    } else if (user.role === "salesman") {
-      amendments = await Amendment.find({ generated_by: activeUser })
-        .populate({
-          path: "customer",
-        })
-        .populate({
-          path: "generated_by",
-          select: "fullName avatar",
-        });
-      // .skip(skip)
-      // .limit(limit);
-      // totalCount = await Amendment.countDocuments({ generated_by: activeUser });
-    }
+    // Fetch all amendments without filtering
+    const amendments = await Amendment.find()
+      .populate({
+        path: "customer",
+      })
+      .populate({
+        path: "generated_by",
+        select: "fullName avatar",
+      });
 
     return res.json(
       new ApiResponse(200, amendments, "Amendment fetched successfully")
@@ -162,6 +140,51 @@ const getAllAmendment = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+
+// const getAllAmendment = asyncHandler(async (req, res, next) => {
+//   try {
+//     const activeUser = req.user?._id;
+//     const user = await User.findById(activeUser);
+
+//     // let page = parseInt(req.query.page) || 1;
+//     // let limit = parseInt(req.query.limit) || 10;
+//     // let skip = (page - 1) * limit;
+
+//     let amendments;
+//     // let totalCount;
+
+//     if (user.role === "admin") {
+//       amendments = await Amendment.find()
+//         .populate({
+//           path: "customer",
+//         })
+//         .populate({
+//           path: "generated_by",
+//           select: "fullName avatar",
+//         });
+//       // .skip(skip).limit(limit);
+//       // totalCount = await Amendment.countDocuments();
+//     } else if (user.role === "salesman") {
+//       amendments = await Amendment.find({ generated_by: activeUser })
+//         .populate({
+//           path: "customer",
+//         })
+//         .populate({
+//           path: "generated_by",
+//           select: "fullName avatar",
+//         });
+//       // .skip(skip)
+//       // .limit(limit);
+//       // totalCount = await Amendment.countDocuments({ generated_by: activeUser });
+//     }
+
+//     return res.json(
+//       new ApiResponse(200, amendments, "Amendment fetched successfully")
+//     );
+//   } catch (error) {
+//     next(error);
+//   }
+// });
 
 const getAmendmentById = asyncHandler(async (req, res, next) => {
   const { amendmentId } = req.params;
