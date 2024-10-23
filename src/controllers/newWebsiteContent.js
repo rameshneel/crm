@@ -254,31 +254,18 @@ const createNewWebsiteContent = asyncHandler(async (req, res, next) => {
 });
 
 const getAllNewWebsiteContent = asyncHandler(async (req, res, next) => {
-  const userId = req.user._id;
-
   try {
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return next(new ApiError(404, "User not found"));
-    }
-
-    let query = {};
-
-    if (user.role === "salesman") {
-      query = { createdBy: userId };
-    } else if (user.role !== "admin") {
-      return next(new ApiError(403, "You are not authorized to access this content"));
-    }
-
-    const newWebsiteContent = await NewWebsiteContent.find(query).populate({
-      path: "createdBy",
-      // select: user.role === "admin" ? "" : "fullName email avatar",
-      select:"fullName email avatar",
-    }).populate({
-      path: "customer",
-      select:"companyName",
-    }).sort({ createdAt: -1 });
+    // Fetch all new website content without filtering by user role
+    const newWebsiteContent = await NewWebsiteContent.find()
+      .populate({
+        path: "createdBy",
+        select: "fullName email avatar",
+      })
+      .populate({
+        path: "customer",
+        select: "companyName",
+      })
+      .sort({ createdAt: -1 });
 
     return res.status(200).json(
       new ApiResponse(200, { newWebsiteContent }, "New website content fetched successfully")
@@ -289,6 +276,43 @@ const getAllNewWebsiteContent = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
+
+// const getAllNewWebsiteContent = asyncHandler(async (req, res, next) => {
+//   const userId = req.user._id;
+
+//   try {
+//     const user = await User.findById(userId);
+
+//     if (!user) {
+//       return next(new ApiError(404, "User not found"));
+//     }
+
+//     let query = {};
+
+//     if (user.role === "salesman") {
+//       query = { createdBy: userId };
+//     } else if (user.role !== "admin") {
+//       return next(new ApiError(403, "You are not authorized to access this content"));
+//     }
+
+//     const newWebsiteContent = await NewWebsiteContent.find(query).populate({
+//       path: "createdBy",
+//       // select: user.role === "admin" ? "" : "fullName email avatar",
+//       select:"fullName email avatar",
+//     }).populate({
+//       path: "customer",
+//       select:"companyName",
+//     }).sort({ createdAt: -1 });
+
+//     return res.status(200).json(
+//       new ApiResponse(200, { newWebsiteContent }, "New website content fetched successfully")
+//     );
+    
+//   } catch (error) {
+//     console.error("Error in fetching website content:", error);
+//     return next(error);
+//   }
+// });
 
 const getNewWebsiteContentById =asyncHandler( async (req, res,next) => {
   try {
