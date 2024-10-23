@@ -345,12 +345,12 @@ const updateCustomer = asyncHandler(async (req, res, next) => {
         message: `The details for the customer ${updatedCustomer.companyName} have been successfully updated. Please review the changes!`,
         category: "assigned_to_me",
         assignedTo: createdBy,
-        assignedBy: activeUser,
+        assignedBy: userId,
         mentionedUsers: [],
         item: updatedCustomer._id,
         itemType: "Customer", 
         linkUrl: `https://high-oaks-media-crm.vercel.app/customers/customerDetails/${updatedCustomer._id}`,
-        createdBy: activeUser,
+        createdBy: userId,
       };
     
       await createNotifications(notificationData); 
