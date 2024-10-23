@@ -87,37 +87,22 @@ export const createProductFlow = async (req, res, next) => {
 // Get all ProductFlows
 export const getProductFlows = async (req, res, next) => {
   try {
-    const userId = req.user._id;
-    const userRole = req.user.role;
+    // Removed userRole and userId
+    // const userId = req.user._id;
+    // const userRole = req.user.role;
 
-    // const page = parseInt(req.query.page) || 1;
-    // const limit = parseInt(req.query.limit) || 10;
-    // const skip = (page - 1) * limit;
-
-    let query = {};
-    if (userRole !== "admin") {
-      query = { createdBy: userId };
-    }
-
-    const total = await ProductFlow.countDocuments(query);
-    const productFlows = await ProductFlow.find(query)
+    // Query to retrieve all product flows
+    const productFlows = await ProductFlow.find()
       .sort({ createdAt: -1 })
-      // .skip(skip)
-      // .limit(limit)
       .populate("customer", "companyName contactName")
       .populate("createdBy", "name email avatar")
       .populate("updates");
-
-    // const totalPages = Math.ceil(total / limit);
 
     res.status(200).json(
       new ApiResponse(
         200,
         {
           productFlows,
-          // currentPage: page,
-          // totalPages,
-          // totalProductFlows: total,
         },
         "ProductFlows retrieved successfully"
       )
@@ -126,6 +111,48 @@ export const getProductFlows = async (req, res, next) => {
     next(new ApiError(500, error.message));
   }
 };
+
+// export const getProductFlows = async (req, res, next) => {
+//   try {
+//     const userId = req.user._id;
+//     const userRole = req.user.role;
+
+//     // const page = parseInt(req.query.page) || 1;
+//     // const limit = parseInt(req.query.limit) || 10;
+//     // const skip = (page - 1) * limit;
+
+//     let query = {};
+//     if (userRole !== "admin") {
+//       query = { createdBy: userId };
+//     }
+
+//     const total = await ProductFlow.countDocuments(query);
+//     const productFlows = await ProductFlow.find(query)
+//       .sort({ createdAt: -1 })
+//       // .skip(skip)
+//       // .limit(limit)
+//       .populate("customer", "companyName contactName")
+//       .populate("createdBy", "name email avatar")
+//       .populate("updates");
+
+//     // const totalPages = Math.ceil(total / limit);
+
+//     res.status(200).json(
+//       new ApiResponse(
+//         200,
+//         {
+//           productFlows,
+//           // currentPage: page,
+//           // totalPages,
+//           // totalProductFlows: total,
+//         },
+//         "ProductFlows retrieved successfully"
+//       )
+//     );
+//   } catch (error) {
+//     next(new ApiError(500, error.message));
+//   }
+// };
 // Get a single ProductFlow by ID
 export const getProductFlowById = async (req, res, next) => {
   const { id } = req.params;

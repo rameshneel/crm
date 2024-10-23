@@ -174,20 +174,17 @@ export const updateCopywriterTracker = async (req, res, next) => {
 };
 export const getCopywriterTrackers = async (req, res, next) => {
   try {
-    const userId = req.user._id;
-    const userRole = req.user.role;
+    // Removed userRole and userId
+    // const userId = req.user._id;
+    // const userRole = req.user.role;
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let query = {};
-    if (userRole !== "admin") {
-      query = { createdBy: userId };
-    }
-
-    const total = await CopywriterTracker.countDocuments(query);
-    const copywriterTrackers = await CopywriterTracker.find(query)
+    // Query to retrieve all copywriter trackers
+    const total = await CopywriterTracker.countDocuments();
+    const copywriterTrackers = await CopywriterTracker.find()
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -213,6 +210,48 @@ export const getCopywriterTrackers = async (req, res, next) => {
     next(new ApiError(500, error.message));
   }
 };
+
+// export const getCopywriterTrackers = async (req, res, next) => {
+//   try {
+//     const userId = req.user._id;
+//     const userRole = req.user.role;
+
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const skip = (page - 1) * limit;
+
+//     let query = {};
+//     if (userRole !== "admin") {
+//       query = { createdBy: userId };
+//     }
+
+//     const total = await CopywriterTracker.countDocuments(query);
+//     const copywriterTrackers = await CopywriterTracker.find(query)
+//       .sort({ createdAt: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//       .populate("customer", "companyName contactName")
+//       .populate("createdBy", "name email avatar")
+//       .populate("updates");
+
+//     const totalPages = Math.ceil(total / limit);
+
+//     res.status(200).json(
+//       new ApiResponse(
+//         200,
+//         {
+//           copywriterTrackers,
+//           currentPage: page,
+//           totalPages,
+//           totalCopywriterTrackers: total,
+//         },
+//         "CopywriterTrackers retrieved successfully"
+//       )
+//     );
+//   } catch (error) {
+//     next(new ApiError(500, error.message));
+//   }
+// };
 export const deleteCopywriterTracker = async (req, res, next) => {
   const { trackerId } = req.params;
   const userId = req.user?._id;

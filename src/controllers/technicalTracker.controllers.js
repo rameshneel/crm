@@ -146,20 +146,12 @@ const getTechnicalTrackerById = async (req, res, next) => {
 
 const getAllTechnicalTrackers = async (req, res, next) => {
   try {
-    const userId = req.user._id;
-    const userRole = req.user.role;
-
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    let query = {};
-    if (userRole !== "admin") {
-      query = { createdBy: userId };
-    }
-
-    const total = await TechnicalTracker.countDocuments(query);
-    const trackers = await TechnicalTracker.find(query)
+    const total = await TechnicalTracker.countDocuments();
+    const trackers = await TechnicalTracker.find()
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -184,6 +176,48 @@ const getAllTechnicalTrackers = async (req, res, next) => {
     next(error);
   }
 };
+
+
+// const getAllTechnicalTrackers = async (req, res, next) => {
+//   try {
+//     const userId = req.user._id;
+//     const userRole = req.user.role;
+
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const skip = (page - 1) * limit;
+
+//     let query = {};
+//     if (userRole !== "admin") {
+//       query = { createdBy: userId };
+//     }
+
+//     const total = await TechnicalTracker.countDocuments(query);
+//     const trackers = await TechnicalTracker.find(query)
+//       .sort({ createdAt: -1 })
+//       .skip(skip)
+//       .limit(limit)
+//       .populate("customer", "companyName contactName")
+//       .populate("createdBy", "name email avatar");
+
+//     const totalPages = Math.ceil(total / limit);
+
+//     res.status(200).json(
+//       new ApiResponse(
+//         200,
+//         {
+//           trackers,
+//           currentPage: page,
+//           totalPages,
+//           totalTrackers: total,
+//         },
+//         "Technical trackers retrieved successfully"
+//       )
+//     );
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 export {
   createTechnicalTracker,
