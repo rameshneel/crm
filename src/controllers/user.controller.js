@@ -138,11 +138,10 @@ const loginUser = asyncHandler(async (req, res, next) => {
       // SameSite:"Lax",
       // maxAge: 900000
     };
-
     return res
       .status(200)
-      .cookie("accessToken", accessToken, options)
-      .cookie("refreshToken", refreshToken, options)
+      .cookie("accessTokenCrm", accessToken, options)
+      .cookie("refreshTokenCrm", refreshToken, { ...options, maxAge: 7 * 24 * 60 * 60 * 1000 })
       .json(
         new ApiResponse(
           200,
@@ -417,7 +416,6 @@ const getAllUsers = asyncHandler(async (req, res, next) => {
     return next(error);
   }
 });
-
 
 const userDetails = asyncHandler(async (req, res, next) => {
   const { userId } = req.params;
