@@ -111,10 +111,10 @@ const loginUser = asyncHandler(async (req, res, next) => {
   }
 
   try {
-    const user = await User.findOne({
-      $or: [{ email }],
-    });
-
+    // const user = await User.findOne({
+    //   $or: [{ email }],
+    // });
+    const user = await User.findOne({ email }); // Simplified lookup
     if (!user) {
       throw new ApiError(404, "User does not exist");
     }
@@ -158,30 +158,60 @@ const loginUser = asyncHandler(async (req, res, next) => {
   }
 });
 
-const logoutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(
-    req.user._id,
-    {
-      $unset: {
-        refreshToken: 1, // this removes the field from document
-      },
-    },
-    {
-      new: true,
-    }
-  );
+// const logoutUser = asyncHandler(async (req, res) => {
+//   await User.findByIdAndUpdate(
+//     req.user._id,
+//     {
+//       $unset: {
+//         refreshToken: 1, // this removes the field from document
+//       },
+//     },
+//     {
+//       new: true,
+//     }
+//   );
 
-  const options = {
-    httpOnly: true,
-    secure: true,
+//   const options = {
+//     httpOnly: true,
+//     secure: true,
+//   };
+
+//   return res
+//     .status(200)
+//     .clearCookie("accessToken", options)
+//     .clearCookie("refreshToken", options)
+//     .json(new ApiResponse(200, {}, "User logged Out"));
+// });
+
+const logoutUser = asyncHandler(async (req, res) => {
+  try {
+    // Remove the refresh token from the user document
+    await User.findByIdAndUpdate(
+      req.user._id,
+      { $unset: { refreshToken: "" } }, // Use empty string to unset
+      { new: true } // Return the modified document
+    );
+
+    // Clear cookies for access and refresh tokens
+    const options = {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      path: '/',
   };
 
-  return res
-    .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
-    .json(new ApiResponse(200, {}, "User logged Out"));
+    return res
+      .status(200)
+      .clearCookie("accessTokenCrm", options) // Use the correct cookie name
+      .clearCookie("refreshTokenCrm", options)
+      .json(new ApiResponse(200, {}, "User logged out successfully"));
+  } catch (error) {
+    console.error("Logout error:", error); // Log the error for debugging
+    throw new ApiError(500, "Failed to log out. Please try again.");
+  }
 });
+
+export default logoutUser;
 
 const changeCurrentPassword = asyncHandler(async (req, res, next) => {
   const { oldPassword, newPassword } = req.body;
