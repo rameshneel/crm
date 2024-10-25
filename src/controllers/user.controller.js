@@ -211,8 +211,6 @@ const logoutUser = asyncHandler(async (req, res) => {
   }
 });
 
-export default logoutUser;
-
 const changeCurrentPassword = asyncHandler(async (req, res, next) => {
   const { oldPassword, newPassword } = req.body;
 
