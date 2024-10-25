@@ -393,24 +393,34 @@ const deleteUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+// const getAllUsers = asyncHandler(async (req, res, next) => {
+//   try {
+//     // Check if user is admin
+//     if (req.user.role === "admin") {
+//       // Fetch all users
+//       const users = await User.find();
+//       return res
+//         .status(200)
+//         .json(new ApiResponse(200, users, "All users retrieved successfully"));
+//     } else if (req.user.role === "salesman") {
+//       // Fetch only admin users
+//       const admins = await User.find({ role: "admin" });
+//       return res
+//         .status(200)
+//         .json(new ApiResponse(200, admins, "Admins retrieved successfully"));
+//     } else {
+//       throw new ApiError(403, "Access denied");
+//     }
+//   } catch (error) {
+//     // Pass the error to the next middleware (errorHandler)
+//     return next(error);
+//   }
+// });
 const getAllUsers = asyncHandler(async (req, res, next) => {
   try {
-    // Check if user is admin
-    if (req.user.role === "admin") {
-      // Fetch all users
-      const users = await User.find();
-      return res
-        .status(200)
-        .json(new ApiResponse(200, users, "All users retrieved successfully"));
-    } else if (req.user.role === "salesman") {
-      // Fetch only admin users
-      const admins = await User.find({ role: "admin" });
-      return res
-        .status(200)
-        .json(new ApiResponse(200, admins, "Admins retrieved successfully"));
-    } else {
-      throw new ApiError(403, "Access denied");
-    }
+    // Fetch all users without role checks
+    const users = await User.find();
+    return res.status(200).json(new ApiResponse(200, users, "All users retrieved successfully"));
   } catch (error) {
     // Pass the error to the next middleware (errorHandler)
     return next(error);
