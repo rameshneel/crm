@@ -176,72 +176,68 @@ const toggleLike = asyncHandler(async (req, res, next) => {
   }
 });
 const updatedUpdate = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { content, mentions: mentionString } = req.body;
-  const userId = req.user._id;
-  const user = await User.findById(userId);
+  try {
+    const { id } = req.params;
+    const { content, mentions: mentionString } = req.body;
+    const userId = req.user._id;
 
-  const update = await Update.findById(id);
-  console.log("update", update);
-  if (!update) {
-    throw new ApiError(404, "Update not found");
-  }
-  if (
-    update.createdBy.toString() !== userId.toString()
-    //  &&
-    // req.user.role !== "admin"
-  ) {
-    return res
-      .status(403)
-      .json(
-        new ApiResponse(
-          403,
-          null,
-          "You don't have permission to edit this update"
-        )
-      );
-  }
-  // Update content if provided
-  if (content) {
-    update.content = content;
-  }
-
-  // Update mentions if provided
-  //  if (mentionString) {
-  const mentions = mentionString
-    ? mentionString.split(",").map((id) => id.trim())
-    : [];
-
-
-  // }
-
-  // Handle mentions and notifications
-  if (mentions.length > 0) {
-    const mentionedUsers = await User.find({ _id: { $in: mentions } });
-    console.log("mentionedUsers", mentionedUsers);
-
-  
-
-    const entity = await getEntityModel(update.itemType).findById(
-      update.itemId
-    );
-    if (!entity) {
-      throw new ApiError(
-        404,
-        `${update.itemType} with id ${update.itemId} not found`
-      );
+    // Validate if update exists
+    const update = await Update.findById(id);
+    if (!update) {
+      throw new ApiError(404, "Update not found");
     }
 
+    // Permission check: user must be the creator of the update
+    if (update.createdBy.toString() !== userId.toString()) {
+      return res.status(403).json(new ApiResponse(403, null, "Permission denied"));
+    }
 
+    // Update content if provided
+    if (content) {
+      update.content = content;
+    }
+
+    // Handle mentions if provided
+    if (mentionString) {
+      const mentions = mentionString.split(",").map((id) => id.trim());
+
+      // Add mentions to the update if they are not already present
+      mentions.forEach((mention) => {
+        if (!update.mentions.includes(mention)) {
+          update.mentions.push(mention);
+        }
+      });
+
+      // Handle notifications for mentioned users
+      await handleMentions(mentions, update, userId);
+    }
+
+    // Handle file uploads if any
+    if (req.files && req.files.length > 0) {
+      await handleFileUploads(req.files, update, userId);
+    }
+
+    // Save the update and send response
+    await update.save({ validateBeforeSave: false });
+    res.status(200).json(new ApiResponse(200, { update }, "Update edited successfully"));
+  } catch (error) {
+    console.error("Error in updating update:", error);
+    res.status(500).json(new ApiResponse(500, null, "Internal Server Error"));
+  }
+});
+// Helper function to handle mentions and notifications
+const handleMentions = async (mentions, update, userId) => {
+  const mentionedUsers = await User.find({ _id: { $in: mentions } });
+  if (mentionedUsers.length > 0) {
+    const entity = await getEntityModel(update.itemType).findById(update.itemId);
+    if (!entity) {
+      throw new ApiError(404, `${update.itemType} with id ${update.itemId} not found`);
+    }
 
     for (let mentionedUser of mentionedUsers) {
-
       const notification = new Notification({
         title: `Mentioned in ${update.itemType} Update`,
-        message: `You were mentioned in an update for  ${update.itemType} ${getEntityName(
-          entity,
-          update.itemType
-        )}.`,
+        message: `You were mentioned in an update for ${update.itemType} ${getEntityName(entity, update.itemType)}.`,
         category: "i_was_mentioned",
         isRead: false,
         assignedTo: mentionedUser._id,
@@ -249,87 +245,30 @@ const updatedUpdate = asyncHandler(async (req, res) => {
         mentionedUsers: [mentionedUser._id],
         item: update._id,
         itemType: update.itemType,
-        linkUrl: `https://high-oaks-media-crm.vercel.app/${update.itemType.toLowerCase()}s/update/${
-          update._id
-        }`,
+        linkUrl: `https://high-oaks-media-crm.vercel.app/${update.itemType.toLowerCase()}s/update/${update._id}`,
       });
-
       await notification.save();
-
-    }
-
-    // const entityName = getEntityName(entity, update.itemType);
-    // await sendEmailForMentions(
-    //   user.email,
-    //   mentionedUsers,
-    //   update.itemType,
-    //   entityName,
-    //   update._id,
-    //   content
-    // );
-  }
-
-  //
-  //   console.log("mention__",mentionString);
-  //   update.mentions = mentionString.split(",").map(id => id.trim());
-  //
-
-  // Handle removed files
-  // if (update.files && update.files.length > 0) {
-  //   for (const fileUrl of update.files) {
-  //     try {
-  //       // Remove file from update.files array
-  //       update.files = update.files.filter((f) => f !== fileUrl);
-
-  //       // Delete File document
-  //       const file = await File.findOneAndDelete({ fileUrl: fileUrl });
-  //       if (file) {
-  //         console.log(`File document deleted: ${file._id}`);
-  //       }
-
-  //       // Delete physical file
-  //       const fileName = path.basename(fileUrl);
-  //       const filePath = path.join(
-  //         __dirname,
-  //         "..",
-  //         "..",
-  //         "public",
-  //         "files",
-  //         fileName
-  //       );
-  //       await fs.unlink(filePath);
-  //       console.log(`Physical file deleted: ${filePath}`);
-  //     } catch (error) {
-  //       console.error(`Error deleting file: ${fileUrl}`, error);
-  //     }
-  //   }
-  // }
-
-  // Handle new files
-  if (req.files && req.files.length > 0) {
-    for (let file of req.files) {
-      const fileUrl = `https://${req.get("host")}/files/${file.filename}`;
-      update.files.push(fileUrl);
-
-      const newFile = new File({
-        uploadedBy: userId,
-        fileUrl: fileUrl,
-        itemType: update.itemType,
-        itemId: update.itemId,
-        source: "UpdateFile",
-      });
-
-      await newFile.save();
     }
   }
+};
+// Helper function to handle file uploads
+const handleFileUploads = async (files, update, userId) => {
+  for (let file of files) {
+    const fileUrl = `https://${req.get("host")}/files/${file.filename}`;
+    update.files.push(fileUrl);
 
-  // Save the updated update
-  await update.save({ validateBeforeSave: false });
+    const newFile = new File({
+      uploadedBy: userId,
+      fileUrl,
+      itemType: update.itemType,
+      itemId: update.itemId,
+      source: "UpdateFile",
+    });
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, { update }, "Update edited successfully"));
-});
+    await newFile.save();
+  }
+};
+
 const createEntityUpdate = asyncHandler(async (req, res, next) => {
   const userId = req.user?._id;
   const user = await User.findById(userId);
@@ -864,34 +803,34 @@ const deleteReply = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-const handleMentions = async (mentionString, userId, update, content, req) => {
-  const mentions = mentionString.split(",").map((id) => id.trim());
-  const mentionedUsers = await User.find({ _id: { $in: mentions } });
+// const handleMentions = async (mentionString, userId, update, content, req) => {
+//   const mentions = mentionString.split(",").map((id) => id.trim());
+//   const mentionedUsers = await User.find({ _id: { $in: mentions } });
 
-  const Model = getEntityModel(update.itemType);
-  console.log("model", Model);
-  if (!Model) {
-    throw new ApiError(400, `Invalid item type: ${update.itemType}`);
-  }
+//   const Model = getEntityModel(update.itemType);
+//   console.log("model", Model);
+//   if (!Model) {
+//     throw new ApiError(400, `Invalid item type: ${update.itemType}`);
+//   }
 
-  const entity = await Model.findById(update.itemId);
-  if (!entity) {
-    throw new ApiError(
-      404,
-      `${update.itemType} with id ${update.itemId} not found`
-    );
-  }
+//   const entity = await Model.findById(update.itemId);
+//   if (!entity) {
+//     throw new ApiError(
+//       404,
+//       `${update.itemType} with id ${update.itemId} not found`
+//     );
+//   }
 
-  const entityName = getEntityName(entity, update.itemType);
-  await sendEmailForMentions(
-    req.user.email,
-    mentionedUsers,
-    update.itemType,
-    entityName,
-    update._id,
-    content
-  );
-};
+//   const entityName = getEntityName(entity, update.itemType);
+//   await sendEmailForMentions(
+//     req.user.email,
+//     mentionedUsers,
+//     update.itemType,
+//     entityName,
+//     update._id,
+//     content
+//   );
+// };
 const handleRemovedFiles = async (files) => {
   for (const fileUrl of files) {
     try {
@@ -1368,3 +1307,192 @@ const replyToUpdat = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const updatedUpdate = asyncHandler(async (req, res) => {
+//   const { id } = req.params;
+//   const { content, mentions: mentionString } = req.body;
+//   const userId = req.user._id;
+
+//   const update = await Update.findById(id);
+//   if (!update) {
+//     throw new ApiError(404, "Update not found");
+//   }
+//   if (
+//     update.createdBy.toString() !== userId.toString()
+//     //  &&
+//     // req.user.role !== "admin"
+//   ) {
+//     return res
+//       .status(403)
+//       .json(
+//         new ApiResponse(
+//           403,
+//           null,
+//           "You don't have permission to edit this update"
+//         )
+//       );
+//   }
+//   // Update content if provided
+//   if (content) {
+//     update.content = content;
+//   }
+
+//   // Update mentions if provided
+//   //  if (mentionString) {
+//   const mentions = mentionString
+//     ? mentionString.split(",").map((id) => id.trim())
+//     : [];
+// console.log("mentions",mentions);
+ 
+//   // Handle mentions and notifications
+//   if (mentions.length > 0) {
+//     const mentionedUsers = await User.find({ _id: { $in: mentions } });
+//     console.log("mentionedUsers", mentionedUsers);
+
+//     const entity = await getEntityModel(update.itemType).findById(
+//       update.itemId
+//     );
+//     if (!entity) {
+//       throw new ApiError(
+//         404,
+//         `${update.itemType} with id ${update.itemId} not found`
+//       );
+//     }
+
+
+
+//     for (let mentionedUser of mentionedUsers) {
+
+//       const notification = new Notification({
+//         title: `Mentioned in ${update.itemType} Update`,
+//         message: `You were mentioned in an update for  ${update.itemType} ${getEntityName(
+//           entity,
+//           update.itemType
+//         )}.`,
+//         category: "i_was_mentioned",
+//         isRead: false,
+//         assignedTo: mentionedUser._id,
+//         assignedBy: userId,
+//         mentionedUsers: [mentionedUser._id],
+//         item: update._id,
+//         itemType: update.itemType,
+//         linkUrl: `https://high-oaks-media-crm.vercel.app/${update.itemType.toLowerCase()}s/update/${
+//           update._id
+//         }`,
+//       });
+
+//       await notification.save();
+
+//     }
+
+//     // const entityName = getEntityName(entity, update.itemType);
+//     // await sendEmailForMentions(
+//     //   user.email,
+//     //   mentionedUsers,
+//     //   update.itemType,
+//     //   entityName,
+//     //   update._id,
+//     //   content
+//     // );
+//   }
+
+//   //
+//   //   console.log("mention__",mentionString);
+//   //   update.mentions = mentionString.split(",").map(id => id.trim());
+//   //
+
+//   // Handle removed files
+//   // if (update.files && update.files.length > 0) {
+//   //   for (const fileUrl of update.files) {
+//   //     try {
+//   //       // Remove file from update.files array
+//   //       update.files = update.files.filter((f) => f !== fileUrl);
+
+//   //       // Delete File document
+//   //       const file = await File.findOneAndDelete({ fileUrl: fileUrl });
+//   //       if (file) {
+//   //         console.log(`File document deleted: ${file._id}`);
+//   //       }
+
+//   //       // Delete physical file
+//   //       const fileName = path.basename(fileUrl);
+//   //       const filePath = path.join(
+//   //         __dirname,
+//   //         "..",
+//   //         "..",
+//   //         "public",
+//   //         "files",
+//   //         fileName
+//   //       );
+//   //       await fs.unlink(filePath);
+//   //       console.log(`Physical file deleted: ${filePath}`);
+//   //     } catch (error) {
+//   //       console.error(`Error deleting file: ${fileUrl}`, error);
+//   //     }
+//   //   }
+//   // }
+
+//   // Handle new files
+//   if (req.files && req.files.length > 0) {
+//     for (let file of req.files) {
+//       const fileUrl = `https://${req.get("host")}/files/${file.filename}`;
+//       update.files.push(fileUrl);
+
+//       const newFile = new File({
+//         uploadedBy: userId,
+//         fileUrl: fileUrl,
+//         itemType: update.itemType,
+//         itemId: update.itemId,
+//         source: "UpdateFile",
+//       });
+
+//       await newFile.save();
+//     }
+//   }
+//   // Save the updated update
+//   await update.save({ validateBeforeSave: false });
+
+//   res
+//     .status(200)
+//     .json(new ApiResponse(200, { update }, "Update edited successfully"));
+// });
