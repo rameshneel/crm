@@ -220,6 +220,20 @@ const updatedUpdate = asyncHandler(async (req, res) => {
     const mentionedUsers = await User.find({ _id: { $in: mentions } });
     console.log("mentionedUsers", mentionedUsers);
 
+  
+
+    const entity = await getEntityModel(update.itemType).findById(
+      update.itemId
+    );
+    if (!entity) {
+      throw new ApiError(
+        404,
+        `${update.itemType} with id ${update.itemId} not found`
+      );
+    }
+
+
+
     for (let mentionedUser of mentionedUsers) {
 
       const notification = new Notification({
@@ -244,16 +258,6 @@ const updatedUpdate = asyncHandler(async (req, res) => {
 
     }
 
-    const entity = await getEntityModel(update.itemType).findById(
-      update.itemId
-    );
-    console.log("entity", entity);
-    if (!entity) {
-      throw new ApiError(
-        404,
-        `${update.itemType} with id ${update.itemId} not found`
-      );
-    }
     // const entityName = getEntityName(entity, update.itemType);
     // await sendEmailForMentions(
     //   user.email,
