@@ -197,7 +197,7 @@ const uploadFilesToGallery = asyncHandler(async (req, res, next) => {
 
     if (req.files && req.files.length > 0) {
       for (let file of req.files) {
-        const fileUrl = `${req.protocol}://${req.get("host")}/files/${
+        const fileUrl = `https://${req.get("host")}/files/${
           file.filename
         }`;
 

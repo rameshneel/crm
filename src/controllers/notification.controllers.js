@@ -66,21 +66,33 @@ export const getAllNotifications = asyncHandler(async (req, res, next) => {
   try {
     const [notifications, totalNotifications] = await Promise.all([
       Notification.find(query)
-        .sort({ createdAt: -1 }) // Sort by latest created
+        .sort({ createdAt: -1 })
         .limit(parsedLimit)
         .skip((parsedPage - 1) * parsedLimit)
-        .populate({
-          path: 'assignedBy',
-          select: '_id fullName email',
-        })
-        .lean(), // Use lean for better performance when only reading
+        .populate([
+          {
+            path: 'assignedBy',
+            select: '_id fullName email',
+          },
+          {
+            path: 'mentionedUsers', 
+            select: '_id fullName email',
+          },
+          {
+            path: 'assignedTo',
+            select: '_id fullName email',
+          },
+          {path:"item"}
+        ])
+        .lean(), 
       Notification.countDocuments(query),
     ]);
+    
 
     // Map notifications to add read status
     const notificationsWithReadStatus = notifications.map(notification => ({
       ...notification,
-      isRead: notification.readBy.some(id => id.equals(userId)), // Check if current user has read this notification
+      isRead: notification.readBy.some(id => id.equals(userId)), 
     }));
     console.log("notification",notificationsWithReadStatus);
     
