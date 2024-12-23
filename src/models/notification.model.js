@@ -14,7 +14,7 @@ const notificationSchema = new Schema({
   },
   category: {
     type: String,
-    enum: ["assigned_to_me", "i_was_mentioned", "update_posted", "reply_received", "other"], 
+    enum: ["assigned_to_me", "i_was_mentioned",], 
     required: true,
   },
   // isRead: {
@@ -45,7 +45,7 @@ const notificationSchema = new Schema({
   itemType: {
     type: String,
     required: true,
-    enum: ["Customer", "Order", "Lead", "Amendment", "Update", "Reply","NewWebsiteContent","NewWebsite","Appointment"],
+    enum: ["Customer", "Order", "Lead", "Amendment", "Update", "Reply","NewWebsiteContent","NewWebsite","Appointment","CopywriterTracker"],
   },
   linkUrl: {
     type: String, 
