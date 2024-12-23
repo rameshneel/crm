@@ -94,11 +94,11 @@ const getUpdateById = asyncHandler(async (req, res, next) => {
   const { updateId } = req.params;
   try {
     const update = await Update.findById(updateId)
-      // .populate({
-      //   path: "mentions",
-      //   model: "User",
-      //   select: "fullName email avatar",
-      // })
+      .populate({
+        path: "mentions",
+        model: "User",
+        select: "fullName email avatar",
+      })
       .populate({
         path: "createdBy",
         model: "User",
@@ -182,8 +182,10 @@ const updatedUpdate = asyncHandler(async (req, res,next) => {
     const { id } = req.params;
     const { content, mentions: mentionString } = req.body;
     const userId = req.user._id;
+    console.log("mentionString", mentionString);
     const update = await Update.findById(id);
-const userIds = mentionString.split(",").map(id => new mongoose.Types.ObjectId(id));
+// const userIds = mentionString.split(",").map(id => new mongoose.Types.ObjectId(id));
+// console.log("userIds", userIds);
 
     if (!update) {
       throw new ApiError(404, "Update not found");
@@ -198,7 +200,7 @@ const userIds = mentionString.split(",").map(id => new mongoose.Types.ObjectId(i
     }
 
     if (mentionString) {
-      const mentions = mentionString.split(",").map((id) => id.trim());
+      const mentions = mentionString.split(",").map(id => new mongoose.Types.ObjectId(id));
 
       mentions.forEach((mention) => {
         if (!update.mentions.includes(mention)) {
