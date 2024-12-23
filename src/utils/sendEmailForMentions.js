@@ -135,7 +135,6 @@ const sendEmailForMentions = async (userEmail, mentionedUsers, entityType, entit
 
   try {
     for (let user of mentionedUsers) {
-      console.log("user for email",user);
       if (!user.email) {
         console.warn(`Skipping email for user without email address`);
         continue;

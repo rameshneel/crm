@@ -566,3 +566,47 @@ export {
   deleteUsers,
   updateUser,
 };
+
+
+
+// const getAllUsers = asyncHandler(async (req, res, next) => {
+//   try {
+//     const { search } = req.query; // Use query parameters
+//     const { page = 1, limit = 10 } = req.query;
+
+//     const query = {};
+//     if (search) {
+//       const regex = new RegExp(search, "i"); // Case-insensitive search
+//       query.$or = [
+//         { fullName: { $regex: regex } },
+//         { email: { $regex: regex } },
+//         { jobtitle: { $regex: regex } }
+//       ];
+//     }
+
+//     const pageNumber = parseInt(page, 10);
+//     const pageLimit = parseInt(limit, 10);
+
+//     const users = await User.find(query)
+//       .skip((pageNumber - 1) * pageLimit)
+//       .limit(pageLimit);
+
+//     const totalUsers = await User.countDocuments(query);
+//     const totalPages = Math.ceil(totalUsers / pageLimit);
+
+//     return res.status(200).json({
+//       status: 200,
+//       data: users,
+//       pagination: {
+//         totalUsers,
+//         totalPages,
+//         currentPage: pageNumber,
+//         pageLimit
+//       },
+//       message: "Users retrieved successfully"
+//     });
+//   } catch (error) {
+//     return next(error); // Handle errors appropriately
+//   }
+// });
+// GET /api/users?search=Technical&page=2&limit=5
