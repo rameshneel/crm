@@ -213,3 +213,74 @@ export default sendInvoiceEmail;
 // };
 
 // export default sendInvoiceEmail;
+
+
+// import nodemailer from "nodemailer";
+
+// export const sendInvoiceEmail = async (order, filePath) => {
+//   console.log("email", order, filePath);
+
+//   var transporter = nodemailer.createTransport({
+//     host: "sandbox.smtp.mailtrap.io",
+//     port: 2525,
+//     auth: {
+//       user: "16def67a96f9dd",
+//       pass: "a76727e7b8b3f3",
+//     },
+//   });
+
+//   let mailOptions = {
+//     from: "rkmahto151@gmail.com",
+//     to: "rkmahto@gmail.com", // Ensure you use the customer's email from the order
+//     subject: `Invoice for Order ${order.orderNo}`,
+//     text: `Dear ${order.customer.name},\n\nPlease find attached the invoice for your recent order.\n\nThank you for your business.`,
+//     html: `
+//       <div style="font-family: Arial, sans-serif; font-size: 14px; color: #333;">
+//         <h2 style="color: #0056b3;">Invoice for Order ${order.orderNo}</h2>
+//         <p>Dear ${order.customer.name},</p>
+//         <p>Please find attached the invoice for your recent order.</p>
+//         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+//           <tr>
+//             <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Description</th>
+//             <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Amount</th>
+//           </tr>
+//           <tr>
+//             <td style="border: 1px solid #ddd; padding: 8px;">Order Value</td>
+//             <td style="border: 1px solid #ddd; padding: 8px;">£${order.orderValue.toFixed(
+//               2
+//             )}</td>
+//           </tr>
+//           <tr>
+//             <td style="border: 1px solid #ddd; padding: 8px;">VAT @ 20%</td>
+//             <td style="border: 1px solid #ddd; padding: 8px;">£${(
+//               order.orderValue * 0.2
+//             ).toFixed(2)}</td>
+//           </tr>
+//           <tr>
+//             <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Total</td>
+//             <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">£${(
+//               order.orderValue * 1.2
+//             ).toFixed(2)}</td>
+//           </tr>
+//         </table>
+//         <p>Thank you for your business.</p>
+//         <p>Best regards,</p>
+//         <p>Your Company Name</p>
+//       </div>
+//     `,
+//     attachments: [
+//       {
+//         filename: `Invoice_${order.orderNo}.pdf`,
+//         path: filePath,
+//       },
+//     ],
+//   };
+
+//   try {
+//     await transporter.sendMail(mailOptions);
+//     console.log("Email sent successfully");
+//   } catch (error) {
+//     console.error("Error sending email:", error);
+//     throw error;
+//   }
+// };
