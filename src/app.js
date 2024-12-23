@@ -15,6 +15,7 @@ app.use(
       "http://localhost:3000",
       "https://localhost:3000",
       "http://localhost:5173",
+      "https://hom-seven.vercel.app",
       "https://high-oaks-media-crm.vercel.app",
     ],
     credentials: true,
