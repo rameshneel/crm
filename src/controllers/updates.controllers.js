@@ -183,6 +183,9 @@ const updatedUpdate = asyncHandler(async (req, res,next) => {
     const { content, mentions: mentionString } = req.body;
     const userId = req.user._id;
     console.log("mentionString", mentionString);
+    const mentions = mentionString.map(id => id.trim()); 
+    console.log("mentions", mentions);
+    
     const update = await Update.findById(id);
 // const userIds = mentionString.split(",").map(id => new mongoose.Types.ObjectId(id));
 // console.log("userIds", userIds);
@@ -200,7 +203,7 @@ const updatedUpdate = asyncHandler(async (req, res,next) => {
     }
 
     if (mentionString) {
-      const mentions = mentionString.split(",").map(id => new mongoose.Types.ObjectId(id));
+      const mentions = mentionString.map(id => id.trim()); 
 
       mentions.forEach((mention) => {
         if (!update.mentions.includes(mention)) {
