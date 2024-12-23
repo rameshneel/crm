@@ -94,11 +94,11 @@ const getUpdateById = asyncHandler(async (req, res, next) => {
   const { updateId } = req.params;
   try {
     const update = await Update.findById(updateId)
-      .populate({
-        path: "mentions",
-        model: "User",
-        select: "fullName email avatar",
-      })
+      // .populate({
+      //   path: "mentions",
+      //   model: "User",
+      //   select: "fullName email avatar",
+      // })
       .populate({
         path: "createdBy",
         model: "User",
@@ -137,6 +137,8 @@ const getUpdateById = asyncHandler(async (req, res, next) => {
     if (!update) {
       throw new Error("Update not found");
     }
+    console.log("update", update);
+    
     return res.json(
       new ApiResponse(200, { update }, "Update fetech successfully")
     );
@@ -175,40 +177,34 @@ const toggleLike = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-const updatedUpdate = asyncHandler(async (req, res) => {
+const updatedUpdate = asyncHandler(async (req, res,next) => {
   try {
     const { id } = req.params;
     const { content, mentions: mentionString } = req.body;
     const userId = req.user._id;
-
-    // Validate if update exists
     const update = await Update.findById(id);
+const userIds = mentionString.split(",").map(id => new mongoose.Types.ObjectId(id));
+
     if (!update) {
       throw new ApiError(404, "Update not found");
     }
 
-    // Permission check: user must be the creator of the update
     if (update.createdBy.toString() !== userId.toString()) {
       return res.status(403).json(new ApiResponse(403, null, "Permission denied"));
     }
 
-    // Update content if provided
     if (content) {
       update.content = content;
     }
 
-    // Handle mentions if provided
     if (mentionString) {
       const mentions = mentionString.split(",").map((id) => id.trim());
 
-      // Add mentions to the update if they are not already present
       mentions.forEach((mention) => {
         if (!update.mentions.includes(mention)) {
           update.mentions.push(mention);
         }
       });
-
-      // Handle notifications for mentioned users
       await handleMentions(mentions, update, userId);
     }
 
@@ -222,7 +218,7 @@ const updatedUpdate = asyncHandler(async (req, res) => {
     res.status(200).json(new ApiResponse(200, { update }, "Update edited successfully"));
   } catch (error) {
     console.error("Error in updating update:", error);
-    res.status(500).json(new ApiResponse(500, null, "Internal Server Error"));
+   next(error);
   }
 });
 // Helper function to handle mentions and notifications
@@ -908,15 +904,13 @@ async function processBase64Image(src, userId) {
     const imageExtension = matches[1];
     const imageData = Buffer.from(matches[2], "base64");
 
-    // यूनीक फाइलनेम जनरेट करें
+
     const hash = crypto.createHash("md5").update(imageData).digest("hex");
     const imageName = `${hash}.${imageExtension}`;
     const imagePath = path.join(__dirname, "public", "uploads", imageName);
 
-    // फाइल को डिस्क पर सेव करें
+ 
     await fs.writeFile(imagePath, imageData);
-
-    // नया URL रिटर्न करें
     return `/uploads/${imageName}`;
   }
   return src;
