@@ -353,9 +353,14 @@ const createEntityUpdate = asyncHandler(async (req, res, next) => {
       return next(new ApiError(400, "Invalid entityId format"));
     }
 
-    const mentions = mentionString
-      ? mentionString.split(",").map((id) => id.trim())
-      : [];
+    // const mentions = mentionString
+    //   ? mentionString.split(",").map((id) => id.trim())
+    //   : [];
+    const mentions = mentionString.map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
+    
+    if (mentions.length !== mentionString.length) {
+      return res.status(400).json(new ApiResponse(400, null, "Some mention IDs are invalid"));
+    }
     const update = new Update({
       content,
       createdBy: userId,
