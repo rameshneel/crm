@@ -177,19 +177,25 @@ const toggleLike = asyncHandler(async (req, res, next) => {
     next(error);
   }
 });
-const updatedUpdate = asyncHandler(async (req, res,next) => {
+const updatedUpdate = asyncHandler(async (req, res, next) => {
   try {
     const { id } = req.params;
     const { content, mentions: mentionString } = req.body;
     const userId = req.user._id;
     console.log("mentionString", mentionString);
-    const mentions = mentionString.map(id => id.trim()); 
-    console.log("mentions", mentions);
-    
-    const update = await Update.findById(id);
-// const userIds = mentionString.split(",").map(id => new mongoose.Types.ObjectId(id));
-// console.log("userIds", userIds);
 
+    // Check if mentionString is an array, and ensure it's treated as such
+    let mentions = [];
+    if (Array.isArray(mentionString)) {
+      mentions = mentionString.map(id => id.trim());
+    } else {
+      // If mentionString is not an array, you need to decide how to handle it.
+      // For example, if it's a comma-separated string, split it into an array.
+      mentions = mentionString.split(",").map(id => id.trim());
+    }
+    console.log("mentions", mentions);
+
+    const update = await Update.findById(id);
     if (!update) {
       throw new ApiError(404, "Update not found");
     }
@@ -203,13 +209,14 @@ const updatedUpdate = asyncHandler(async (req, res,next) => {
     }
 
     if (mentionString) {
-      const mentions = mentionString.map(id => id.trim()); 
-
+      // Iterate over mentions and add to update if they are not already included
       mentions.forEach((mention) => {
         if (!update.mentions.includes(mention)) {
           update.mentions.push(mention);
         }
       });
+
+      // Handle mentions notifications
       await handleMentions(mentions, update, userId);
     }
 
@@ -223,9 +230,10 @@ const updatedUpdate = asyncHandler(async (req, res,next) => {
     res.status(200).json(new ApiResponse(200, { update }, "Update edited successfully"));
   } catch (error) {
     console.error("Error in updating update:", error);
-   next(error);
+    next(error);
   }
 });
+
 // Helper function to handle mentions and notifications
 const handleMentions = async (mentions, update, userId) => {
   const mentionedUsers = await User.find({ _id: { $in: mentions } });
