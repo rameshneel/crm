@@ -123,7 +123,7 @@ const sendEmail = async (mailOptions) => {
  * @param {string} content - The content of the update.
  */
 const sendEmailForMentions = async (userEmail, mentionedUsers, entityType, entityName, updateId, content) => {
-  if (!userEmail || !mentionedUsers || !entityType || !entityName || !updateId ) {
+  if (!userEmail || !mentionedUsers || !entityType  || !updateId ) {
     throw new ApiError(400, "Missing required parameters for sending mention emails");
   }
 
@@ -135,6 +135,7 @@ const sendEmailForMentions = async (userEmail, mentionedUsers, entityType, entit
 
   try {
     for (let user of mentionedUsers) {
+      console.log("user for email",user);
       if (!user.email) {
         console.warn(`Skipping email for user without email address`);
         continue;
@@ -157,6 +158,12 @@ const sendEmailForMentions = async (userEmail, mentionedUsers, entityType, entit
 };
 
 export default sendEmailForMentions;
+
+
+
+
+
+
 
 
 

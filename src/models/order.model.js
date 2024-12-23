@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 const orderSchema = new Schema(
@@ -28,8 +29,7 @@ const orderSchema = new Schema(
     },
     renewalStatus: {
       type: String,
-      enum: {values:["Meeting Booked", "Sold", "Dropped", "Still to Contact", ""],message:'{VALUE} is not supported'},
-      require:false,
+      enum: {values:["Meeting Booked", "Sold", "Dropped", "Still to Contact", ""],message:'{VALUE} is not supported'},                                     
       default:""
     },
     renewalNotes: {

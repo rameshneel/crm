@@ -26,12 +26,13 @@ const router = Router()
 ;
 router.route("/")
     .post(
+        verifyJWT,
         uploadFile,
         registerUser
     );
 router.route("/login").post(loginUser)
 //secured routes
-router.route("/logout").post(verifyJWT,  logoutUser)
+router.route("/logout").post(verifyJWT,logoutUser)
 router.route("/change-password").post(verifyJWT, changeCurrentPassword)
 router.route("/:userId").get(verifyJWT, userDetails)
 router.route("/update-account").patch(verifyJWT,upload.single("avatar"), updateAccountDetails)
@@ -43,7 +44,6 @@ router.route('/delete').delete(verifyJWT,deleteUser);
 router.route('/:userId').delete(verifyJWT,deleteUsers);
 router.route('/').get(verifyJWT,getAllUsers);
 router.route("/update/:userId").patch(verifyJWT,upload.single("avatar"),updateUser)
-
 router.route('/upload').post(fileUploadforupdate,uploadForSingleFile)
 
 export default router
